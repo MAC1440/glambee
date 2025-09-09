@@ -31,6 +31,7 @@ import {
 import {
   Calendar,
   CalendarPlus,
+  CreditCard,
   LayoutDashboard,
   LogOut,
   Scissors,
@@ -48,6 +49,7 @@ const navItems = [
   { href: "/book-appointment", icon: CalendarPlus, label: "Book Appointment" },
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
   { href: "/clients", icon: Users, label: "Clients" },
+  { href: "/billing", icon: CreditCard, label: "Billing" },
   { href: "/trends", icon: TrendingUp, label: "Trends" },
 ];
 
