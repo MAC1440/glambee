@@ -47,11 +47,11 @@ import { SalonFlowLogo } from "../icons";
 import { user } from "@/lib/placeholder-data";
 
 const navItems = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
   { href: "/services", icon: Scissors, label: "Services" },
   { href: "/book-appointment", icon: CalendarPlus, label: "Book Appointment" },
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
-  { href: "/staff", icon: Briefcase, label: "Staff", activeMatch: "/staff" },
+  { href: "/staff", icon: Briefcase, label: "Staff", activeMatch: "/staff", exact: true },
   { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
   { href: "/billing", icon: CreditCard, label: "Billing" },
   { href: "/inventory", icon: Boxes, label: "Inventory" },
@@ -61,12 +61,28 @@ const navItems = [
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  const isNavItemActive = (item: typeof navItems[0]) => {
-    if (item.activeMatch) {
-      return pathname.startsWith(item.activeMatch);
+  const isNavItemActive = (item: (typeof navItems)[0]) => {
+    if (item.exact) {
+      return pathname === item.href;
     }
-    return pathname === item.href;
+    const matchPath = item.activeMatch || item.href;
+    return pathname.startsWith(matchPath);
+  };
+  
+  // Find the most specific active item
+  let activeItem: (typeof navItems)[0] | undefined;
+  let longestMatch = 0;
+
+  for (const item of navItems) {
+    const matchPath = item.activeMatch || item.href;
+    if (pathname.startsWith(matchPath)) {
+      if (matchPath.length > longestMatch) {
+        longestMatch = matchPath.length;
+        activeItem = item;
+      }
+    }
   }
+
 
   return (
     <SidebarProvider>
@@ -83,7 +99,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={isNavItemActive(item)}
+                  isActive={item === activeItem}
                   tooltip={item.label}
                 >
                   <Link href={item.href}>
