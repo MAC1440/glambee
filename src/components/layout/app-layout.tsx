@@ -62,20 +62,23 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   const isNavItemActive = (item: typeof navItems[0]) => {
-     if (item.exact) {
+    if (item.exact) {
       return pathname === item.href;
     }
-    const matchPath = item.activeMatch || item.href;
-    // For non-exact matches, we need to ensure we're not on a more specific page.
-    // For example, if we are on /staff/schedule, /staff should not be active.
-    // The most specific match will be handled by picking the one with the longest path.
-    return pathname.startsWith(matchPath);
+    // This is a special case. We want to highlight the parent nav item,
+    // but not if we are on a more specific page.
+    if (item.activeMatch) {
+        return pathname.startsWith(item.activeMatch) && (pathname === item.href);
+    }
+    return pathname.startsWith(item.href);
   };
   
   // Find the most specific active item by finding the longest matching path.
-  const activeItem = navItems
+    const activeItem = navItems
     .filter(isNavItemActive)
-    .sort((a, b) => (b.activeMatch || b.href).length - (a.activeMatch || a.href).length)[0];
+    .sort((a, b) => (a.href.length - b.href.length))[0] || navItems
+    .filter((item) => pathname.startsWith(item.activeMatch || item.href))
+    .sort((a,b) => (b.activeMatch || b.href).length - (a.activeMatch || a.href).length)[0];
 
 
   return (
