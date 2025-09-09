@@ -37,6 +37,7 @@ import {
   Settings,
   TrendingUp,
   User as UserIcon,
+  Users,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { user } from "@/lib/placeholder-data";
@@ -46,6 +47,7 @@ const navItems = [
   { href: "/services", icon: Scissors, label: "Services" },
   { href: "/book-appointment", icon: CalendarPlus, label: "Book Appointment" },
   { href: "/staff/schedule", icon: Calendar, label: "My Schedule" },
+  { href: "/clients", icon: Users, label: "Clients" },
   { href: "/trends", icon: TrendingUp, label: "Trends" },
 ];
 
