@@ -1,6 +1,6 @@
 
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,11 +15,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Paintbrush, Upload } from "lucide-react";
 
 const themes = [
-  { name: "Default", primary: "339 49% 68%", background: "338 56% 95%" },
-  { name: "Ocean", primary: "210 40% 50%", background: "210 40% 96%" },
-  { name: "Forest", primary: "140 35% 45%", background: "140 10% 94%" },
-  { name: "Sunset", primary: "25 80% 60%", background: "30 60% 95%" },
-  { name: "Plum", primary: "270 50% 60%", background: "270 30% 96%" },
+  { name: "Default", primary: "339 49% 68%", background: "338 56% 95%", accent: "279 45% 72%" },
+  { name: "Ocean", primary: "210 40% 50%", background: "210 40% 96%", accent: "190 50% 70%" },
+  { name: "Forest", primary: "140 35% 45%", background: "140 10% 94%", accent: "110 30% 65%" },
+  { name: "Sunset", primary: "25 80% 60%", background: "30 60% 95%", accent: "50 85% 70%" },
+  { name: "Plum", primary: "270 50% 60%", background: "270 30% 96%", accent: "290 55% 75%" },
 ];
 
 export default function SettingsPage() {
@@ -29,14 +29,21 @@ export default function SettingsPage() {
 
   const handleThemeChange = (theme: typeof themes[0]) => {
     setSelectedTheme(theme);
-    // In a real app, you would save this to a database
-    // and apply it dynamically, perhaps by updating CSS variables on the root element.
-    console.log("Selected theme:", theme.name);
-    toast({
-      title: "Theme Updated",
-      description: `Switched to the ${theme.name} theme.`,
-    });
+    if (typeof window !== "undefined") {
+      document.documentElement.style.setProperty("--primary", theme.primary);
+      document.documentElement.style.setProperty("--background", theme.background);
+      document.documentElement.style.setProperty("--accent", theme.accent);
+    }
   };
+
+  const handleSaveTheme = () => {
+    // In a real app, you would save this to a database
+    console.log("Saving theme:", selectedTheme.name);
+    toast({
+      title: "Theme Saved!",
+      description: `The ${selectedTheme.name} theme has been applied and saved.`,
+    });
+  }
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -45,17 +52,34 @@ export default function SettingsPage() {
       reader.onloadend = () => {
         const result = reader.result as string;
         setLogoPreview(result);
-        // In a real app, you would upload this file to a storage service
-        // and save the URL to the database.
-        console.log("Logo file selected:", file.name);
-         toast({
-            title: "Logo Updated",
-            description: "Your new logo has been uploaded.",
-        });
       };
       reader.readAsDataURL(file);
     }
   };
+
+  const handleSaveLogo = () => {
+    // In a real app, you would upload this file to a storage service
+    // and save the URL to the database.
+    if (logoPreview) {
+        console.log("Saving logo...");
+        toast({
+            title: "Logo Saved!",
+            description: "Your new logo has been saved.",
+        });
+    } else {
+        toast({
+            title: "No Logo Selected",
+            description: "Please upload a logo first.",
+            variant: "destructive"
+        });
+    }
+  };
+
+  // Set the initial theme on component mount
+  useEffect(() => {
+    handleThemeChange(selectedTheme);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="flex flex-col gap-8">
@@ -96,7 +120,7 @@ export default function SettingsPage() {
                 </div>
               ))}
             </div>
-             <Button>
+             <Button onClick={handleSaveTheme}>
                 <Paintbrush className="mr-2 h-4 w-4" /> Save Theme
             </Button>
           </CardContent>
@@ -122,7 +146,7 @@ export default function SettingsPage() {
                     <Input id="logo-upload" type="file" accept="image/*" onChange={handleLogoUpload} />
                 </div>
             </div>
-            <Button>
+            <Button onClick={handleSaveLogo}>
               <Upload className="mr-2 h-4 w-4" /> Save Logo
             </Button>
           </CardContent>
