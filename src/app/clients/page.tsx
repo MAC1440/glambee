@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { appointments } from "@/lib/placeholder-data";
 import { PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 // Process appointments to build detailed client data
 const clientsMap = new Map<
@@ -115,9 +116,9 @@ export default function ClientsPage() {
             </TableHeader>
             <TableBody>
               {clients.map((client) => (
-                <TableRow key={client.email}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
+                <TableRow key={client.email} className="cursor-pointer hover:bg-muted/50">
+                   <TableCell>
+                    <Link href={`/clients/${encodeURIComponent(client.email)}`} className="flex items-center gap-3 w-full">
                       <Avatar className="h-9 w-9">
                         <AvatarImage
                           src={`https://picsum.photos/seed/${client.name}/100`}
@@ -133,7 +134,7 @@ export default function ClientsPage() {
                           {client.email}
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
