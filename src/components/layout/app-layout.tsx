@@ -1,3 +1,4 @@
+
 "use client";
 import * as React from "react";
 import Link from "next/link";
@@ -29,6 +30,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
+  Boxes,
   Calendar,
   CalendarPlus,
   CreditCard,
@@ -50,6 +52,7 @@ const navItems = [
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
   { href: "/clients", icon: Users, label: "Clients" },
   { href: "/billing", icon: CreditCard, label: "Billing" },
+  { href: "/inventory", icon: Boxes, label: "Inventory" },
   { href: "/trends", icon: TrendingUp, label: "Trends" },
 ];
 
