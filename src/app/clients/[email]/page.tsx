@@ -1,3 +1,4 @@
+"use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,21 @@ import {
 import { appointments } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
 import { Mail, Phone, Edit, MessageSquare } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+
 
 export default function ClientDetailPage({
   params,
@@ -27,6 +43,8 @@ export default function ClientDetailPage({
   params: { email: string };
 }) {
   const clientEmail = decodeURIComponent(params.email);
+  const { toast } = useToast();
+  const [message, setMessage] = useState("");
 
   const clientAppointments = appointments.filter(
     (apt) => apt.customer.email === clientEmail
@@ -62,6 +80,15 @@ export default function ClientDetailPage({
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300";
     }
     };
+
+    const handleSendMessage = () => {
+        console.log("Sending message:", message);
+        toast({
+            title: "Message Sent!",
+            description: `Your message has been sent to ${client.name}.`,
+        });
+        setMessage("");
+    }
 
 
   return (
@@ -101,10 +128,38 @@ export default function ClientDetailPage({
           </div>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Send Message
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Send Message
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Send Message to {client.name}</DialogTitle>
+                  <DialogDescription>
+                    Compose your message below. It will be sent via their preferred communication channel.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid w-full gap-1.5">
+                    <Label htmlFor="message">Your message</Label>
+                    <Textarea placeholder="Type your message here." id="message" value={message} onChange={(e) => setMessage(e.target.value)} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="secondary">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button type="submit" onClick={handleSendMessage} disabled={!message}>Send message</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             <Button>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Profile
