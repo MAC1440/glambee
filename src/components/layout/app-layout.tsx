@@ -41,6 +41,7 @@ import {
   TrendingUp,
   User as UserIcon,
   Users,
+  Briefcase,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { user } from "@/lib/placeholder-data";
@@ -50,6 +51,7 @@ const navItems = [
   { href: "/services", icon: Scissors, label: "Services" },
   { href: "/book-appointment", icon: CalendarPlus, label: "Book Appointment" },
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
+  { href: "/staff", icon: Briefcase, label: "Staff" },
   { href: "/clients", icon: Users, label: "Clients" },
   { href: "/billing", icon: CreditCard, label: "Billing" },
   { href: "/inventory", icon: Boxes, label: "Inventory" },
@@ -74,7 +76,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href) && (item.href === '/' ? pathname === '/' : true)}
                   tooltip={item.label}
                 >
                   <Link href={item.href}>
