@@ -129,8 +129,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <UserIcon className="mr-2" /> Profile
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2" /> Settings
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="mr-2" /> Settings
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
