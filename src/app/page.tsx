@@ -140,6 +140,9 @@ export default function Dashboard() {
             <Button asChild variant="secondary">
               <Link href="/trends">View Trends</Link>
             </Button>
+            <Button asChild variant="secondary">
+              <Link href="/staff/schedule">View Schedule</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

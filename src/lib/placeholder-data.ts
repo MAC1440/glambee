@@ -129,6 +129,42 @@ export const appointments = [
     time: "02:00 PM",
     price: 85.0,
   },
+  {
+    id: "apt_07",
+    customer: { name: "Olivia Jones", email: "olivia.jones@example.com" },
+    service: "Deep Conditioning Treatment",
+    staff: "Emily Rodriguez",
+    date: "2024-08-02",
+    time: "09:00 AM",
+    price: 55.0,
+  },
+  {
+    id: "apt_08",
+    customer: { name: "Benjamin Garcia", email: "benjamin.garcia@example.com" },
+    service: "Balayage / Ombré",
+    staff: "Jessica Miller",
+    date: "2024-08-05",
+    time: "10:00 AM",
+    price: 250.0,
+  },
+  {
+    id: "apt_09",
+    customer: { name: "Mia Martinez", email: "mia.martinez@example.com" },
+    service: "Luxury Manicure",
+    staff: "David Wilson",
+    date: "2024-08-10",
+    time: "11:00 AM",
+    price: 45.0,
+  },
+    {
+    id: "apt_10",
+    customer: { name: "Ethan Rodriguez", email: "ethan.rodriguez@example.com" },
+    service: "Signature Haircut & Style",
+    staff: "Michael Chen",
+    date: "2024-08-15",
+    time: "01:00 PM",
+    price: 85.0,
+  },
 ];
 
 export const trends = [

@@ -46,7 +46,7 @@ const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/services", icon: Scissors, label: "Services" },
   { href: "/book-appointment", icon: CalendarPlus, label: "Book Appointment" },
-  { href: "/staff/schedule", icon: Calendar, label: "My Schedule" },
+  { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
   { href: "/clients", icon: Users, label: "Clients" },
   { href: "/trends", icon: TrendingUp, label: "Trends" },
 ];
