@@ -51,8 +51,8 @@ const navItems = [
   { href: "/services", icon: Scissors, label: "Services" },
   { href: "/book-appointment", icon: CalendarPlus, label: "Book Appointment" },
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
-  { href: "/staff", icon: Briefcase, label: "Staff" },
-  { href: "/clients", icon: Users, label: "Clients" },
+  { href: "/staff", icon: Briefcase, label: "Staff", activeMatch: "/staff" },
+  { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
   { href: "/billing", icon: CreditCard, label: "Billing" },
   { href: "/inventory", icon: Boxes, label: "Inventory" },
   { href: "/trends", icon: TrendingUp, label: "Trends" },
@@ -60,6 +60,13 @@ const navItems = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+
+  const isNavItemActive = (item: typeof navItems[0]) => {
+    if (item.activeMatch) {
+      return pathname.startsWith(item.activeMatch);
+    }
+    return pathname === item.href;
+  }
 
   return (
     <SidebarProvider>
@@ -76,7 +83,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
-                  isActive={pathname.startsWith(item.href) && (item.href === '/' ? pathname === '/' : true)}
+                  isActive={isNavItemActive(item)}
                   tooltip={item.label}
                 >
                   <Link href={item.href}>
