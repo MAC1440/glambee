@@ -49,7 +49,10 @@ export async function verifyPhoneOtp(formData: FormData) {
   }
 
   if (!session) {
-     return { error: "Could not create session. Please try again.", success: false };
+    return {
+      error: "Could not create session. Please try again.",
+      success: false,
+    };
   }
 
   revalidatePath("/", "layout");
