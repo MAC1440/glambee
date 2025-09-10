@@ -1,5 +1,5 @@
 import { Schedule } from "@/features/staff/schedule/Schedule";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
 export default async function SchedulePage() {
   const supabase = createClient();

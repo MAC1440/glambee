@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AppLayout } from "@/components/layout/app-layout";
 import { Toaster } from "@/components/ui/toaster";
 import { StoreProvider } from "@/lib/StoreProvider";
 import { createClient } from "@/lib/supabase/server";
-import { AuthLayout } from "@/components/layout/auth-layout";
+import { LayoutProvider } from "@/components/layout/layout-provider";
 
 export const metadata: Metadata = {
   title: "SalonFlow",
@@ -18,8 +17,8 @@ export default async function RootLayout({
 }>) {
   const supabase = createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -37,11 +36,7 @@ export default async function RootLayout({
       </head>
       <body className="font-body antialiased">
         <StoreProvider>
-          {user ? (
-            <AppLayout user={user}>{children}</AppLayout>
-          ) : (
-            <AuthLayout>{children}</AuthLayout>
-          )}
+          <LayoutProvider session={session}>{children}</LayoutProvider>
           <Toaster />
         </StoreProvider>
       </body>

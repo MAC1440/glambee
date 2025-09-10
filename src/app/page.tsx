@@ -1,5 +1,5 @@
 import { Dashboard } from "@/features/dashboard/Dashboard";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 
 export default async function DashboardPage() {
