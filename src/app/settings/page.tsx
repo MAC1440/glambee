@@ -38,6 +38,7 @@ export default function SettingsPage() {
 
   const handleSaveTheme = () => {
     // In a real app, you would save this to a database
+    console.log(selectedTheme)
     console.log("Saving theme:", selectedTheme.name);
     toast({
       title: "Theme Saved!",
