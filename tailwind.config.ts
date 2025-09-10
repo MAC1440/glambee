@@ -16,6 +16,9 @@ export default {
       },
     },
     extend: {
+      backgroundImage: {
+        'gradient-primary': 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)))',
+      },
       fontFamily: {
         body: ['PT Sans', 'sans-serif'],
         headline: ['Playfair Display', 'serif'],
