@@ -56,6 +56,12 @@ export function Login() {
     setIsSubmitting(false);
   };
   
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    handleSendOtp(formData);
+  };
+  
   useEffect(() => {
     // When retrying with an invalid OTP, phone is in the URL.
     if(initialPhone) {
@@ -103,7 +109,7 @@ export function Login() {
         )}
 
         {step === "login" ? (
-          <form ref={formRef} action={handleSendOtp}>
+          <form ref={formRef} onSubmit={handleSubmit}>
             <CardContent className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="phone" className="text-golden-300">
