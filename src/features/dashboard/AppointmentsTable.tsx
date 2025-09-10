@@ -21,7 +21,7 @@ export function AppointmentsTable() {
 
   return (
     <>
-      <CardHeader className="flex flex-row items-center p-0 mb-4">
+      <CardHeader className="flex flex-row items-center">
         <div className="grid gap-2">
           <CardTitle>Today's Appointments</CardTitle>
         </div>
@@ -29,7 +29,7 @@ export function AppointmentsTable() {
           <Link href="/staff/schedule">View All</Link>
         </Button>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
