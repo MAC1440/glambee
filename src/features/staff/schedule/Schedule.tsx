@@ -1,4 +1,6 @@
 
+"use client";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -10,29 +12,40 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { appointments } from "@/lib/placeholder-data";
-import { subDays, addDays, format } from "date-fns";
+import { addDays, format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from "date-fns";
 
-export function Schedule() {
+type Appointment = {
+  id: string;
+  customer_name: string;
+  customer_id: string;
+  booking_type: string;
+  date: string;
+  start_time: string;
+};
+
+export function Schedule({ appointments }: { appointments: Appointment[] }) {
   const today = new Date();
-  const yesterday = subDays(today, 1);
-  const tomorrow = addDays(today, 1);
-
+  
   const todayAppointments = appointments.filter(
     (apt) => apt.date === format(today, "yyyy-MM-dd")
   );
-  const weeklyAppointments = appointments.filter(
-    (apt) =>
-      new Date(apt.date) >= today && new Date(apt.date) <= addDays(today, 7)
-  );
-  const monthlyAppointments = appointments.filter(
-    (apt) =>
-      new Date(apt.date).getMonth() === today.getMonth() &&
-      new Date(apt.date).getFullYear() === today.getFullYear()
-  );
+
+  const startOfCurrentWeek = startOfWeek(today);
+  const endOfCurrentWeek = endOfWeek(today);
+  const weeklyAppointments = appointments.filter((apt) => {
+    const aptDate = parseISO(apt.date);
+    return aptDate >= startOfCurrentWeek && aptDate <= endOfCurrentWeek;
+  });
+
+  const startOfCurrentMonth = startOfMonth(today);
+  const endOfCurrentMonth = endOfMonth(today);
+  const monthlyAppointments = appointments.filter((apt) => {
+    const aptDate = parseISO(apt.date);
+    return aptDate >= startOfCurrentMonth && aptDate <= endOfCurrentMonth;
+  });
 
   const renderAppointmentTable = (
-    appointments: typeof todayAppointments,
+    appointments: Appointment[],
     showDate: boolean = false
   ) => (
     <Table>
@@ -48,34 +61,31 @@ export function Schedule() {
       </TableHeader>
       <TableBody>
         {appointments.length > 0 ? (
-          appointments.map((apt) => (
+          appointments.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.start_time.localeCompare(b.start_time)).map((apt) => (
             <TableRow key={apt.id}>
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
                     <AvatarImage
-                      src={`https://picsum.photos/seed/${apt.customer.name}/100`}
+                      src={`https://picsum.photos/seed/${apt.customer_name}/100`}
                       alt="Avatar"
                     />
                     <AvatarFallback>
-                      {apt.customer.name.charAt(0)}
+                      {apt.customer_name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="font-medium">{apt.customer.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {apt.customer.email}
-                    </div>
+                    <div className="font-medium">{apt.customer_name}</div>
                   </div>
                 </div>
               </TableCell>
-              <TableCell>{apt.service}</TableCell>
+              <TableCell>{apt.booking_type}</TableCell>
               {showDate && (
                 <TableCell className="hidden md:table-cell">
-                  {apt.date}
+                  {format(parseISO(apt.date), "PPP")}
                 </TableCell>
               )}
-              <TableCell className="text-right">{apt.time}</TableCell>
+              <TableCell className="text-right">{apt.start_time}</TableCell>
             </TableRow>
           ))
         ) : (
