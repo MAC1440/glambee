@@ -30,7 +30,6 @@ export function Services() {
                   alt={service.name}
                   fill
                   className="object-cover rounded-t-lg"
-                  data-ai-hint={service.dataAiHint}
                 />
               </div>
             </CardHeader>

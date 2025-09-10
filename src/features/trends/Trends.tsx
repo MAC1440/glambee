@@ -31,7 +31,6 @@ export function Trends() {
                   alt={trend.name}
                   fill
                   className="object-cover rounded-t-lg"
-                  data-ai-hint={trend.dataAiHint}
                 />
               </div>
             </CardHeader>
