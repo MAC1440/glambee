@@ -1,29 +1,29 @@
-import { type NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 
-// Define protected routes that require authentication
-const protectedRoutes = [
-  "/",
-  "/services",
-  "/book-appointment",
-  "/staff",
-  "/staff/schedule",
-  "/clients",
-  "/billing",
-  "/inventory",
-  "/trends",
-  "/profile",
-  "/settings",
-];
-
-// Define authentication routes that are only for unauthenticated users
-const authRoutes = ["/login", "/signup", "/auth/confirm"];
+const protectedRoutes = ["/", "/dashboard", "/profile", "/settings", "/services", "/book-appointment", "/staff", "/clients", "/billing", "/inventory", "/trends"];
+const authRoutes = ["/login", "/signup"];
 
 export async function middleware(request: NextRequest) {
-  const response = await updateSession(request);
-  const supabase = createClient();
+  const response = NextResponse.next();
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
 
   const {
     data: { session },
@@ -31,41 +31,22 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  const isProtectedRoute = protectedRoutes.some((route) => {
-    // Handle nested routes for clients and staff
-    if (route === '/clients' || route === '/staff') {
-      return pathname.startsWith(route);
-    }
-    // Exact match for all other protected routes
-    return pathname === route;
-  });
-
-  // Auth Guard: If the user is not logged in and tries to access a protected route,
-  // redirect them to the login page.
-  if (!session && isProtectedRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
+  // If the user is logged in and tries to access an auth page, redirect them to the dashboard
+  if (session && authRoutes.some(route => pathname.startsWith(route))) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Guest Guard: If the user is logged in and tries to access an auth route,
-  // redirect them to the dashboard.
-  if (session && authRoutes.includes(pathname)) {
-    return NextResponse.redirect(new URL("/", request.url));
+  // If the user is not logged in and tries to access a protected page, redirect them to the login page
+  if (!session && protectedRoutes.some(route => {
+      if(route === '/') return pathname === route;
+      return pathname.startsWith(route)
+  })) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return response;
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - auth/callback
-     */
-    "/((?!_next/static|_next/image|favicon.ico|auth/callback).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
