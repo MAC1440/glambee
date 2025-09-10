@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -149,13 +150,14 @@ export function BookingForm() {
                     control={form.control}
                     name="time"
                     render={({ field }) => (
-                    <div className="grid grid-cols-3 gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-2">
                         {timeSlots.map((time) => (
                         <Button
                             key={time}
                             type="button"
                             variant={field.value === time ? 'default' : 'outline'}
                             onClick={() => field.onChange(time)}
+                            className="rounded-full w-auto"
                         >
                             {time}
                         </Button>
