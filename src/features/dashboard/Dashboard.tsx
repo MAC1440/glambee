@@ -13,7 +13,11 @@ import {
   Users,
 } from "lucide-react";
 
-export function Dashboard() {
+export function Dashboard({
+  todayAppointments,
+}: {
+  todayAppointments: any[];
+}) {
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -39,9 +43,9 @@ export function Dashboard() {
             <CalendarCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+23</div>
+            <div className="text-2xl font-bold">{todayAppointments.length}</div>
             <p className="text-xs text-muted-foreground">
-              +180.1% from last month
+              Booked for today
             </p>
           </CardContent>
         </Card>
@@ -73,7 +77,7 @@ export function Dashboard() {
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <Card>
-          <AppointmentsTable />
+          <AppointmentsTable todayAppointments={todayAppointments} />
         </Card>
         <Card>
           <QuickActions />

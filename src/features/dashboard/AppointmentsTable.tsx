@@ -14,10 +14,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { appointments } from "@/lib/placeholder-data";
 
-export function AppointmentsTable() {
-  const todayAppointments = appointments.slice(0, 5);
+export function AppointmentsTable({
+  todayAppointments,
+}: {
+  todayAppointments: any[];
+}) {
 
   return (
     <>
@@ -39,26 +41,34 @@ export function AppointmentsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {todayAppointments.map((apt) => (
-              <TableRow key={apt.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage
-                        src={`https://picsum.photos/seed/${apt.customer.name}/100`}
-                        alt="Avatar"
-                      />
-                      <AvatarFallback>
-                        {apt.customer.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="font-medium">{apt.customer.name}</div>
-                  </div>
+            {todayAppointments.length > 0 ? (
+              todayAppointments.map((apt) => (
+                <TableRow key={apt.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage
+                          src={`https://picsum.photos/seed/${apt.customer_name}/100`}
+                          alt="Avatar"
+                        />
+                        <AvatarFallback>
+                          {apt.customer_name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="font-medium">{apt.customer_name}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{apt.booking_type}</TableCell>
+                  <TableCell className="text-right">{apt.start_time}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center h-24">
+                  No appointments for today.
                 </TableCell>
-                <TableCell>{apt.service}</TableCell>
-                <TableCell className="text-right">{apt.time}</TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </CardContent>
