@@ -1,6 +1,5 @@
 
 import {
-  Card,
   CardContent,
   CardHeader,
   CardTitle,
@@ -15,7 +14,7 @@ import {
 export function StatCards() {
   return (
     <>
-      <Card>
+      <div className="border rounded-lg p-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
           <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
@@ -26,9 +25,9 @@ export function StatCards() {
             +20.1% from last month
           </p>
         </CardContent>
-      </Card>
+      </div>
 
-      <Card>
+      <div className="border rounded-lg p-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
             Appointments Today
@@ -41,9 +40,9 @@ export function StatCards() {
             +180.1% from last month
           </p>
         </CardContent>
-      </Card>
+      </div>
 
-      <Card>
+      <div className="border rounded-lg p-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">New Clients</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
@@ -54,9 +53,9 @@ export function StatCards() {
             +19% from last month
           </p>
         </CardContent>
-      </Card>
+      </div>
 
-      <Card>
+      <div className="border rounded-lg p-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Active Now</CardTitle>
           <Activity className="h-4 w-4 text-muted-foreground" />
@@ -67,7 +66,7 @@ export function StatCards() {
             +201 since last hour
           </p>
         </CardContent>
-      </Card>
+      </div>
     </>
   );
 }

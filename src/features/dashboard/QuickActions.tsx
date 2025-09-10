@@ -5,10 +5,10 @@ import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export function QuickActions() {
   return (
     <>
-      <CardHeader>
+      <CardHeader className="p-0 mb-4">
         <CardTitle>Quick Actions</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4">
+      <CardContent className="grid gap-4 p-0">
         <Button asChild>
           <Link href="/book-appointment">Book New Appointment</Link>
         </Button>

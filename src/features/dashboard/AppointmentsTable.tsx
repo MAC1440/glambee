@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
   CardContent,
   CardHeader,
   CardTitle,
@@ -21,8 +20,8 @@ export function AppointmentsTable() {
   const todayAppointments = appointments.slice(0, 5);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center">
+    <>
+      <CardHeader className="flex flex-row items-center p-0 mb-4">
         <div className="grid gap-2">
           <CardTitle>Today's Appointments</CardTitle>
         </div>
@@ -30,7 +29,7 @@ export function AppointmentsTable() {
           <Link href="/staff/schedule">View All</Link>
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
@@ -63,6 +62,6 @@ export function AppointmentsTable() {
           </TableBody>
         </Table>
       </CardContent>
-    </Card>
+    </>
   );
 }
