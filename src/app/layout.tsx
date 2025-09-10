@@ -16,10 +16,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
+  const 
+    data = await supabase.auth.getUser();
+console.log('session' , data)
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -36,7 +35,7 @@ export default async function RootLayout({
       </head>
       <body className="font-body antialiased">
         <StoreProvider>
-          <LayoutProvider session={session}>{children}</LayoutProvider>
+          <LayoutProvider session={data.data.user}>{children}</LayoutProvider>
           <Toaster />
         </StoreProvider>
       </body>
