@@ -3,11 +3,13 @@ import { updateSession } from "@/lib/supabase/middleware";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+// Define protected routes that require authentication
 const protectedRoutes = [
   "/",
   "/services",
   "/book-appointment",
   "/staff",
+  "/staff/schedule",
   "/clients",
   "/billing",
   "/inventory",
@@ -15,11 +17,11 @@ const protectedRoutes = [
   "/profile",
   "/settings",
 ];
+
+// Define authentication routes that are only for unauthenticated users
 const authRoutes = ["/login", "/signup", "/auth/confirm"];
 
 export async function middleware(request: NextRequest) {
-  // The updateSession function is crucial. It refreshes the session cookie,
-  // ensuring the server has the latest auth state.
   const response = await updateSession(request);
   const supabase = createClient();
 
@@ -29,16 +31,25 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // This is the **Auth Guard** for protected routes.
-  // If the user is not logged in and tries to access a protected route,
-  // they are redirected to the login page.
-  if (!session && protectedRoutes.some((route) => pathname.startsWith(route))) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  const isProtectedRoute = protectedRoutes.some((route) => {
+    // Handle nested routes for clients and staff
+    if (route === '/clients' || route === '/staff') {
+      return pathname.startsWith(route);
+    }
+    // Exact match for all other protected routes
+    return pathname === route;
+  });
+
+  // Auth Guard: If the user is not logged in and tries to access a protected route,
+  // redirect them to the login page.
+  if (!session && isProtectedRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
-  // This is the **Guest Guard** you asked about.
-  // If the user IS logged in and tries to access a guest-only route
-  // (like login or signup), they are redirected to the dashboard.
+  // Guest Guard: If the user is logged in and tries to access an auth route,
+  // redirect them to the dashboard.
   if (session && authRoutes.includes(pathname)) {
     return NextResponse.redirect(new URL("/", request.url));
   }
