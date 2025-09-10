@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -98,7 +99,7 @@ export function Schedule() {
       </div>
 
       <Tabs defaultValue="day">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
+        <TabsList>
           <TabsTrigger value="day">Day</TabsTrigger>
           <TabsTrigger value="week">Week</TabsTrigger>
           <TabsTrigger value="month">Month</TabsTrigger>
