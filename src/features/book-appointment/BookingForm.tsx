@@ -194,7 +194,7 @@ export function BookingForm() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" size="lg" className="w-full md:w-auto">
+            <Button type="submit" size="lg" className="w-full md:w-auto ml-auto">
               Confirm Booking
             </Button>
           </CardFooter>
