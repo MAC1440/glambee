@@ -28,7 +28,6 @@ export async function middleware(request: NextRequest) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
   const { pathname } = request.nextUrl;
 
   // If the user is logged in and tries to access an auth page, redirect them to the dashboard

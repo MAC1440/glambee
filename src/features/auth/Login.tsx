@@ -63,16 +63,22 @@ export function Login() {
     setIsSubmitting(true);
     setServerError(null);
     const formData = new FormData(event.currentTarget);
-    
     const { error, success } = await verifyPhoneOtp(formData);
-
     if (error) {
+      toast({
+        title: "OTP Error",
+        description: "Verified.",
+      });
         setServerError(error);
         setIsSubmitting(false);
         return;
     }
 
     if (success) {
+      toast({
+        title: "OTP Verifiedd",
+        description: "Verified.",
+      });
         // This is crucial: router.refresh() re-fetches the layout and server components,
         // which will now correctly detect the authenticated user session.
         router.refresh();
