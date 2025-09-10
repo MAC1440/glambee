@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import React, { useState, useRef, useEffect } from "react";
 import { signInWithPhoneOtp, verifyPhoneOtp } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
 
 export function Login() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
@@ -31,9 +32,10 @@ export function Login() {
   const [step, setStep] = useState(initialPhone ? "verify" : "login");
   const [phone, setPhone] = useState(initialPhone);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(message);
   
-  const formRef = useRef<HTMLFormElement>(null);
+  const loginFormRef = useRef<HTMLFormElement>(null);
+  const verifyFormRef = useRef<HTMLFormElement>(null);
 
   const handleSendOtp = async (formData: FormData) => {
     setIsSubmitting(true);
@@ -56,14 +58,36 @@ export function Login() {
     setIsSubmitting(false);
   };
   
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleVerifyOtp = async (formData: FormData) => {
+    setIsSubmitting(true);
+    setServerError(null);
+
+    const { error, success } = await verifyPhoneOtp(formData);
+
+    if (error) {
+        setServerError(error);
+    }
+
+    if (success) {
+        router.refresh();
+        router.push('/');
+    }
+    setIsSubmitting(false);
+  }
+
+  const handleLoginSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     handleSendOtp(formData);
   };
+
+  const handleVerifySubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    handleVerifyOtp(formData);
+  }
   
   useEffect(() => {
-    // When retrying with an invalid OTP, phone is in the URL.
     if(initialPhone) {
       setStep("verify");
       setPhone(initialPhone);
@@ -87,16 +111,6 @@ export function Login() {
               : `Enter the code sent to ${phone}`}
           </CardDescription>
         </CardHeader>
-
-        {message && (
-             <div className="px-6 pb-4">
-            <Alert variant="destructive" className="bg-red-900/50 border-red-500/50 text-white">
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{message}</AlertDescription>
-            </Alert>
-            </div>
-        )}
         
         {serverError && (
             <div className="px-6 pb-4">
@@ -109,7 +123,7 @@ export function Login() {
         )}
 
         {step === "login" ? (
-          <form ref={formRef} onSubmit={handleSubmit}>
+          <form ref={loginFormRef} onSubmit={handleLoginSubmit}>
             <CardContent className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="phone" className="text-golden-300">
@@ -133,7 +147,7 @@ export function Login() {
             </CardFooter>
           </form>
         ) : (
-          <form action={verifyPhoneOtp}>
+          <form ref={verifyFormRef} onSubmit={handleVerifySubmit}>
             <CardContent className="grid gap-4">
                <input type="hidden" name="phone" value={phone} />
               <div className="grid gap-2">
@@ -146,15 +160,16 @@ export function Login() {
                   name="token"
                   placeholder="123456"
                   required
+                  autoFocus
                   className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
                 />
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
-              <Button type="submit" className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950">
-                Verify & Sign In
+              <Button type="submit" className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950" disabled={isSubmitting}>
+                {isSubmitting ? "Verifying..." : "Verify & Sign In"}
               </Button>
-               <Button variant="link" onClick={() => setStep("login")} className="text-golden-300">
+               <Button variant="link" onClick={() => { setStep("login"); setServerError(null);}} className="text-golden-300">
                 Use a different phone number
               </Button>
             </CardFooter>

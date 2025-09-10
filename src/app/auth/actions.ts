@@ -31,7 +31,7 @@ export async function verifyPhoneOtp(formData: FormData) {
   const token = formData.get("token") as string;
 
   if (!phone || !token) {
-    return redirect("/login?message=Phone number and OTP are required.");
+    return { error: "Phone number and OTP are required.", success: false };
   }
 
   const {
@@ -45,15 +45,15 @@ export async function verifyPhoneOtp(formData: FormData) {
 
   if (error) {
     console.error("Verify OTP Error:", error);
-    return redirect(`/login?phone=${phone}&message=Invalid OTP. Please try again.`);
+    return { error: "Invalid OTP. Please try again.", success: false };
   }
 
   if (!session) {
-     return redirect(`/login?phone=${phone}&message=Could not create session. Please try again.`);
+     return { error: "Could not create session. Please try again.", success: false };
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  return { error: null, success: true };
 }
 
 
