@@ -1,3 +1,4 @@
+
 import { StatCards } from "./StatCards";
 import { AppointmentsTable } from "./AppointmentsTable";
 import { QuickActions } from "./QuickActions";
