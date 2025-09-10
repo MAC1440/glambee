@@ -1,26 +1,40 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/middleware";
+import { type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+
+const protectedRoutes = [
+  "/",
+  "/services",
+  "/book-appointment",
+  "/staff",
+  "/clients",
+  "/billing",
+  "/inventory",
+  "/trends",
+  "/profile",
+  "/settings",
+];
+const authRoutes = ["/login", "/signup", "/auth/confirm"];
 
 export async function middleware(request: NextRequest) {
-  const { supabase, response } = createClient(request);
+    const { supabase, response } = createClient(request);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const {
+        data: { session },
+    } = await supabase.auth.getSession();
 
-  const { pathname } = request.nextUrl;
+    const { pathname } = request.nextUrl;
 
-  // If user is not signed in and tries to access a protected route
-  if (!user && !["/login", "/signup", "/auth/confirm"].includes(pathname)) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+    if (!session && protectedRoutes.some(route => pathname.startsWith(route))) {
+        return NextResponse.redirect(new URL("/login", request.url));
+    }
 
-  // If user is signed in and tries to access login or signup
-  if (user && ["/login", "/signup"].includes(pathname)) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+    if (session && authRoutes.includes(pathname)) {
+        return NextResponse.redirect(new URL("/", request.url));
+    }
 
-  return response;
+    return await updateSession(request);
 }
 
 export const config = {
@@ -30,7 +44,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - auth/callback
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|auth/callback).*)",
   ],
 };
