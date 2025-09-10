@@ -1,3 +1,4 @@
+
 import { signup } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,26 +24,20 @@ export function Signup() {
           </div>
           <CardTitle className="text-2xl font-headline text-golden-300">Create an Account</CardTitle>
           <CardDescription className="text-golden-400/80">
-            Enter your email and password to get started.
+            Enter your phone number to get started.
           </CardDescription>
         </CardHeader>
         <form>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="phone">Phone Number</Label>
               <Input
-                id="email"
-                type="email"
-                name="email"
-                placeholder="m@example.com"
+                id="phone"
+                type="tel"
+                name="phone"
+                placeholder="+15551234567"
                 required
                 className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" name="password" required 
-               className="bg-black/50 border-golden-700/50 text-golden-200"
               />
             </div>
           </CardContent>
