@@ -1,4 +1,3 @@
-
 import { AppointmentsTable } from "./AppointmentsTable";
 import { QuickActions } from "./QuickActions";
 import {
@@ -14,7 +13,7 @@ import {
   Users,
 } from "lucide-react";
 
-export function Dashboard({ users, error }: { users: any[] | null; error: any }) {
+export function Dashboard() {
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -72,28 +71,6 @@ export function Dashboard({ users, error }: { users: any[] | null; error: any })
         </Card>
       </div>
 
-      {/* Display fetched users or error */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Supabase Connection Test</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <div className="text-red-500">
-              <p>An error occurred:</p>
-              <pre>{JSON.stringify(error, null, 2)}</pre>
-            </div>
-          )}
-          {users && (
-            <div>
-              <p>Successfully fetched data from 'users' table:</p>
-              <pre className="mt-2 bg-muted p-4 rounded-lg">{JSON.stringify(users, null, 2)}</pre>
-            </div>
-          )}
-          {!users && !error && <p>No users found or table is empty.</p>}
-        </CardContent>
-      </Card>
-      
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <Card>
           <AppointmentsTable />

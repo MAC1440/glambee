@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,11 +6,25 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
-import { services } from "@/lib/placeholder-data";
-import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Terminal } from "lucide-react";
 
-export function Services() {
+interface Service {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export function Services({
+  services,
+  error,
+}: {
+  services: Service[] | null;
+  error: any;
+}) {
   return (
     <div className="flex flex-col gap-8">
       <div className="text-center">
@@ -20,40 +34,42 @@ export function Services() {
           services.
         </p>
       </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>Error Fetching Services</AlertTitle>
+          <AlertDescription>
+            <pre className="mt-2 bg-background p-4 rounded-lg text-destructive-foreground">
+              {JSON.stringify(error, null, 2)}
+            </pre>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {services.map((service) => (
-          <Card key={service.id} className="flex flex-col">
-            <CardHeader className="p-0">
-              <div className="relative h-48 w-full">
-                <Image
-                  src={service.image}
-                  alt={service.name}
-                  fill
-                  className="object-cover rounded-t-lg"
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="flex-grow pt-6">
-              <CardTitle className="font-headline text-2xl">
-                {service.name}
-              </CardTitle>
-              <p className="mt-2 text-muted-foreground">
-                {service.description}
-              </p>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center">
-              <div>
-                <p className="font-bold text-lg">${service.price.toFixed(2)}</p>
+        {services &&
+          services.map((service) => (
+            <Card key={service.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle className="font-headline text-2xl">
+                  {service.name}
+                </CardTitle>
+                <CardDescription>
+                  Created: {new Date(service.created_at).toLocaleDateString()}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow"></CardContent>
+              <CardFooter className="flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">
-                  {service.duration} min
+                  Last Updated: {new Date(service.updated_at).toLocaleDateString()}
                 </p>
-              </div>
-              <Button asChild>
-                <Link href="/book-appointment">Book Now</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+                <Button asChild>
+                  <Link href="/book-appointment">Book Now</Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
       </div>
     </div>
   );
