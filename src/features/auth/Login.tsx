@@ -58,21 +58,29 @@ export function Login() {
     setIsSubmitting(false);
   };
   
-  const handleVerifyOtp = async (formData: FormData) => {
+  const handleVerifySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setIsSubmitting(true);
     setServerError(null);
-
+    const formData = new FormData(event.currentTarget);
+    
     const { error, success } = await verifyPhoneOtp(formData);
 
     if (error) {
         setServerError(error);
+        setIsSubmitting(false);
+        return;
     }
 
     if (success) {
+        // This is crucial: router.refresh() re-fetches the layout and server components,
+        // which will now correctly detect the authenticated user session.
         router.refresh();
+        // After refreshing, we can safely push the user to the dashboard.
         router.push('/');
+    } else {
+        setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   }
 
   const handleLoginSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -80,12 +88,6 @@ export function Login() {
     const formData = new FormData(event.currentTarget);
     handleSendOtp(formData);
   };
-
-  const handleVerifySubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    handleVerifyOtp(formData);
-  }
   
   useEffect(() => {
     if(initialPhone) {
