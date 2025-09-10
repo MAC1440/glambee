@@ -16,40 +16,43 @@ import { SalonFlowLogo } from "@/components/icons";
 export function Login() {
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-sm bg-black/30 border-golden-700/50 text-golden-200">
         <CardHeader className="text-center">
            <div className="flex justify-center mb-4">
-            <SalonFlowLogo className="h-12 w-12 text-primary" />
+            <SalonFlowLogo className="h-12 w-12 text-golden-400" />
           </div>
-          <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-headline text-golden-300">Welcome Back</CardTitle>
+          <CardDescription className="text-golden-400/80">
             Enter your credentials to access your account.
           </CardDescription>
         </CardHeader>
         <form>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-golden-300">Email</Label>
               <Input
                 id="email"
                 type="email"
                 name="email"
                 placeholder="m@example.com"
                 required
+                className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" name="password" required />
+              <Input id="password" type="password" name="password" required 
+              className="bg-black/50 border-golden-700/50 text-golden-200"
+              />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button formAction={login} className="w-full">
+            <Button formAction={login} className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950">
               Sign In
             </Button>
-            <div className="text-sm text-center">
+            <div className="text-sm text-center text-golden-400/80">
               Don't have an account?{" "}
-              <Link href="/signup" className="underline">
+              <Link href="/signup" className="underline text-golden-300 hover:text-golden-200">
                 Sign up
               </Link>
             </div>
