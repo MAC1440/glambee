@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logout } from "@/app/auth/actions";
 import {
   Avatar,
   AvatarFallback,
@@ -44,7 +45,8 @@ import {
   Briefcase,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
-import { user } from "@/lib/placeholder-data";
+import type { User } from "@supabase/supabase-js";
+
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
@@ -58,7 +60,7 @@ const navItems = [
   { href: "/trends", icon: TrendingUp, label: "Trends" },
 ];
 
-export function AppLayout({ children }: { children: React.ReactNode }) {
+export function AppLayout({ children, user }: { children: React.ReactNode, user: User }) {
   const pathname = usePathname();
 
   const isNavItemActive = (item: typeof navItems[0]) => {
@@ -80,6 +82,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     .filter((item) => pathname.startsWith(item.activeMatch || item.href))
     .sort((a,b) => (b.activeMatch || b.href).length - (a.activeMatch || a.href).length)[0];
 
+  const userInitial = user.email ? user.email.charAt(0).toUpperCase() : '?';
 
   return (
     <SidebarProvider>
@@ -98,8 +101,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 className="mx-2 w-[90%]"
                   variant={isNavItemActive(item) ? "default" : "ghost"}
                   size="default"
-                  // asChild
-                  // tooltip={item.label}
                 >
                   <Link href={item.href} className="flex content-start items-center gap-2 w-full">
                     <item.icon />
@@ -116,10 +117,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuButton asChild isActive={pathname === '/profile'}>
                 <Link href="/profile">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                    <AvatarFallback>{userInitial}</AvatarFallback>
                   </Avatar>
-                  <span>{user.name}</span>
+                  <span>{user.email}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -138,8 +139,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 className="overflow-hidden rounded-full"
               >
                 <Avatar>
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                  <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -157,8 +158,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <LogOut className="mr-2" /> Logout
+              <DropdownMenuItem asChild>
+                <form action={logout} className="w-full">
+                  <button className="flex items-center w-full">
+                    <LogOut className="mr-2" /> Logout
+                  </button>
+                </form>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

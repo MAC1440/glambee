@@ -1,9 +1,3 @@
-export const user = {
-  name: "Olivia Martin",
-  email: "olivia.martin@email.com",
-  avatar: "https://picsum.photos/seed/olivia/100",
-};
-
 export const services = [
   {
     id: "svc_01",
