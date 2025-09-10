@@ -17,7 +17,7 @@ export default {
     },
     extend: {
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--secondary)))',
+        'gradient-primary': 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary-dark)))',
       },
       fontFamily: {
         body: ['PT Sans', 'sans-serif'],
@@ -33,6 +33,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          dark: "hsl(var(--primary-dark))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
