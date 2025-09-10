@@ -18,23 +18,32 @@ const protectedRoutes = [
 const authRoutes = ["/login", "/signup", "/auth/confirm"];
 
 export async function middleware(request: NextRequest) {
-    const { supabase, response } = createClient(request);
+  // The updateSession function is crucial. It refreshes the session cookie,
+  // ensuring the server has the latest auth state.
+  const response = await updateSession(request);
+  const supabase = createClient();
 
-    const {
-        data: { session },
-    } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-    const { pathname } = request.nextUrl;
+  const { pathname } = request.nextUrl;
 
-    if (!session && protectedRoutes.some(route => pathname.startsWith(route))) {
-        return NextResponse.redirect(new URL("/login", request.url));
-    }
+  // This is the **Auth Guard** for protected routes.
+  // If the user is not logged in and tries to access a protected route,
+  // they are redirected to the login page.
+  if (!session && protectedRoutes.some((route) => pathname.startsWith(route))) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 
-    if (session && authRoutes.includes(pathname)) {
-        return NextResponse.redirect(new URL("/", request.url));
-    }
+  // This is the **Guest Guard** you asked about.
+  // If the user IS logged in and tries to access a guest-only route
+  // (like login or signup), they are redirected to the dashboard.
+  if (session && authRoutes.includes(pathname)) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 
-    return await updateSession(request);
+  return response;
 }
 
 export const config = {
