@@ -61,7 +61,7 @@ export function ClientDetail({ params }: { params: { email: string } }) {
   if (clientAppointments.length > 5) {
     tags.push("VIP");
   }
-  if (clientAppointments.length === 1) {
+  if (clientAppointments.length > 0 && clientAppointments.length <= 2) {
     tags.push("New");
   }
   if (totalSpent > 500) {
@@ -110,7 +110,7 @@ export function ClientDetail({ params }: { params: { email: string } }) {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span>(123) 456-7890</span>
+                <span>{client.phone}</span>
               </div>
             </div>
             <div className="flex gap-2 mt-2">

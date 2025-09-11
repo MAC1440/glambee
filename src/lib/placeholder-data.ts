@@ -244,7 +244,7 @@ export const appointments = [
   {
     id: "apt_01",
     salonId: "salon_01",
-    customer: mockCustomers[0],
+    customer: mockCustomers[0], // Sophia Davis
     service: "Balayage / Ombré",
     staff: "Jessica Miller",
     date: "2024-07-30",
@@ -254,7 +254,7 @@ export const appointments = [
   {
     id: "apt_02",
     salonId: "salon_01",
-    customer: mockCustomers[1],
+    customer: mockCustomers[1], // Liam Garcia
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
     date: "2024-07-30",
@@ -264,7 +264,7 @@ export const appointments = [
   {
     id: "apt_03",
     salonId: "salon_02",
-    customer: mockCustomers[2],
+    customer: mockCustomers[2], // Ava Johnson
     service: "Luxury Manicure",
     staff: "Emily Rodriguez",
     date: "2024-07-30",
@@ -274,7 +274,7 @@ export const appointments = [
   {
     id: "apt_04",
     salonId: "salon_01",
-    customer: mockCustomers[3],
+    customer: mockCustomers[3], // Noah Brown
     service: "Full Color & Gloss",
     staff: "Jessica Miller",
     date: "2024-07-30",
@@ -284,7 +284,7 @@ export const appointments = [
   {
     id: "apt_05",
     salonId: "salon_02",
-    customer: mockCustomers[4],
+    customer: mockCustomers[4], // Isabella Smith
     service: "Spa Pedicure",
     staff: "David Wilson",
     date: "2024-07-30",
@@ -294,7 +294,7 @@ export const appointments = [
   {
     id: "apt_06",
     salonId: "salon_01",
-    customer: mockCustomers[5],
+    customer: mockCustomers[0], // Sophia Davis
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
     date: "2024-08-01",
@@ -304,7 +304,7 @@ export const appointments = [
   {
     id: "apt_07",
     salonId: "salon_02",
-    customer: mockCustomers[6],
+    customer: mockCustomers[6], // Olivia Jones
     service: "Deep Conditioning Treatment",
     staff: "Emily Rodriguez",
     date: "2024-08-02",
@@ -314,7 +314,7 @@ export const appointments = [
   {
     id: "apt_08",
     salonId: "salon_01",
-    customer: mockCustomers[7],
+    customer: mockCustomers[7], // Benjamin Garcia
     service: "Balayage / Ombré",
     staff: "Jessica Miller",
     date: "2024-08-05",
@@ -324,7 +324,7 @@ export const appointments = [
   {
     id: "apt_09",
     salonId: "salon_02",
-    customer: mockCustomers[8],
+    customer: mockCustomers[8], // Mia Martinez
     service: "Luxury Manicure",
     staff: "David Wilson",
     date: "2024-08-10",
@@ -334,7 +334,7 @@ export const appointments = [
   {
     id: "apt_10",
     salonId: "salon_01",
-    customer: mockCustomers[9],
+    customer: mockCustomers[1], // Liam Garcia
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
     date: "2024-08-15",
@@ -344,7 +344,7 @@ export const appointments = [
   {
     id: "apt_11",
     salonId: "salon_02",
-    customer: mockCustomers[10],
+    customer: mockCustomers[10], // Abigail Taylor
     service: "Spa Pedicure",
     staff: "David Wilson",
     date: "2024-07-30",
@@ -354,17 +354,17 @@ export const appointments = [
   {
     id: "apt_12",
     salonId: "salon_01",
-    customer: mockCustomers[11],
+    customer: mockCustomers[0], // Sophia Davis
     service: "Full Color & Gloss",
     staff: "Jessica Miller",
-    date: "2024-07-30",
+    date: "2024-07-20",
     time: "03:00 PM",
     price: 150.0,
   },
   {
     id: "apt_13",
     salonId: "salon_01",
-    customer: mockCustomers[12],
+    customer: mockCustomers[12], // Charlotte Thomas
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
     date: "2024-07-30",
@@ -374,7 +374,7 @@ export const appointments = [
   {
     id: "apt_14",
     salonId: "salon_02",
-    customer: mockCustomers[13],
+    customer: mockCustomers[13], // Daniel White
     service: "Balayage / Ombré",
     staff: "Emily Rodriguez",
     date: "2024-08-01",
@@ -384,7 +384,7 @@ export const appointments = [
   {
     id: "apt_15",
     salonId: "salon_02",
-    customer: mockCustomers[14],
+    customer: mockCustomers[14], // Harper Harris
     service: "Luxury Manicure",
     staff: "David Wilson",
     date: "2024-08-01",
