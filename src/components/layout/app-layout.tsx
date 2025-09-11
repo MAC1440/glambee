@@ -38,6 +38,7 @@ import {
   Users,
   Briefcase,
   CalendarPlus,
+  Building,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
@@ -55,6 +56,7 @@ type User = {
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
+  { href: "/salons", icon: Building, label: "Salons", roles: ["SUPER_ADMIN"]},
   { href: "/services", icon: Scissors, label: "Services" },
   { href: "/appointments", icon: CalendarPlus, label: "Appointments" },
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
@@ -73,7 +75,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
     router.push('/login');
   };
 
-  const isNavItemActive = (item: typeof navItems[0]) => {
+  const isNavItemActive = (item: any) => {
     if (item.exact) {
       return pathname === item.href;
     }
@@ -91,6 +93,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   
   const userIdentifier = user?.email;
   const userInitial = userIdentifier ? userIdentifier.charAt(0).toUpperCase() : '?';
+  const visibleNavItems = navItems.filter(item => !item.roles || item.roles.includes(user.role));
 
   return (
     <SidebarProvider>
@@ -103,7 +106,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <Button
                   className="w-full justify-start"
