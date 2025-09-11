@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import React, { useState, useRef, useEffect } from "react";
-import { signInWithPhoneOtp, verifyPhoneOtp } from "@/app/auth/actions";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { login } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,83 +17,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { SalonFlowLogo } from "@/components/icons";
-import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import { users } from "@/lib/placeholder-data";
 
 export function Login() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { toast } = useToast();
-  
-  const initialPhone = searchParams.get("phone") || "";
-  const message = searchParams.get("message");
-
-  const [step, setStep] = useState(initialPhone ? "verify" : "login");
-  const [phone, setPhone] = useState(initialPhone);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(message);
-  
-  const loginFormRef = useRef<HTMLFormElement>(null);
-  const verifyFormRef = useRef<HTMLFormElement>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const handleSendOtp = async (formData: FormData) => {
-    setIsSubmitting(true);
-    setServerError(null);
-    
-    const phoneInput = formData.get("phone") as string;
-    setPhone(phoneInput);
-    
-    const { error } = await signInWithPhoneOtp(formData);
-
-    if (error) {
-      setServerError(error);
-    } else {
-      toast({
-        title: "OTP Sent",
-        description: "A verification code has been sent to your phone.",
-      });
-      setStep("verify");
-    }
-    setIsSubmitting(false);
-  };
-  
-  const handleVerifySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     setServerError(null);
-    const formData = new FormData(event.currentTarget);
-    const { error, success } = await verifyPhoneOtp(formData);
-    if (error) {
-        setServerError(error);
-        setIsSubmitting(false);
-        return;
-    }
 
-    if (success) {
-        // This is crucial: router.refresh() re-fetches the layout and server components,
-        // which will now correctly detect the authenticated user session.
-        router.refresh();
-        // After refreshing, we can safely push the user to the dashboard.
-        router.push('/');
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    // For prototyping, we'll find the user and store it in localStorage
+    const user = users.find(
+      (u) => u.email === email && u.password === password
+    );
+
+    if (user) {
+      localStorage.setItem("session", JSON.stringify(user));
+      router.refresh();
+      router.push("/");
     } else {
-        setIsSubmitting(false);
+      setServerError("Invalid email or password.");
+      setIsSubmitting(false);
     }
-  }
-
-  const handleLoginSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    handleSendOtp(formData);
   };
-  
-  useEffect(() => {
-    if(initialPhone) {
-      setStep("verify");
-      setPhone(initialPhone);
-    }
-  }, [initialPhone]);
-
 
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -103,78 +58,61 @@ export function Login() {
             <SalonFlowLogo className="h-12 w-12 text-golden-400" />
           </div>
           <CardTitle className="text-2xl font-headline text-golden-300">
-            {step === "login" ? "Welcome Back" : "Verify Your Phone"}
+            Welcome Back
           </CardTitle>
           <CardDescription className="text-golden-400/80">
-            {step === "login"
-              ? "Enter your phone number to sign in."
-              : `Enter the code sent to ${phone}`}
+            Enter your credentials to sign in.
+            <br />
+            <small>Try: super@admin.com / password</small>
+            <br />
+            <small>or: salon@admin.com / password</small>
           </CardDescription>
         </CardHeader>
         
         {serverError && (
-            <div className="px-6 pb-4">
+          <div className="px-6 pb-4">
             <Alert variant="destructive" className="bg-red-900/50 border-red-500/50 text-white">
-                <Terminal className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{serverError}</AlertDescription>
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{serverError}</AlertDescription>
             </Alert>
-            </div>
+          </div>
         )}
 
-        {step === "login" ? (
-          <form ref={loginFormRef} onSubmit={handleLoginSubmit}>
-            <CardContent className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="phone" className="text-golden-300">
-                  Phone Number
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  name="phone"
-                  placeholder="+15551234567"
-                  required
-                  className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
-                  defaultValue={phone}
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4">
-              <Button type="submit" className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950" disabled={isSubmitting}>
-                {isSubmitting ? "Sending..." : "Send OTP"}
-              </Button>
-            </CardFooter>
-          </form>
-        ) : (
-          <form ref={verifyFormRef} onSubmit={handleVerifySubmit}>
-            <CardContent className="grid gap-4">
-               <input type="hidden" name="phone" value={phone} />
-              <div className="grid gap-2">
-                <Label htmlFor="token" className="text-golden-300">
-                  Verification Code
-                </Label>
-                <Input
-                  id="token"
-                  type="text"
-                  name="token"
-                  placeholder="123456"
-                  required
-                  autoFocus
-                  className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4">
-              <Button type="submit" className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950" disabled={isSubmitting}>
-                {isSubmitting ? "Verifying..." : "Verify & Sign In"}
-              </Button>
-               <Button variant="link" onClick={() => { setStep("login"); setServerError(null);}} className="text-golden-300">
-                Use a different phone number
-              </Button>
-            </CardFooter>
-          </form>
-        )}
+        <form onSubmit={handleLogin}>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email" className="text-golden-300">
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="m@example.com"
+                required
+                className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
+                defaultValue="super@admin.com"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                name="password"
+                required
+                className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
+                defaultValue="password"
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4">
+            <Button type="submit" className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950" disabled={isSubmitting}>
+              {isSubmitting ? "Signing In..." : "Sign In"}
+            </Button>
+          </CardFooter>
+        </form>
 
         <div className="text-sm text-center text-golden-400/80 pb-6">
           Don't have an account?{" "}

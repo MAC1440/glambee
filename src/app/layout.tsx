@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { StoreProvider } from "@/lib/StoreProvider";
-import { createClient } from "@/lib/supabase/server";
 import { LayoutProvider } from "@/components/layout/layout-provider";
 
 export const metadata: Metadata = {
@@ -10,15 +9,11 @@ export const metadata: Metadata = {
   description: "Manage your salon with ease.",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = createClient();
-  const 
-    data = await supabase.auth.getUser();
-console.log('session' , data)
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -35,7 +30,7 @@ console.log('session' , data)
       </head>
       <body className="font-body antialiased">
         <StoreProvider>
-          <LayoutProvider session={data.data.user}>{children}</LayoutProvider>
+          <LayoutProvider>{children}</LayoutProvider>
           <Toaster />
         </StoreProvider>
       </body>

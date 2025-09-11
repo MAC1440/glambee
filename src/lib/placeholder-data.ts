@@ -12,6 +12,27 @@ export const salons = [
   },
 ];
 
+export const users = [
+    {
+    id: "user_01",
+    name: "Super Admin",
+    email: "super@admin.com",
+    password: "password",
+    avatar: "https://picsum.photos/seed/super-admin/100/100",
+    role: "SUPER_ADMIN",
+    salonId: null,
+  },
+  {
+    id: "user_02",
+    name: "Salon Admin",
+    email: "salon@admin.com",
+    password: "password",
+    avatar: "https://picsum.photos/seed/salon-admin/100/100",
+    role: "SALON_ADMIN",
+    salonId: "salon_01",
+  }
+];
+
 export const user = {
   name: "Admin User",
   email: "admin@salonflow.com",

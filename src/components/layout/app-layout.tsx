@@ -2,8 +2,7 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { logout } from "@/app/auth/actions";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Avatar,
   AvatarFallback,
@@ -25,9 +24,6 @@ import {
   SidebarContent,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-  SidebarInset,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
@@ -45,8 +41,16 @@ import {
   Briefcase,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
-import type { User } from "@supabase/supabase-js";
 
+// Mock user type for prototype
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  role: 'SUPER_ADMIN' | 'SALON_ADMIN';
+  salonId: string | null;
+};
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
@@ -62,27 +66,25 @@ const navItems = [
 
 export function AppLayout({ children, user }: { children: React.ReactNode, user: User }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("session");
+    router.refresh();
+    router.push('/login');
+  };
 
   const isNavItemActive = (item: typeof navItems[0]) => {
     if (item.exact) {
       return pathname === item.href;
     }
-    // This is a special case. We want to highlight the parent nav item,
-    // but not if we are on a more specific page.
     if (item.activeMatch) {
         return pathname.startsWith(item.activeMatch) && (pathname === item.href);
     }
     return pathname.startsWith(item.href);
   };
   
-  // Find the most specific active item by finding the longest matching path.
-    const activeItem = navItems
-    .filter(isNavItemActive)
-    .sort((a, b) => (a.href.length - b.href.length))[0] || navItems
-    .filter((item) => pathname.startsWith(item.activeMatch || item.href))
-    .sort((a,b) => (b.activeMatch || b.href).length - (a.activeMatch || a.href).length)[0];
-
-  const userIdentifier = user?.phone || user?.email;
+  const userIdentifier = user?.email;
   const userInitial = userIdentifier ? userIdentifier.charAt(0).toUpperCase() : '?';
 
   return (
@@ -99,9 +101,10 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <Button
-                className="mx-2 w-[90%]"
+                  className="mx-2 w-[90%]"
                   variant={isNavItemActive(item) ? "default" : "ghost"}
                   size="default"
+                  asChild
                 >
                   <Link href={item.href} className="flex content-start items-center gap-2 w-full">
                     <item.icon />
@@ -112,21 +115,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
             ))}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={pathname === '/profile'}>
-                <Link href="/profile">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} alt={userIdentifier} />
-                    <AvatarFallback>{userInitial}</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate">{userIdentifier}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
+        {/* Footer is removed as profile is in the header dropdown */}
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6">
@@ -140,13 +129,13 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
                 className="overflow-hidden rounded-full"
               >
                 <Avatar>
-                  <AvatarImage src={user?.user_metadata?.avatar_url} alt={userIdentifier} />
+                  <AvatarImage src={user?.avatar} alt={userIdentifier} />
                   <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/profile">
@@ -159,12 +148,8 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <form action={logout} className="w-full">
-                  <button className="flex items-center w-full">
-                    <LogOut className="mr-2" /> Logout
-                  </button>
-                </form>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2" /> Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

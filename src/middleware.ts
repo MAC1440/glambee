@@ -1,9 +1,10 @@
-import { type NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
 
-export async function middleware(request: NextRequest) {
-  // update user's auth session
-  return await updateSession(request);
+import { NextResponse, type NextRequest } from "next/server";
+
+// This middleware is now a placeholder for prototyping.
+// The actual auth guard logic is handled client-side in LayoutProvider.
+export function middleware(request: NextRequest) {
+  return NextResponse.next();
 }
 
 export const config = {
