@@ -30,7 +30,6 @@ import {
 import {
   Boxes,
   Calendar,
-  CalendarPlus,
   CreditCard,
   LayoutDashboard,
   LogOut,
@@ -40,6 +39,7 @@ import {
   User as UserIcon,
   Users,
   Briefcase,
+  CalendarPlus,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 
@@ -56,7 +56,7 @@ type User = {
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
   { href: "/services", icon: Scissors, label: "Services" },
-  { href: "/book-appointment", icon: CalendarPlus, label: "Book Appointment" },
+  { href: "/appointments", icon: CalendarPlus, label: "Appointments" },
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
   { href: "/staff", icon: Briefcase, label: "Staff", activeMatch: "/staff", exact: true },
   { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
