@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,42 +12,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Paintbrush, Upload } from "lucide-react";
-
-const themes = [
-  { name: "Default", primary: "339 49% 68%", background: "338 56% 95%", accent: "279 45% 72%" },
-  { name: "Ocean", primary: "210 40% 50%", background: "210 40% 96%", accent: "190 50% 70%" },
-  { name: "Forest", primary: "140 35% 45%", background: "140 10% 94%", accent: "110 30% 65%" },
-  { name: "Sunset", primary: "25 80% 60%", background: "30 60% 95%", accent: "50 85% 70%" },
-  { name: "Plum", primary: "270 50% 60%", background: "270 30% 96%", accent: "290 55% 75%" },
-];
+import { Sun, Moon, Laptop, Upload } from "lucide-react";
 
 export function Settings() {
+  const { setTheme } = useTheme();
   const { toast } = useToast();
-  const [selectedTheme, setSelectedTheme] = useState(themes[0]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-
-  const handleThemeChange = (theme: typeof themes[0]) => {
-    setSelectedTheme(theme);
-    if (typeof window !== "undefined") {
-      document.documentElement.style.setProperty("--primary", theme.primary);
-      document.documentElement.style.setProperty(
-        "--background",
-        theme.background
-      );
-      document.documentElement.style.setProperty("--accent", theme.accent);
-    }
-  };
-
-  const handleSaveTheme = () => {
-    // In a real app, you would save this to a database
-    console.log(selectedTheme);
-    console.log("Saving theme:", selectedTheme.name);
-    toast({
-      title: "Theme Saved!",
-      description: `The ${selectedTheme.name} theme has been applied and saved.`,
-    });
-  };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -61,8 +32,6 @@ export function Settings() {
   };
 
   const handleSaveLogo = () => {
-    // In a real app, you would upload this file to a storage service
-    // and save the URL to the database.
     if (logoPreview) {
       console.log("Saving logo...");
       toast({
@@ -78,12 +47,6 @@ export function Settings() {
     }
   };
 
-  // Set the initial theme on component mount
-  useEffect(() => {
-    handleThemeChange(selectedTheme);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <div className="flex flex-col gap-8">
       <div className="text-left">
@@ -96,39 +59,26 @@ export function Settings() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
-            <CardTitle>Theme Customization</CardTitle>
+            <CardTitle>Theme</CardTitle>
             <CardDescription>
-              Choose a color palette that matches your brand.
+              Select the theme for the dashboard.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-4">
-              {themes.map((theme) => (
-                <div
-                  key={theme.name}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <button
-                    onClick={() => handleThemeChange(theme)}
-                    className={`h-16 w-16 rounded-lg border-4 flex items-center justify-center ${
-                      selectedTheme.name === theme.name
-                        ? "border-primary"
-                        : "border-transparent"
-                    }`}
-                    style={{ backgroundColor: `hsl(${theme.background})` }}
-                  >
-                    <div
-                      className="h-8 w-8 rounded-full"
-                      style={{ backgroundColor: `hsl(${theme.primary})` }}
-                    ></div>
-                  </button>
-                  <span className="text-sm font-medium">{theme.name}</span>
-                </div>
-              ))}
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={() => setTheme("light")}>
+                <Sun className="mr-2 h-4 w-4" />
+                Light
+              </Button>
+              <Button variant="outline" onClick={() => setTheme("dark")}>
+                <Moon className="mr-2 h-4 w-4" />
+                Dark
+              </Button>
+              <Button variant="outline" onClick={() => setTheme("system")}>
+                <Laptop className="mr-2 h-4 w-4" />
+                System
+              </Button>
             </div>
-            <Button onClick={handleSaveTheme}>
-              <Paintbrush className="mr-2 h-4 w-4" /> Save Theme
-            </Button>
           </CardContent>
         </Card>
         <Card>
