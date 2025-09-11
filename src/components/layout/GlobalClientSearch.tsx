@@ -42,17 +42,20 @@ export function GlobalClientSearch() {
   };
 
   return (
-    <div className="relative w-full max-w-md">
-      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+    <div className="flex w-full max-w-sm items-center space-x-2">
       <Input
         type="tel"
         placeholder="Search client by phone..."
-        className="w-full rounded-lg bg-background pl-8"
+        className="w-full rounded-lg bg-background"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
         disabled={isSearching}
       />
+       <Button onClick={handleSearch} disabled={!phone || isSearching}>
+        <Search className="mr-2 h-4 w-4" />
+        {isSearching ? "..." : "Search"}
+      </Button>
     </div>
   );
 }

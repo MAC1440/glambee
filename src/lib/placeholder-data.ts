@@ -149,14 +149,94 @@ export const staff = [
 
 export const mockCustomers = [
   {
+    id: "cust_01",
     phone: "+923001234567",
     name: "Sophia Davis",
     email: "sophia@example.com",
   },
   {
+    id: "cust_02",
     phone: "+923217654321",
     name: "Liam Garcia",
     email: "liam@example.com",
+  },
+  {
+    id: "cust_03",
+    phone: "+14155551234",
+    name: "Ava Johnson",
+    email: "ava@example.com",
+  },
+  {
+    id: "cust_04",
+    phone: "+14155555678",
+    name: "Noah Brown",
+    email: "noah@example.com",
+  },
+  {
+    id: "cust_05",
+    phone: "+14155558765",
+    name: "Isabella Smith",
+    email: "isabella@example.com",
+  },
+  {
+    id: "cust_06",
+    phone: "+14155554321",
+    name: "James Williams",
+    email: "james@example.com",
+  },
+  {
+    id: "cust_07",
+    phone: "+16505551111",
+    name: "Olivia Jones",
+    email: "olivia.jones@example.com",
+  },
+  {
+    id: "cust_08",
+    phone: "+16505552222",
+    name: "Benjamin Garcia",
+    email: "benjamin.garcia@example.com",
+  },
+  {
+    id: "cust_09",
+    phone: "+16505553333",
+    name: "Mia Martinez",
+    email: "mia.martinez@example.com",
+  },
+  {
+    id: "cust_10",
+    phone: "+16505554444",
+    name: "Ethan Rodriguez",
+    email: "ethan.rodriguez@example.com",
+  },
+  {
+    id: "cust_11",
+    phone: "+16505555555",
+    name: "Abigail Taylor",
+    email: "abigail.taylor@example.com",
+  },
+  {
+    id: "cust_12",
+    phone: "+16505556666",
+    name: "William Anderson",
+    email: "william.anderson@example.com",
+  },
+  {
+    id: "cust_13",
+    phone: "+16505557777",
+    name: "Charlotte Thomas",
+    email: "charlotte.thomas@example.com",
+  },
+  {
+    id: "cust_14",
+    phone: "+16505558888",
+    name: "Daniel White",
+    email: "daniel.white@example.com",
+  },
+  {
+    id: "cust_15",
+    phone: "+16505559999",
+    name: "Harper Harris",
+    email: "harper.harris@example.com",
   },
 ];
 
@@ -164,7 +244,7 @@ export const appointments = [
   {
     id: "apt_01",
     salonId: "salon_01",
-    customer: { name: "Sophia Davis", email: "sophia@example.com" },
+    customer: mockCustomers[0],
     service: "Balayage / Ombré",
     staff: "Jessica Miller",
     date: "2024-07-30",
@@ -174,7 +254,7 @@ export const appointments = [
   {
     id: "apt_02",
     salonId: "salon_01",
-    customer: { name: "Liam Garcia", email: "liam@example.com" },
+    customer: mockCustomers[1],
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
     date: "2024-07-30",
@@ -184,7 +264,7 @@ export const appointments = [
   {
     id: "apt_03",
     salonId: "salon_02",
-    customer: { name: "Ava Johnson", email: "ava@example.com" },
+    customer: mockCustomers[2],
     service: "Luxury Manicure",
     staff: "Emily Rodriguez",
     date: "2024-07-30",
@@ -194,7 +274,7 @@ export const appointments = [
   {
     id: "apt_04",
     salonId: "salon_01",
-    customer: { name: "Noah Brown", email: "noah@example.com" },
+    customer: mockCustomers[3],
     service: "Full Color & Gloss",
     staff: "Jessica Miller",
     date: "2024-07-30",
@@ -204,7 +284,7 @@ export const appointments = [
   {
     id: "apt_05",
     salonId: "salon_02",
-    customer: { name: "Isabella Smith", email: "isabella@example.com" },
+    customer: mockCustomers[4],
     service: "Spa Pedicure",
     staff: "David Wilson",
     date: "2024-07-30",
@@ -214,7 +294,7 @@ export const appointments = [
   {
     id: "apt_06",
     salonId: "salon_01",
-    customer: { name: "James Williams", email: "james@example.com" },
+    customer: mockCustomers[5],
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
     date: "2024-08-01",
@@ -224,7 +304,7 @@ export const appointments = [
   {
     id: "apt_07",
     salonId: "salon_02",
-    customer: { name: "Olivia Jones", email: "olivia.jones@example.com" },
+    customer: mockCustomers[6],
     service: "Deep Conditioning Treatment",
     staff: "Emily Rodriguez",
     date: "2024-08-02",
@@ -234,7 +314,7 @@ export const appointments = [
   {
     id: "apt_08",
     salonId: "salon_01",
-    customer: { name: "Benjamin Garcia", email: "benjamin.garcia@example.com" },
+    customer: mockCustomers[7],
     service: "Balayage / Ombré",
     staff: "Jessica Miller",
     date: "2024-08-05",
@@ -244,7 +324,7 @@ export const appointments = [
   {
     id: "apt_09",
     salonId: "salon_02",
-    customer: { name: "Mia Martinez", email: "mia.martinez@example.com" },
+    customer: mockCustomers[8],
     service: "Luxury Manicure",
     staff: "David Wilson",
     date: "2024-08-10",
@@ -254,7 +334,7 @@ export const appointments = [
   {
     id: "apt_10",
     salonId: "salon_01",
-    customer: { name: "Ethan Rodriguez", email: "ethan.rodriguez@example.com" },
+    customer: mockCustomers[9],
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
     date: "2024-08-15",
@@ -264,7 +344,7 @@ export const appointments = [
   {
     id: "apt_11",
     salonId: "salon_02",
-    customer: { name: "Abigail Taylor", email: "abigail.taylor@example.com" },
+    customer: mockCustomers[10],
     service: "Spa Pedicure",
     staff: "David Wilson",
     date: "2024-07-30",
@@ -274,7 +354,7 @@ export const appointments = [
   {
     id: "apt_12",
     salonId: "salon_01",
-    customer: { name: "William Anderson", email: "william.anderson@example.com" },
+    customer: mockCustomers[11],
     service: "Full Color & Gloss",
     staff: "Jessica Miller",
     date: "2024-07-30",
@@ -284,7 +364,7 @@ export const appointments = [
   {
     id: "apt_13",
     salonId: "salon_01",
-    customer: { name: "Charlotte Thomas", email: "charlotte.thomas@example.com" },
+    customer: mockCustomers[12],
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
     date: "2024-07-30",
@@ -294,7 +374,7 @@ export const appointments = [
   {
     id: "apt_14",
     salonId: "salon_02",
-    customer: { name: "Daniel White", email: "daniel.white@example.com" },
+    customer: mockCustomers[13],
     service: "Balayage / Ombré",
     staff: "Emily Rodriguez",
     date: "2024-08-01",
@@ -304,7 +384,7 @@ export const appointments = [
   {
     id: "apt_15",
     salonId: "salon_02",
-    customer: { name: "Harper Harris", email: "harper.harris@example.com" },
+    customer: mockCustomers[14],
     service: "Luxury Manicure",
     staff: "David Wilson",
     date: "2024-08-01",

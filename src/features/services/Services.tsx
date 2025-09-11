@@ -13,7 +13,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { services as initialServices } from "@/lib/placeholder-data";
 import {
   PlusCircle,
   Edit,
@@ -40,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ServiceFormDialog } from "./ServiceFormDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useGetServicesQuery } from "@/lib/api/servicesApi";
 
 type User = {
   id: string;
@@ -157,6 +157,7 @@ const ServiceCard = ({
 
 export function Services() {
   const [user, setUser] = useState<User | null>(null);
+  const { data: initialServices = [], isLoading } = useGetServicesQuery();
   const [services, setServices] = useState<Service[]>(initialServices);
   const { toast } = useToast();
 
@@ -173,6 +174,12 @@ export function Services() {
       setUser(JSON.parse(sessionData));
     }
   }, []);
+
+  useEffect(() => {
+    if (initialServices) {
+      setServices(initialServices as Service[]);
+    }
+  }, [initialServices]);
 
   const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "SALON_ADMIN";
 
@@ -233,6 +240,8 @@ export function Services() {
         </AlertDialog>
       </div>
     );
+
+  if (isLoading) return <div>Loading services...</div>;
 
   return (
     <>
