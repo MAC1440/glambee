@@ -16,65 +16,36 @@ import {
   isToday,
   isThisWeek,
   isThisMonth,
-  parse,
   format,
 } from "date-fns";
 import { CalendarView } from "./CalendarView";
-import dayjs from "dayjs";
-import customParseFormat from "dayjs/plugin/customParseFormat";
+import type { ScheduleAppointment } from "@/lib/schedule-data";
 
-dayjs.extend(customParseFormat);
-
-type Appointment = {
-  id: string;
-  salonId: string;
-  customer: {
-    id: string;
-    phone: string;
-    name: string;
-    email: string;
-  };
-  service: string;
-  staff: string;
-  date: string; // "YYYY-MM-DD"
-  time: string; // "hh:mm A"
-  price: number;
-};
-
-// Helper to parse date and time strings into a JS Date object using dayjs
-const parseDateTime = (dateString: string, timeString: string): Date => {
-  return dayjs(`${dateString} ${timeString}`, "YYYY-MM-DD hh:mm A").toDate();
-};
-
-export function Schedule({ appointments }: { appointments: Appointment[] }) {
+export function Schedule({ appointments }: { appointments: ScheduleAppointment[] }) {
+  
   const todayAppointments = appointments.filter((apt) =>
-    isToday(parseDateTime(apt.date, apt.time))
+    isToday(apt.start)
   );
 
   const weeklyAppointments = appointments.filter((apt) =>
-    isThisWeek(parseDateTime(apt.date, apt.time), { weekStartsOn: 1 })
+    isThisWeek(apt.start, { weekStartsOn: 1 })
   );
 
   const monthlyAppointments = appointments.filter((apt) =>
-    isThisMonth(parseDateTime(apt.date, apt.time))
+    isThisMonth(apt.start)
   );
 
   const calendarEvents = appointments.map((apt) => {
-    const startDate = parseDateTime(apt.date, apt.time);
-
-    // Assuming 1 hour duration for now, can be replaced by service duration later
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-
     return {
-      title: `${apt.service} - ${apt.customer.name}`,
-      start: startDate,
-      end: endDate,
+      title: `${apt.service} - ${apt.customerName}`,
+      start: apt.start,
+      end: apt.end,
       resource: apt,
     };
   });
 
   const renderAppointmentTable = (
-    appointments: Appointment[],
+    appointments: ScheduleAppointment[],
     showDate: boolean = false
   ) => (
     <Table>
@@ -93,8 +64,7 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
           appointments
             .sort(
               (a, b) =>
-                parseDateTime(a.date, a.time).getTime() -
-                parseDateTime(b.date, b.time).getTime()
+                a.start.getTime() - b.start.getTime()
             )
             .map((apt) => (
               <TableRow key={apt.id}>
@@ -102,25 +72,25 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-9 w-9">
                       <AvatarImage
-                        src={`https://picsum.photos/seed/${apt.customer.name}/100`}
+                        src={apt.customerAvatar}
                         alt="Avatar"
                       />
                       <AvatarFallback>
-                        {apt.customer.name.charAt(0)}
+                        {apt.customerName.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <div className="font-medium">{apt.customer.name}</div>
+                      <div className="font-medium">{apt.customerName}</div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>{apt.service}</TableCell>
                 {showDate && (
                   <TableCell className="hidden md:table-cell">
-                    {format(parseDateTime(apt.date, apt.time), "PPP")}
+                    {format(apt.start, "PPP")}
                   </TableCell>
                 )}
-                <TableCell className="text-right">{apt.time}</TableCell>
+                <TableCell className="text-right">{format(apt.start, "p")}</TableCell>
               </TableRow>
             ))
         ) : (

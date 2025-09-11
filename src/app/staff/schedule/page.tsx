@@ -1,9 +1,7 @@
 import { Schedule } from "@/features/staff/schedule/Schedule";
-import { appointments as mockAppointments } from "@/lib/placeholder-data";
+import { scheduleAppointments } from "@/lib/schedule-data";
 
 export default function SchedulePage() {
-  // In a real app, you'd fetch this from your database or API.
-  const appointments = mockAppointments;
-
-  return <Schedule appointments={appointments || []} />;
+  // Using dedicated schedule data to simplify and ensure correctness
+  return <Schedule appointments={scheduleAppointments || []} />;
 }
