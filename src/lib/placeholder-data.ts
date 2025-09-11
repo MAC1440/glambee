@@ -158,6 +158,16 @@ export const staff = [
   { id: "staff_06", name: "Daniel Green", department: "Assistant", salonId: "salon_02" },
 ];
 
+export const departments = [
+  "Stylist",
+  "Nail Artist",
+  "Esthetician",
+  "Massage Therapist",
+  "Receptionist",
+  "Assistant",
+  "Manager",
+];
+
 export const mockCustomers = [
   {
     id: "cust_01",

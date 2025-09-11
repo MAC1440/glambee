@@ -1,3 +1,7 @@
+
+"use client";
+
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +18,45 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { staff, appointments } from "@/lib/placeholder-data";
-import { PlusCircle, TrendingUp, Star } from "lucide-react";
+import { staff as initialStaff, appointments } from "@/lib/placeholder-data";
+import { PlusCircle, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { StaffFormDialog } from "./StaffFormDialog";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+export type StaffMember = {
+  id: string;
+  name: string;
+  department: string;
+  salonId: string;
+};
 
 export function Staff() {
+  const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+  const [editingStaff, setEditingStaff] = useState<StaffMember | undefined>(
+    undefined
+  );
+  const { toast } = useToast();
+
   const getDepartmentColor = (department: string) => {
     switch (department.toLowerCase()) {
       case "stylist":
@@ -34,87 +72,181 @@ export function Staff() {
     }
   };
 
-  return (
-    <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
-        <div className="text-left">
-          <h1 className="text-4xl font-headline font-bold">Staff Management</h1>
-          <p className="text-muted-foreground mt-2">
-            View and manage your team members.
-          </p>
-        </div>
-        <Button>
-          <PlusCircle className="mr-2" />
-          Add Staff Member
-        </Button>
-      </div>
+  const handleOpenDialog = (mode: "add" | "edit", member?: StaffMember) => {
+    setDialogMode(mode);
+    setEditingStaff(member);
+    setDialogOpen(true);
+  };
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Staff</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Appointments Today</TableHead>
-                <TableHead>Total Revenue Generated</TableHead>
-                <TableHead className="text-right">Performance</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {staff.map((member) => {
-                const memberAppointments = appointments.filter(
-                  (apt) => apt.staff === member.name
-                );
-                const todayAppointments = memberAppointments.filter(
-                  (apt) => apt.date === new Date().toISOString().slice(0, 10)
-                ).length;
-                const totalRevenue = memberAppointments.reduce(
-                  (sum, apt) => sum + apt.price,
-                  0
-                );
-                return (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage
-                            src={`https://picsum.photos/seed/${member.name}/100`}
-                            alt="Avatar"
-                          />
-                          <AvatarFallback>
-                            {member.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="font-medium">{member.name}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                       <Badge
-                          variant="outline"
-                          className={getDepartmentColor(member.department)}
-                        >
-                          {member.department}
-                        </Badge>
-                    </TableCell>
-                    <TableCell>{member.department.toLowerCase().includes('artist') || member.department.toLowerCase().includes('stylist') ? todayAppointments : 'N/A'}</TableCell>
-                    <TableCell>{member.department.toLowerCase().includes('artist') || member.department.toLowerCase().includes('stylist') ? `$${totalRevenue.toFixed(2)}` : 'N/A'}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <TrendingUp className="mr-2 h-4 w-4" />
-                        View Stats
-                      </Button>
-                    </TableCell>
+  const handleSaveStaff = (staffData: Omit<StaffMember, "id" | "salonId">) => {
+    if (dialogMode === "add") {
+      const newStaff = {
+        ...staffData,
+        id: `staff_${Date.now()}`,
+        salonId: "salon_01", // Default salon for prototype
+      };
+      setStaff((prev) => [newStaff, ...prev]);
+      toast({
+        title: "Success",
+        description: `${newStaff.name} has been added.`,
+      });
+    } else if (editingStaff) {
+      const updatedStaff = { ...editingStaff, ...staffData };
+      setStaff((prev) =>
+        prev.map((s) => (s.id === updatedStaff.id ? updatedStaff : s))
+      );
+      toast({
+        title: "Success",
+        description: `${updatedStaff.name}'s details have been updated.`,
+      });
+    }
+  };
+
+  const handleDeleteStaff = (staffId: string) => {
+    const staffName = staff.find((s) => s.id === staffId)?.name || "The member";
+    setStaff((prev) => prev.filter((s) => s.id !== staffId));
+    toast({
+      title: "Deleted",
+      description: `${staffName} has been removed from the team.`,
+    });
+  };
+
+  return (
+    <>
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <div className="text-left">
+            <h1 className="text-4xl font-headline font-bold">
+              Staff Management
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              View and manage your team members.
+            </p>
+          </div>
+          <Button onClick={() => handleOpenDialog("add")}>
+            <PlusCircle className="mr-2" />
+            Add Staff Member
+          </Button>
+        </div>
+
+        <AlertDialog>
+          <Card>
+            <CardHeader>
+              <CardTitle>All Staff</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Appointments Today</TableHead>
+                    <TableHead>Total Revenue Generated</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+                </TableHeader>
+                <TableBody>
+                  {staff.map((member) => {
+                    const memberAppointments = appointments.filter(
+                      (apt) => apt.staff === member.name
+                    );
+                    const todayAppointments = memberAppointments.filter(
+                      (apt) =>
+                        apt.date === new Date().toISOString().slice(0, 10)
+                    ).length;
+                    const totalRevenue = memberAppointments.reduce(
+                      (sum, apt) => sum + apt.price,
+                      0
+                    );
+                    return (
+                      <TableRow key={member.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9">
+                              <AvatarImage
+                                src={`https://picsum.photos/seed/${member.name}/100`}
+                                alt="Avatar"
+                              />
+                              <AvatarFallback>
+                                {member.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="font-medium">{member.name}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={getDepartmentColor(member.department)}
+                          >
+                            {member.department}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {member.department.toLowerCase().includes("artist") ||
+                          member.department.toLowerCase().includes("stylist")
+                            ? todayAppointments
+                            : "N/A"}
+                        </TableCell>
+                        <TableCell>
+                          {member.department.toLowerCase().includes("artist") ||
+                          member.department.toLowerCase().includes("stylist")
+                            ? `$${totalRevenue.toFixed(2)}`
+                            : "N/A"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleOpenDialog("edit", member)}
+                              >
+                                <Edit className="mr-2 h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-red-500 focus:text-red-500">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+
+                           <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete {member.name} from
+                                your staff list. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteStaff(member.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </AlertDialog>
+      </div>
+      <StaffFormDialog
+        isOpen={dialogOpen}
+        onOpenChange={setDialogOpen}
+        mode={dialogMode}
+        staffMember={editingStaff}
+        onSave={handleSaveStaff}
+      />
+    </>
   );
 }
