@@ -59,6 +59,7 @@ type Service = {
   duration: number | null;
   image: string;
   category: "Service" | "Deal" | "Discount";
+  includedServices?: { value: string; label: string }[];
 };
 
 const ServiceCard = ({
@@ -278,6 +279,7 @@ export function Services() {
         category={dialogCategory}
         service={editingService}
         onSave={handleSaveService}
+        individualServices={individualServices}
       />
     </>
   );

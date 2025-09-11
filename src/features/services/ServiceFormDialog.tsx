@@ -24,7 +24,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Select from "react-select";
 
 type Service = {
   id: string;
@@ -35,6 +36,7 @@ type Service = {
   duration: number | null;
   image: string;
   category: "Service" | "Deal" | "Discount";
+  includedServices?: { value: string; label: string }[];
 };
 
 type ServiceFormDialogProps = {
@@ -44,6 +46,7 @@ type ServiceFormDialogProps = {
   category: Service["category"];
   service?: Service;
   onSave: (service: Service) => void;
+  individualServices: Service[];
 };
 
 const formSchema = z.object({
@@ -55,6 +58,10 @@ const formSchema = z.object({
   image: z.string().url({ message: "Please enter a valid image URL." }),
   category: z.enum(["Service", "Deal", "Discount"]),
   duration: z.union([z.number(), z.null()]),
+  includedServices: z.array(z.object({
+    value: z.string(),
+    label: z.string(),
+  })).optional(),
 });
 
 export function ServiceFormDialog({
@@ -64,6 +71,7 @@ export function ServiceFormDialog({
   category,
   service,
   onSave,
+  individualServices = [],
 }: ServiceFormDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -76,8 +84,31 @@ export function ServiceFormDialog({
       image: service?.image || "https://picsum.photos/seed/new-service/600/400",
       category: service?.category || category,
       duration: service?.duration || null,
+      includedServices: service?.includedServices || [],
     },
   });
+
+  const includedServices = form.watch("includedServices");
+
+  const serviceOptions = useMemo(() => {
+    return individualServices.map((s) => ({ value: s.id, label: `${s.name} ($${s.price})` }));
+  }, [individualServices]);
+
+  useEffect(() => {
+    if (category === 'Deal' && includedServices && includedServices.length > 0) {
+      const newName = includedServices.map(s => s.label.split(' (')[0]).join(' + ');
+      const newDescription = `A special package including: ${includedServices.map(s => s.label.split(' (')[0]).join(', ')}.`;
+      const total = includedServices.reduce((acc, s) => {
+        const service = individualServices.find(is => is.id === s.value);
+        return acc + (Number(service?.price) || 0);
+      }, 0);
+      
+      form.setValue('name', newName);
+      form.setValue('description', newDescription);
+      form.setValue('originalPrice', total);
+    }
+  }, [includedServices, category, form, individualServices]);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -87,10 +118,10 @@ export function ServiceFormDialog({
         description: service?.description || "",
         price: service?.price || (category === "Discount" ? "" : 0),
         originalPrice: service?.originalPrice || null,
-        image:
-          service?.image || "https://picsum.photos/seed/new-service/600/400",
+        image: service?.image || `https://picsum.photos/seed/${Math.random()}/600/400`,
         category: service?.category || category,
         duration: service?.duration || null,
+        includedServices: service?.includedServices || [],
       });
     }
   }, [isOpen, service, category, form]);
@@ -119,20 +150,41 @@ export function ServiceFormDialog({
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
 
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Signature Haircut" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            {category === 'Deal' ? (
+              <FormField
+                control={form.control}
+                name="includedServices"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Included Services</FormLabel>
+                    <Select
+                      isMulti
+                      options={serviceOptions}
+                      value={field.value}
+                      onChange={field.onChange}
+                      className="text-sm"
+                      classNamePrefix="select"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Signature Haircut" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            
             <FormField
               control={form.control}
               name="description"
@@ -143,6 +195,7 @@ export function ServiceFormDialog({
                     <Textarea
                       placeholder="Describe the service..."
                       {...field}
+                      disabled={category === 'Deal'}
                     />
                   </FormControl>
                   <FormMessage />
@@ -184,6 +237,7 @@ export function ServiceFormDialog({
                         {...field}
                         value={field.value ?? ""}
                         onChange={e => field.onChange(parseFloat(e.target.value) || null)}
+                        disabled
                        />
                      </FormControl>
                      <FormMessage />
