@@ -59,7 +59,7 @@ export function AppointmentsTable({
           </TableHeader>
           <TableBody>
             {todayAppointments.length > 0 ? (
-              todayAppointments.map((apt) => (
+              todayAppointments.slice(0, 3).map((apt) => (
                 <TableRow key={apt.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
