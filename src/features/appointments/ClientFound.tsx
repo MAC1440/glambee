@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CalendarPlus, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 type Customer = {
   phone: string;
@@ -47,7 +48,7 @@ export function ClientFound({
 }: ClientFoundProps) {
   return (
     <div className="flex flex-col gap-4 items-center">
-       <div className="w-full max-w-4xl flex justify-start">
+      <div className="w-full max-w-4xl flex justify-start">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Search
@@ -61,9 +62,11 @@ export function ClientFound({
               {customer.email} | {customer.phone}
             </CardDescription>
           </div>
-          <Button>
-            <CalendarPlus className="mr-2" />
-            Schedule New Appointment
+          <Button asChild>
+            <Link href={`/appointments/book/${encodeURIComponent(customer.email)}`}>
+              <CalendarPlus className="mr-2" />
+              Schedule New Appointment
+            </Link>
           </Button>
         </CardHeader>
         <CardContent>
