@@ -1,3 +1,4 @@
+
 import { AppointmentsTable } from "./AppointmentsTable";
 import { QuickActions } from "./QuickActions";
 import {
@@ -5,6 +6,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import {
   Activity,
@@ -12,6 +14,8 @@ import {
   CircleDollarSign,
   Users,
 } from "lucide-react";
+import { RevenueChart } from "./RevenueChart";
+import { RecentActivity } from "./RecentActivity";
 
 type Appointment = {
     id: string;
@@ -79,14 +83,39 @@ export function Dashboard({
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Now</CardTitle>
+            <CardTitle className="text-sm font-medium">Occupancy</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+573</div>
+            <div className="text-2xl font-bold">78%</div>
             <p className="text-xs text-muted-foreground">
-              +201 since last hour
+              Based on staff availability
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-2">
+           <CardHeader>
+            <CardTitle>Revenue Overview</CardTitle>
+            <CardDescription>
+              Your revenue summary for the last 6 months.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RevenueChart />
+          </CardContent>
+        </Card>
+        <Card>
+           <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>
+              Latest bookings and client registrations.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RecentActivity />
           </CardContent>
         </Card>
       </div>
