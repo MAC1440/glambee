@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { ToolbarProps } from "react-big-calendar";
+import type { ToolbarProps, View } from "react-big-calendar";
 
 export function CustomToolbar(toolbar: ToolbarProps) {
   const goToBack = () => {
@@ -16,11 +16,11 @@ export function CustomToolbar(toolbar: ToolbarProps) {
     toolbar.onNavigate('TODAY');
   };
 
-  const view = (view: string) => {
-    toolbar.onView(view as any);
+  const view = (view: View) => {
+    toolbar.onView(view);
   };
 
-  const views: {name: string, view: string}[] = [
+  const views: {name: string, view: View}[] = [
     { name: 'Day', view: 'day' },
     { name: 'Week', view: 'week' },
     { name: 'Month', view: 'month' },

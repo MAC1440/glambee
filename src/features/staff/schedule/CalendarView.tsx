@@ -1,11 +1,12 @@
 
 "use client";
 
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer, Views, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CustomToolbar } from './Toolbar';
+import { useState } from 'react';
 
 const locales = {
   'en-US': enUS,
@@ -20,6 +21,8 @@ const localizer = dateFnsLocalizer({
 });
 
 export function CalendarView({ events }: { events: any[] }) {
+  const [view, setView] = useState<View>(Views.WEEK);
+
   return (
     <div className="h-[75vh]">
       <Calendar
@@ -29,7 +32,8 @@ export function CalendarView({ events }: { events: any[] }) {
         endAccessor="end"
         style={{ height: '100%' }}
         views={[Views.MONTH, Views.WEEK, Views.DAY]}
-        defaultView={Views.WEEK}
+        view={view}
+        onView={(view) => setView(view)}
         components={{
           toolbar: CustomToolbar
         }}
