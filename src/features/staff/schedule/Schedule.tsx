@@ -12,44 +12,60 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { addDays, format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import {
+  isToday,
+  isThisWeek,
+  isThisMonth,
+  parseISO,
+  format,
+} from "date-fns";
+import { CalendarView } from "./CalendarView";
 
 type Appointment = {
+  id: string;
+  salonId: string;
+  customer: {
     id: string;
-    salonId: string;
-    customer: {
-        id: string;
-        phone: string;
-        name: string;
-        email: string;
-    };
-    service: string;
-    staff: string;
-    date: string;
-    time: string;
-    price: number;
+    phone: string;
+    name: string;
+    email: string;
+  };
+  service: string;
+  staff: string;
+  date: string;
+  time: string;
+  price: number;
 };
 
 export function Schedule({ appointments }: { appointments: Appointment[] }) {
-  const today = new Date();
-  
-  const todayAppointments = appointments.filter(
-    (apt) => apt.date === format(today, "yyyy-MM-dd")
+  const todayAppointments = appointments.filter((apt) =>
+    isToday(parseISO(apt.date))
   );
 
-  const startOfCurrentWeek = startOfWeek(today);
-  const endOfCurrentWeek = endOfWeek(today);
-  const weeklyAppointments = appointments.filter((apt) => {
-    const aptDate = parseISO(apt.date);
-    return aptDate >= startOfCurrentWeek && aptDate <= endOfCurrentWeek;
+  const weeklyAppointments = appointments.filter((apt) =>
+    isThisWeek(parseISO(apt.date), { weekStartsOn: 1 })
+  );
+
+  const monthlyAppointments = appointments.filter((apt) =>
+    isThisMonth(parseISO(apt.date))
+  );
+  
+  const calendarEvents = appointments.map(apt => {
+    const [hours, minutes] = apt.time.split(/[:\s]/);
+    const date = parseISO(apt.date);
+    date.setHours(parseInt(hours, 10) + (apt.time.includes('PM') && parseInt(hours, 10) !== 12 ? 12 : 0));
+    date.setMinutes(parseInt(minutes, 10));
+
+    const endDate = new Date(date.getTime() + (60 * 60 * 1000)); // Assuming 1 hour duration for now
+
+    return {
+      title: `${apt.service} - ${apt.customer.name}`,
+      start: date,
+      end: endDate,
+      resource: apt,
+    }
   });
 
-  const startOfCurrentMonth = startOfMonth(today);
-  const endOfCurrentMonth = endOfMonth(today);
-  const monthlyAppointments = appointments.filter((apt) => {
-    const aptDate = parseISO(apt.date);
-    return aptDate >= startOfCurrentMonth && aptDate <= endOfCurrentMonth;
-  });
 
   const renderAppointmentTable = (
     appointments: Appointment[],
@@ -68,33 +84,39 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
       </TableHeader>
       <TableBody>
         {appointments.length > 0 ? (
-          appointments.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.time.localeCompare(b.time)).map((apt) => (
-            <TableRow key={apt.id}>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage
-                      src={`https://picsum.photos/seed/${apt.customer.name}/100`}
-                      alt="Avatar"
-                    />
-                    <AvatarFallback>
-                      {apt.customer.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">{apt.customer.name}</div>
+          appointments
+            .sort(
+              (a, b) =>
+                new Date(a.date).getTime() - new Date(b.date).getTime() ||
+                a.time.localeCompare(b.time)
+            )
+            .map((apt) => (
+              <TableRow key={apt.id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage
+                        src={`https://picsum.photos/seed/${apt.customer.name}/100`}
+                        alt="Avatar"
+                      />
+                      <AvatarFallback>
+                        {apt.customer.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium">{apt.customer.name}</div>
+                    </div>
                   </div>
-                </div>
-              </TableCell>
-              <TableCell>{apt.service}</TableCell>
-              {showDate && (
-                <TableCell className="hidden md:table-cell">
-                  {format(parseISO(apt.date), "PPP")}
                 </TableCell>
-              )}
-              <TableCell className="text-right">{apt.time}</TableCell>
-            </TableRow>
-          ))
+                <TableCell>{apt.service}</TableCell>
+                {showDate && (
+                  <TableCell className="hidden md:table-cell">
+                    {format(parseISO(apt.date), "PPP")}
+                  </TableCell>
+                )}
+                <TableCell className="text-right">{apt.time}</TableCell>
+              </TableRow>
+            ))
         ) : (
           <TableRow>
             <TableCell colSpan={showDate ? 4 : 3} className="text-center h-24">
@@ -115,25 +137,41 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
         </p>
       </div>
 
-      <Tabs defaultValue="day">
+      <Tabs defaultValue="calendar">
         <TabsList>
-          <TabsTrigger value="day">Day</TabsTrigger>
-          <TabsTrigger value="week">Week</TabsTrigger>
-          <TabsTrigger value="month">Month</TabsTrigger>
+          <TabsTrigger value="grid">Grid View</TabsTrigger>
+          <TabsTrigger value="calendar">Calendar View</TabsTrigger>
         </TabsList>
-        <Card className="mt-4">
-          <CardContent className="p-0">
-            <TabsContent value="day" className="m-0">
-              {renderAppointmentTable(todayAppointments)}
-            </TabsContent>
-            <TabsContent value="week" className="m-0">
-              {renderAppointmentTable(weeklyAppointments, true)}
-            </TabsContent>
-            <TabsContent value="month" className="m-0">
-              {renderAppointmentTable(monthlyAppointments, true)}
-            </TabsContent>
-          </CardContent>
-        </Card>
+
+        <TabsContent value="grid" className="mt-4">
+          <Tabs defaultValue="day">
+            <TabsList>
+              <TabsTrigger value="day">Day</TabsTrigger>
+              <TabsTrigger value="week">Week</TabsTrigger>
+              <TabsTrigger value="month">Month</TabsTrigger>
+            </TabsList>
+            <Card className="mt-4">
+              <CardContent className="p-0">
+                <TabsContent value="day" className="m-0">
+                  {renderAppointmentTable(todayAppointments)}
+                </TabsContent>
+                <TabsContent value="week" className="m-0">
+                  {renderAppointmentTable(weeklyAppointments, true)}
+                </TabsContent>
+                <TabsContent value="month" className="m-0">
+                  {renderAppointmentTable(monthlyAppointments, true)}
+                </TabsContent>
+              </CardContent>
+            </Card>
+          </Tabs>
+        </TabsContent>
+        <TabsContent value="calendar" className="mt-4">
+           <Card>
+            <CardContent className="p-2 md:p-4">
+              <CalendarView events={calendarEvents} />
+            </CardContent>
+           </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
