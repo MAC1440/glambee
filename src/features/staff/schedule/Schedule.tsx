@@ -20,6 +20,10 @@ import {
   format,
 } from "date-fns";
 import { CalendarView } from "./CalendarView";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(customParseFormat);
 
 type Appointment = {
   id: string;
@@ -32,49 +36,42 @@ type Appointment = {
   };
   service: string;
   staff: string;
-  date: string;
-  time: string;
+  date: string; // "YYYY-MM-DD"
+  time: string; // "hh:mm A"
   price: number;
 };
 
-// Helper to parse date without timezone issues
-const parseDate = (dateString: string) => {
-  return parse(dateString, 'yyyy-MM-dd', new Date());
+// Helper to parse date and time strings into a JS Date object using dayjs
+const parseDateTime = (dateString: string, timeString: string): Date => {
+  return dayjs(`${dateString} ${timeString}`, "YYYY-MM-DD hh:mm A").toDate();
 };
-
-const parseDateTime = (dateString: string, timeString: string) => {
-    // Combine date and time and parse it in a way that respects local time
-    // The format 'yyyy-MM-dd h:mm a' handles times like '09:00 AM'
-    return parse(`${dateString} ${timeString}`, 'yyyy-MM-dd h:mm a', new Date());
-}
 
 export function Schedule({ appointments }: { appointments: Appointment[] }) {
   const todayAppointments = appointments.filter((apt) =>
-    isToday(parseDate(apt.date))
+    isToday(parseDateTime(apt.date, apt.time))
   );
 
   const weeklyAppointments = appointments.filter((apt) =>
-    isThisWeek(parseDate(apt.date), { weekStartsOn: 1 })
+    isThisWeek(parseDateTime(apt.date, apt.time), { weekStartsOn: 1 })
   );
 
   const monthlyAppointments = appointments.filter((apt) =>
-    isThisMonth(parseDate(apt.date))
+    isThisMonth(parseDateTime(apt.date, apt.time))
   );
-  
-  const calendarEvents = appointments.map(apt => {
+
+  const calendarEvents = appointments.map((apt) => {
     const startDate = parseDateTime(apt.date, apt.time);
-    
+
     // Assuming 1 hour duration for now, can be replaced by service duration later
-    const endDate = new Date(startDate.getTime() + (60 * 60 * 1000)); 
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
     return {
       title: `${apt.service} - ${apt.customer.name}`,
       start: startDate,
       end: endDate,
       resource: apt,
-    }
+    };
   });
-
 
   const renderAppointmentTable = (
     appointments: Appointment[],
@@ -96,8 +93,8 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
           appointments
             .sort(
               (a, b) =>
-                new Date(a.date).getTime() - new Date(b.date).getTime() ||
-                a.time.localeCompare(b.time)
+                parseDateTime(a.date, a.time).getTime() -
+                parseDateTime(b.date, b.time).getTime()
             )
             .map((apt) => (
               <TableRow key={apt.id}>
@@ -120,7 +117,7 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
                 <TableCell>{apt.service}</TableCell>
                 {showDate && (
                   <TableCell className="hidden md:table-cell">
-                    {format(parseDate(apt.date), "PPP")}
+                    {format(parseDateTime(apt.date, apt.time), "PPP")}
                   </TableCell>
                 )}
                 <TableCell className="text-right">{apt.time}</TableCell>
@@ -175,11 +172,11 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
           </Tabs>
         </TabsContent>
         <TabsContent value="calendar" className="mt-4">
-           <Card>
+          <Card>
             <CardContent className="p-2 md:p-4">
               <CalendarView events={calendarEvents} />
             </CardContent>
-           </Card>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
