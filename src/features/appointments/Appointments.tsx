@@ -27,12 +27,12 @@ import { useToast } from "@/hooks/use-toast";
 
 const mockCustomers = [
   {
-    phone: "111-222-3333",
+    phone: "+923001234567",
     name: "Sophia Davis",
     email: "sophia@example.com",
   },
   {
-    phone: "444-555-6666",
+    phone: "+923217654321",
     name: "Liam Garcia",
     email: "liam@example.com",
   },
@@ -103,7 +103,7 @@ export function Appointments() {
             <Input
               type="tel"
               id="phone"
-              placeholder="(555) 555-5555"
+              placeholder="+923001234567"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               disabled={isSearching}
