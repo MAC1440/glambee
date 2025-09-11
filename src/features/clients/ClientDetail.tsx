@@ -148,50 +148,6 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
               Book Appointment
             </Link>
           </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Send Message
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Send Message to {client.name}</DialogTitle>
-                <DialogDescription>
-                  Compose your message below. It will be sent via their
-                  preferred communication channel.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid w-full gap-1.5">
-                  <Label htmlFor="message">Your message</Label>
-                  <Textarea
-                    placeholder="Type your message here."
-                    id="message"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <DialogClose asChild>
-                  <Button
-                    type="submit"
-                    onClick={handleSendMessage}
-                    disabled={!message}
-                  >
-                    Send message
-                  </Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
           <Button variant="outline">
             <Edit className="mr-2 h-4 w-4" />
             Edit Profile
