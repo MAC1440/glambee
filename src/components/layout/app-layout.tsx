@@ -82,7 +82,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
     .filter((item) => pathname.startsWith(item.activeMatch || item.href))
     .sort((a,b) => (b.activeMatch || b.href).length - (a.activeMatch || a.href).length)[0];
 
-  const userIdentifier = user.phone || user.email;
+  const userIdentifier = user?.phone || user?.email;
   const userInitial = userIdentifier ? userIdentifier.charAt(0).toUpperCase() : '?';
 
   return (
@@ -118,7 +118,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
               <SidebarMenuButton asChild isActive={pathname === '/profile'}>
                 <Link href="/profile">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.user_metadata?.avatar_url} alt={userIdentifier} />
+                    <AvatarImage src={user?.user_metadata?.avatar_url} alt={userIdentifier} />
                     <AvatarFallback>{userInitial}</AvatarFallback>
                   </Avatar>
                   <span className="truncate">{userIdentifier}</span>
@@ -140,7 +140,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
                 className="overflow-hidden rounded-full"
               >
                 <Avatar>
-                  <AvatarImage src={user.user_metadata?.avatar_url} alt={userIdentifier} />
+                  <AvatarImage src={user?.user_metadata?.avatar_url} alt={userIdentifier} />
                   <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
               </Button>

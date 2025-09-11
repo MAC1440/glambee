@@ -17,7 +17,7 @@ export function LayoutProvider({
 
   const user = session?.user || null;
 
-  if (authRoutes.includes(pathname) || !user) {
+  if (authRoutes.includes(pathname)) {
     return <AuthLayout>{children}</AuthLayout>;
   }
 

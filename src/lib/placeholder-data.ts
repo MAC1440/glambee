@@ -1,3 +1,25 @@
+
+export const salons = [
+  {
+    id: "salon_01",
+    name: "Downtown Studio",
+    address: "123 Main St, Anytown, USA",
+  },
+  {
+    id: "salon_02",
+    name: "Uptown Oasis",
+    address: "456 Oak Ave, Anytown, USA",
+  },
+];
+
+export const user = {
+  name: "Admin User",
+  email: "admin@salonflow.com",
+  avatar: "https://picsum.photos/seed/admin/100/100",
+  role: "SUPER_ADMIN", // 'SUPER_ADMIN' or 'SALON_ADMIN'
+  salonId: null, // or "salon_01" if SALON_ADMIN
+};
+
 export const services = [
   {
     id: "svc_01",
@@ -56,15 +78,16 @@ export const services = [
 ];
 
 export const staff = [
-  { id: "staff_01", name: "Jessica Miller" },
-  { id: "staff_02", name: "Michael Chen" },
-  { id: "staff_03", name: "Emily Rodriguez" },
-  { id: "staff_04", name: "David Wilson" },
+  { id: "staff_01", name: "Jessica Miller", salonId: "salon_01" },
+  { id: "staff_02", name: "Michael Chen", salonId: "salon_01" },
+  { id: "staff_03", name: "Emily Rodriguez", salonId: "salon_02" },
+  { id: "staff_04", name: "David Wilson", salonId: "salon_02" },
 ];
 
 export const appointments = [
   {
     id: "apt_01",
+    salonId: "salon_01",
     customer: { name: "Sophia Davis", email: "sophia@example.com" },
     service: "Balayage / Ombré",
     staff: "Jessica Miller",
@@ -74,6 +97,7 @@ export const appointments = [
   },
   {
     id: "apt_02",
+    salonId: "salon_01",
     customer: { name: "Liam Garcia", email: "liam@example.com" },
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
@@ -83,6 +107,7 @@ export const appointments = [
   },
   {
     id: "apt_03",
+    salonId: "salon_02",
     customer: { name: "Ava Johnson", email: "ava@example.com" },
     service: "Luxury Manicure",
     staff: "Emily Rodriguez",
@@ -92,6 +117,7 @@ export const appointments = [
   },
   {
     id: "apt_04",
+    salonId: "salon_01",
     customer: { name: "Noah Brown", email: "noah@example.com" },
     service: "Full Color & Gloss",
     staff: "Jessica Miller",
@@ -101,6 +127,7 @@ export const appointments = [
   },
   {
     id: "apt_05",
+    salonId: "salon_02",
     customer: { name: "Isabella Smith", email: "isabella@example.com" },
     service: "Spa Pedicure",
     staff: "David Wilson",
@@ -110,6 +137,7 @@ export const appointments = [
   },
   {
     id: "apt_06",
+    salonId: "salon_01",
     customer: { name: "James Williams", email: "james@example.com" },
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
@@ -119,6 +147,7 @@ export const appointments = [
   },
   {
     id: "apt_07",
+    salonId: "salon_02",
     customer: { name: "Olivia Jones", email: "olivia.jones@example.com" },
     service: "Deep Conditioning Treatment",
     staff: "Emily Rodriguez",
@@ -128,6 +157,7 @@ export const appointments = [
   },
   {
     id: "apt_08",
+    salonId: "salon_01",
     customer: { name: "Benjamin Garcia", email: "benjamin.garcia@example.com" },
     service: "Balayage / Ombré",
     staff: "Jessica Miller",
@@ -137,6 +167,7 @@ export const appointments = [
   },
   {
     id: "apt_09",
+    salonId: "salon_02",
     customer: { name: "Mia Martinez", email: "mia.martinez@example.com" },
     service: "Luxury Manicure",
     staff: "David Wilson",
@@ -146,6 +177,7 @@ export const appointments = [
   },
     {
     id: "apt_10",
+    salonId: "salon_01",
     customer: { name: "Ethan Rodriguez", email: "ethan.rodriguez@example.com" },
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
@@ -155,6 +187,7 @@ export const appointments = [
   },
   {
     id: "apt_11",
+    salonId: "salon_02",
     customer: { name: "Abigail Taylor", email: "abigail.taylor@example.com" },
     service: "Spa Pedicure",
     staff: "David Wilson",
@@ -164,6 +197,7 @@ export const appointments = [
   },
   {
     id: "apt_12",
+    salonId: "salon_01",
     customer: { name: "William Anderson", email: "william.anderson@example.com" },
     service: "Full Color & Gloss",
     staff: "Jessica Miller",
@@ -173,6 +207,7 @@ export const appointments = [
   },
   {
     id: "apt_13",
+    salonId: "salon_01",
     customer: { name: "Charlotte Thomas", email: "charlotte.thomas@example.com" },
     service: "Signature Haircut & Style",
     staff: "Michael Chen",
@@ -182,18 +217,20 @@ export const appointments = [
   },
   {
     id: "apt_14",
+    salonId: "salon_02",
     customer: { name: "Daniel White", email: "daniel.white@example.com" },
     service: "Balayage / Ombré",
-    staff: "Jessica Miller",
+    staff: "Emily Rodriguez",
     date: "2024-08-01",
     time: "09:00 AM",
     price: 250.0,
   },
   {
     id: "apt_15",
+    salonId: "salon_02",
     customer: { name: "Harper Harris", email: "harper.harris@example.com" },
     service: "Luxury Manicure",
-    staff: "Emily Rodriguez",
+    staff: "David Wilson",
     date: "2024-08-01",
     time: "10:00 AM",
     price: 45.0,
