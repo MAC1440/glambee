@@ -56,9 +56,9 @@ type User = {
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
-  { href: "/salons", icon: Building, label: "Salons", roles: ["SUPER_ADMIN"]},
-  { href: "/services", icon: Scissors, label: "Services" },
   { href: "/appointments", icon: CalendarPlus, label: "Appointments" },
+  { href: "/services", icon: Scissors, label: "Services" },
+  { href: "/salons", icon: Building, label: "Salons", roles: ["SUPER_ADMIN"]},
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
   { href: "/staff", icon: Briefcase, label: "Staff" },
   { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
