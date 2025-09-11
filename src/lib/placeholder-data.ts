@@ -13,7 +13,7 @@ export const salons = [
 ];
 
 export const users = [
-    {
+  {
     id: "user_01",
     name: "Super Admin",
     email: "super@admin.com",
@@ -30,7 +30,7 @@ export const users = [
     avatar: "https://picsum.photos/seed/salon-admin/100/100",
     role: "SALON_ADMIN",
     salonId: "salon_01",
-  }
+  },
 ];
 
 export const user = {
@@ -103,6 +103,19 @@ export const staff = [
   { id: "staff_02", name: "Michael Chen", salonId: "salon_01" },
   { id: "staff_03", name: "Emily Rodriguez", salonId: "salon_02" },
   { id: "staff_04", name: "David Wilson", salonId: "salon_02" },
+];
+
+export const mockCustomers = [
+  {
+    phone: "+923001234567",
+    name: "Sophia Davis",
+    email: "sophia@example.com",
+  },
+  {
+    phone: "+923217654321",
+    name: "Liam Garcia",
+    email: "liam@example.com",
+  },
 ];
 
 export const appointments = [
@@ -196,7 +209,7 @@ export const appointments = [
     time: "11:00 AM",
     price: 45.0,
   },
-    {
+  {
     id: "apt_10",
     salonId: "salon_01",
     customer: { name: "Ethan Rodriguez", email: "ethan.rodriguez@example.com" },
