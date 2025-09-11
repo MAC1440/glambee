@@ -15,12 +15,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { addDays, format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from "date-fns";
 
 type Appointment = {
-  id: string;
-  customer_name: string;
-  customer_id: string;
-  booking_type: string;
-  date: string;
-  start_time: string;
+    id: string;
+    salonId: string;
+    customer: {
+        id: string;
+        phone: string;
+        name: string;
+        email: string;
+    };
+    service: string;
+    staff: string;
+    date: string;
+    time: string;
+    price: number;
 };
 
 export function Schedule({ appointments }: { appointments: Appointment[] }) {
@@ -61,31 +68,31 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
       </TableHeader>
       <TableBody>
         {appointments.length > 0 ? (
-          appointments.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.start_time.localeCompare(b.start_time)).map((apt) => (
+          appointments.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime() || a.time.localeCompare(b.time)).map((apt) => (
             <TableRow key={apt.id}>
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
                     <AvatarImage
-                      src={`https://picsum.photos/seed/${apt.customer_name}/100`}
+                      src={`https://picsum.photos/seed/${apt.customer.name}/100`}
                       alt="Avatar"
                     />
                     <AvatarFallback>
-                      {apt.customer_name.charAt(0)}
+                      {apt.customer.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="font-medium">{apt.customer_name}</div>
+                    <div className="font-medium">{apt.customer.name}</div>
                   </div>
                 </div>
               </TableCell>
-              <TableCell>{apt.booking_type}</TableCell>
+              <TableCell>{apt.service}</TableCell>
               {showDate && (
                 <TableCell className="hidden md:table-cell">
                   {format(parseISO(apt.date), "PPP")}
                 </TableCell>
               )}
-              <TableCell className="text-right">{apt.start_time}</TableCell>
+              <TableCell className="text-right">{apt.time}</TableCell>
             </TableRow>
           ))
         ) : (

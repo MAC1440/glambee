@@ -13,10 +13,26 @@ import {
   Users,
 } from "lucide-react";
 
+type Appointment = {
+    id: string;
+    salonId: string;
+    customer: {
+        id: string;
+        phone: string;
+        name: string;
+        email: string;
+    };
+    service: string;
+    staff: string;
+    date: string;
+    time: string;
+    price: number;
+};
+
 export function Dashboard({
   todayAppointments,
 }: {
-  todayAppointments: any[];
+  todayAppointments: Appointment[];
 }) {
   return (
     <div className="flex flex-col gap-8">

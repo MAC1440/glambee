@@ -1,18 +1,13 @@
 import { Dashboard } from "@/features/dashboard/Dashboard";
-import { createClient } from "@/lib/supabase/client";
+import { appointments as mockAppointments } from "@/lib/placeholder-data";
 import { format } from "date-fns";
 
 export default async function DashboardPage() {
-  const supabase = createClient();
+  // In a real app, you'd fetch this from your database or API.
   const today = format(new Date(), "yyyy-MM-dd");
-  const { data: appointments, error } = await supabase
-    .from("appointments")
-    .select("*")
-    .eq("date", today);
+  const todayAppointments = mockAppointments.filter(
+    (apt) => apt.date === today
+  );
 
-  if (error) {
-    console.error("Error fetching appointments:", error);
-  }
-
-  return <Dashboard todayAppointments={appointments || []} />;
+  return <Dashboard todayAppointments={todayAppointments || []} />;
 }

@@ -15,10 +15,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+type Appointment = {
+    id: string;
+    salonId: string;
+    customer: {
+        id: string;
+        phone: string;
+        name: string;
+        email: string;
+    };
+    service: string;
+    staff: string;
+    date: string;
+    time: string;
+    price: number;
+};
+
+
 export function AppointmentsTable({
   todayAppointments,
 }: {
-  todayAppointments: any[];
+  todayAppointments: Appointment[];
 }) {
 
   return (
@@ -48,18 +65,18 @@ export function AppointmentsTable({
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarImage
-                          src={`https://picsum.photos/seed/${apt.customer_name}/100`}
+                          src={`https://picsum.photos/seed/${apt.customer.name}/100`}
                           alt="Avatar"
                         />
                         <AvatarFallback>
-                          {apt.customer_name.charAt(0)}
+                          {apt.customer.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="font-medium">{apt.customer_name}</div>
+                      <div className="font-medium">{apt.customer.name}</div>
                     </div>
                   </TableCell>
-                  <TableCell>{apt.booking_type}</TableCell>
-                  <TableCell className="text-right">{apt.start_time}</TableCell>
+                  <TableCell>{apt.service}</TableCell>
+                  <TableCell className="text-right">{apt.time}</TableCell>
                 </TableRow>
               ))
             ) : (
