@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
+import { Badge } from "@/components/ui/badge";
 
 // Mock user type for prototype
 type User = {
@@ -121,6 +122,9 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
           <div className="flex-1">
              <GlobalClientSearch />
           </div>
+          <Badge variant="outline" className="hidden md:block">
+            {user.role.replace('_', ' ')}
+          </Badge>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
