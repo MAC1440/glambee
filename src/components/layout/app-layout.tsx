@@ -39,10 +39,13 @@ import {
   Briefcase,
   CalendarPlus,
   Building,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
 import { Badge } from "@/components/ui/badge";
+import { useTheme } from "next-themes";
 
 // Mock user type for prototype
 type User = {
@@ -68,6 +71,7 @@ const navItems = [
 export function AppLayout({ children, user }: { children: React.ReactNode, user: User }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   const handleLogout = () => {
     localStorage.removeItem("session");
@@ -94,6 +98,10 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   const userIdentifier = user?.email;
   const userInitial = userIdentifier ? userIdentifier.charAt(0).toUpperCase() : '?';
   const visibleNavItems = navItems.filter(item => !item.roles || item.roles.includes(user.role));
+  
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
 
   return (
     <SidebarProvider>
@@ -130,9 +138,14 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1"></div>
           <GlobalClientSearch />
-          <Badge variant="outline" className="hidden md:block">
-            {user.role.replace('_', ' ')}
-          </Badge>
+          <Button
+            variant="outline"
+            className="hidden md:flex items-center gap-2"
+            onClick={toggleTheme}
+          >
+            {resolvedTheme === 'dark' ? <Sun /> : <Moon />}
+            <span className="capitalize">{user.role.replace('_', ' ')}</span>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
