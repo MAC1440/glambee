@@ -67,7 +67,7 @@ export function Salons() {
         {salons.map((salon) => {
             const admin = salonAdmins.find(a => a.salonId === salon.id);
             return (
-          <Card key={salon.id}>
+          <Card key={salon.id} className="flex flex-col">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
@@ -85,7 +85,7 @@ export function Salons() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-grow">
                 <div className="text-sm text-muted-foreground flex items-center gap-2">
                     <Users className="h-4 w-4" />
                     <span>Admin: {admin ? admin.name : 'Not Assigned'}</span>
