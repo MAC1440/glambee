@@ -25,6 +25,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarTrigger,
+  SidebarInset,
 } from "@/components/ui/sidebar";
 import {
   Boxes,
