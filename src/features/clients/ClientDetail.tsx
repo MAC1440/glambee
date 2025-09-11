@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { appointments, mockCustomers } from "@/lib/placeholder-data";
+import { appointments } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
 import { Mail, Phone, Edit, MessageSquare } from "lucide-react";
 import {
@@ -37,19 +37,33 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
-export function ClientDetail({ params }: { params: { email: string } }) {
-  const clientEmail = decodeURIComponent(params.email);
+// Simplified Customer type to match placeholder data
+type Customer = {
+  id: string;
+  phone: string;
+  name: string;
+  email: string;
+};
+
+export function ClientDetail({ client }: { client: Customer | undefined }) {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
 
-  const client = mockCustomers.find((c) => c.email === clientEmail);
-  
   if (!client) {
-    return <div>Client not found.</div>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Client Not Found</CardTitle>
+          <CardDescription>
+            The client you are looking for does not exist.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
   }
 
   const clientAppointments = appointments.filter(
-    (apt) => apt.customer.email === clientEmail
+    (apt) => apt.customer.email === client.email
   );
 
   const totalSpent = clientAppointments.reduce(
