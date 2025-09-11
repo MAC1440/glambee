@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { appointments } from "@/lib/placeholder-data";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -109,18 +110,18 @@ export function ClientsList() {
                 <TableHead>Last Visit</TableHead>
                 <TableHead>Total Appointments</TableHead>
                 <TableHead className="text-right">Total Spent</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {clients.map((client) => (
                 <TableRow
                   key={client.email}
-                  className="cursor-pointer hover:bg-muted/50"
                 >
                   <TableCell>
                     <Link
                       href={`/clients/${encodeURIComponent(client.email)}`}
-                      className="flex items-center gap-3 w-full"
+                      className="flex items-center gap-3 w-full hover:underline"
                     >
                       <Avatar className="h-9 w-9">
                         <AvatarImage
@@ -156,6 +157,14 @@ export function ClientsList() {
                   <TableCell>{client.appointments}</TableCell>
                   <TableCell className="text-right">
                     ${client.totalSpent.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm" asChild>
+                       <Link href={`/appointments/book/${encodeURIComponent(client.email)}`}>
+                          <CalendarPlus className="mr-2 h-4 w-4" />
+                          Book
+                       </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

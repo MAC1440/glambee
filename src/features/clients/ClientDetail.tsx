@@ -19,9 +19,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { appointments } from "@/lib/placeholder-data";
+import { appointments, mockCustomers } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
-import { Mail, Phone, Edit, MessageSquare } from "lucide-react";
+import { Mail, Phone, Edit, MessageSquare, CalendarPlus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import Link from "next/link";
 
 // Simplified Customer type to match placeholder data
 type Customer = {
@@ -141,6 +142,12 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
           </div>
         </div>
         <div className="flex gap-2">
+           <Button asChild>
+            <Link href={`/appointments/book/${encodeURIComponent(client.email)}`}>
+              <CalendarPlus className="mr-2 h-4 w-4" />
+              Book Appointment
+            </Link>
+          </Button>
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -185,7 +192,7 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button>
+          <Button variant="outline">
             <Edit className="mr-2 h-4 w-4" />
             Edit Profile
           </Button>
