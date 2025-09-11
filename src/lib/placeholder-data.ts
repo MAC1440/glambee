@@ -33,70 +33,112 @@ export const users = [
   },
 ];
 
-export const user = {
-  name: "Admin User",
-  email: "admin@salonflow.com",
-  avatar: "https://picsum.photos/seed/admin/100/100",
-  role: "SUPER_ADMIN", // 'SUPER_ADMIN' or 'SALON_ADMIN'
-  salonId: null, // or "salon_01" if SALON_ADMIN
-};
-
 export const services = [
+  // Discounts
+  {
+    id: "promo_01",
+    name: "20% Off First Visit",
+    description: "New clients get 20% off any single service on their first visit.",
+    price: "Varies",
+    originalPrice: null,
+    duration: null,
+    image: "https://picsum.photos/seed/promo-new/600/400",
+    category: "Discount",
+  },
+  {
+    id: "promo_02",
+    name: "Refer a Friend, Get $25 Off",
+    description: "Refer a new client and you both get $25 off your next service.",
+    price: "$25 Credit",
+    originalPrice: null,
+    duration: null,
+    image: "https://picsum.photos/seed/promo-refer/600/400",
+    category: "Discount",
+  },
+  // Deals
+  {
+    id: "deal_01",
+    name: "Mani-Pedi Combo",
+    description: "Our Luxury Manicure and Spa Pedicure together at a special price.",
+    price: 100.0,
+    originalPrice: 110.0,
+    duration: 105,
+    image: "https://picsum.photos/seed/mani-pedi/600/400",
+    category: "Deal",
+  },
+  {
+    id: "deal_02",
+    name: "Cut, Color & Condition",
+    description: "A complete hair refresh: Signature Haircut, Full Color, and a Deep Conditioning Treatment.",
+    price: 275.0,
+    originalPrice: 290.0,
+    duration: 210,
+    image: "https://picsum.photos/seed/hair-package/600/400",
+    category: "Deal",
+  },
+  // Individual Services
   {
     id: "svc_01",
     name: "Signature Haircut & Style",
-    description:
-      "A customized haircut designed by your stylist to fit your individual style and preferences, includes a relaxing shampoo and professional styling.",
+    description: "A customized haircut designed by your stylist to fit your individual style and preferences, includes a relaxing shampoo and professional styling.",
     price: 85.0,
+    originalPrice: null,
     duration: 60,
     image: "https://picsum.photos/seed/haircut/600/400",
+    category: "Service",
   },
   {
     id: "svc_02",
     name: "Full Color & Gloss",
-    description:
-      "Permanent or semi-permanent color application from roots to ends, finished with a gloss for shine and vibrancy.",
+    description: "Permanent or semi-permanent color application from roots to ends, finished with a gloss for shine and vibrancy.",
     price: 150.0,
+    originalPrice: null,
     duration: 120,
     image: "https://picsum.photos/seed/hair-color/600/400",
+    category: "Service",
   },
   {
     id: "svc_03",
     name: "Balayage / Ombré",
-    description:
-      "A technique for highlighting hair in which the dye is painted on in such a way as to create a graduated, natural-looking effect.",
+    description: "A technique for highlighting hair in which the dye is painted on in such a way as to create a graduated, natural-looking effect.",
     price: 250.0,
+    originalPrice: null,
     duration: 180,
     image: "https://picsum.photos/seed/balayage/600/400",
+    category: "Service",
   },
   {
     id: "svc_04",
     name: "Luxury Manicure",
-    description:
-      "Includes nail shaping, cuticle care, a relaxing hand massage, and a polish of your choice. A true treat for your hands.",
+    description: "Includes nail shaping, cuticle care, a relaxing hand massage, and a polish of your choice. A true treat for your hands.",
     price: 45.0,
+    originalPrice: null,
     duration: 45,
     image: "https://picsum.photos/seed/manicure/600/400",
+    category: "Service",
   },
   {
     id: "svc_05",
     name: "Spa Pedicure",
-    description:
-      "Relax in our massage chairs while we pamper your feet. Includes a warm soak, exfoliation, nail care, massage, and polish.",
+    description: "Relax in our massage chairs while we pamper your feet. Includes a warm soak, exfoliation, nail care, massage, and polish.",
     price: 65.0,
+    originalPrice: null,
     duration: 60,
     image: "https://picsum.photos/seed/pedicure/600/400",
+    category: "Service",
   },
   {
     id: "svc_06",
     name: "Deep Conditioning Treatment",
-    description:
-      "An intense conditioning treatment to restore moisture, protein, and shine to dry, damaged hair. Add-on to any hair service.",
+    description: "An intense conditioning treatment to restore moisture, protein, and shine to dry, damaged hair. Add-on to any hair service.",
     price: 55.0,
+    originalPrice: null,
     duration: 30,
     image: "https://picsum.photos/seed/hair-mask/600/400",
+    category: "Service",
   },
 ];
+
 
 export const staff = [
   { id: "staff_01", name: "Jessica Miller", salonId: "salon_01" },
