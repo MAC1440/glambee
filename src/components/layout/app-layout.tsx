@@ -58,7 +58,7 @@ const navItems = [
   { href: "/services", icon: Scissors, label: "Services" },
   { href: "/appointments", icon: CalendarPlus, label: "Appointments" },
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
-  { href: "/staff", icon: Briefcase, label: "Staff", activeMatch: "/staff", exact: true },
+  { href: "/staff", icon: Briefcase, label: "Staff" },
   { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
   { href: "/billing", icon: CreditCard, label: "Billing" },
 ];
@@ -78,8 +78,14 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
       return pathname === item.href;
     }
     if (item.activeMatch) {
-        return pathname.startsWith(item.activeMatch) && (pathname === item.href);
+      // For Clients, we want to match /clients and /clients/[email]
+      return pathname.startsWith(item.activeMatch);
     }
+    // For Staff, we want to match /staff but not /staff/schedule
+    if (item.href === "/staff") {
+      return pathname === "/staff";
+    }
+
     return pathname.startsWith(item.href);
   };
   
