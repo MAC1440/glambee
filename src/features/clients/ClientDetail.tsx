@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { appointments } from "@/lib/placeholder-data";
+import { appointments, mockCustomers } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
 import { Mail, Phone, Edit, MessageSquare } from "lucide-react";
 import {
@@ -41,15 +42,16 @@ export function ClientDetail({ params }: { params: { email: string } }) {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
 
+  const client = mockCustomers.find((c) => c.email === clientEmail);
+  
+  if (!client) {
+    return <div>Client not found.</div>;
+  }
+
   const clientAppointments = appointments.filter(
     (apt) => apt.customer.email === clientEmail
   );
 
-  if (clientAppointments.length === 0) {
-    return <div>Client not found.</div>;
-  }
-
-  const client = clientAppointments[0].customer;
   const totalSpent = clientAppointments.reduce(
     (sum, apt) => sum + apt.price,
     0
@@ -199,10 +201,10 @@ export function ClientDetail({ params }: { params: { email: string } }) {
           </CardHeader>
           <CardContent>
             <p className="text-4xl font-bold">
-              {[...clientAppointments].sort(
+              {clientAppointments.length > 0 ? [...clientAppointments].sort(
                 (a, b) =>
                   new Date(b.date).getTime() - new Date(a.date).getTime()
-              )[0].date}
+              )[0].date : 'N/A'}
             </p>
           </CardContent>
         </Card>
@@ -227,17 +229,25 @@ export function ClientDetail({ params }: { params: { email: string } }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientAppointments.map((apt) => (
-                <TableRow key={apt.id}>
-                  <TableCell>{apt.date}</TableCell>
-                  <TableCell>{apt.time}</TableCell>
-                  <TableCell className="font-medium">{apt.service}</TableCell>
-                  <TableCell>{apt.staff}</TableCell>
-                  <TableCell className="text-right">
-                    ${apt.price.toFixed(2)}
+              {clientAppointments.length > 0 ? (
+                clientAppointments.map((apt) => (
+                  <TableRow key={apt.id}>
+                    <TableCell>{apt.date}</TableCell>
+                    <TableCell>{apt.time}</TableCell>
+                    <TableCell className="font-medium">{apt.service}</TableCell>
+                    <TableCell>{apt.staff}</TableCell>
+                    <TableCell className="text-right">
+                      ${apt.price.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center h-24">
+                    No appointment history for this client.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
