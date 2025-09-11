@@ -41,7 +41,7 @@ const activities = [...recentAppointments, ...newClients].sort(
 export function RecentActivity() {
   return (
     <div className="space-y-6">
-      {activities.map((activity) => (
+      {activities.slice(0, 3).map((activity) => (
         <div key={activity.id} className="flex items-start gap-4">
           <Avatar className="h-10 w-10 border">
             <AvatarImage
