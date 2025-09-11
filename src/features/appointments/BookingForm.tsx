@@ -33,8 +33,16 @@ type Customer = {
   email: string;
 };
 
-export function BookingForm({ client }: { client: Customer }) {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+export function BookingForm({
+  client,
+  lastStaffId,
+}: {
+  client: Customer;
+  lastStaffId?: string;
+}) {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    new Date()
+  );
   const { toast } = useToast();
 
   const handleBooking = () => {
@@ -84,7 +92,7 @@ export function BookingForm({ client }: { client: Customer }) {
             </div>
             <div>
               <Label>Staff</Label>
-              <Select>
+              <Select defaultValue={lastStaffId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a staff member" />
                 </SelectTrigger>
@@ -108,7 +116,7 @@ export function BookingForm({ client }: { client: Customer }) {
           </div>
         </CardContent>
         <CardFooter className="flex justify-end">
-            <Button onClick={handleBooking}>Confirm Booking</Button>
+          <Button onClick={handleBooking}>Confirm Booking</Button>
         </CardFooter>
       </Card>
     </div>

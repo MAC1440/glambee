@@ -1,5 +1,5 @@
 import { BookingForm } from "@/features/appointments/BookingForm";
-import { mockCustomers } from "@/lib/placeholder-data";
+import { mockCustomers, appointments, staff } from "@/lib/placeholder-data";
 
 export default function BookAppointmentPage({
   params,
@@ -13,5 +13,20 @@ export default function BookAppointmentPage({
     return <div>Client not found.</div>;
   }
 
-  return <BookingForm client={client} />;
+  // Find the client's most recent appointment to get the last staff member they saw
+  const clientAppointments = appointments
+    .filter((apt) => apt.customer.email === clientEmail)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  let lastStaffId: string | undefined = undefined;
+  if (clientAppointments.length > 0) {
+    const lastStaffMember = staff.find(
+      (s) => s.name === clientAppointments[0].staff
+    );
+    if (lastStaffMember) {
+      lastStaffId = lastStaffMember.id;
+    }
+  }
+
+  return <BookingForm client={client} lastStaffId={lastStaffId} />;
 }
