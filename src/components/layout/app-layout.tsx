@@ -61,8 +61,6 @@ const navItems = [
   { href: "/staff", icon: Briefcase, label: "Staff", activeMatch: "/staff", exact: true },
   { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
   { href: "/billing", icon: CreditCard, label: "Billing" },
-  { href: "/inventory", icon: Boxes, label: "Inventory" },
-  { href: "/trends", icon: TrendingUp, label: "Trends" },
 ];
 
 export function AppLayout({ children, user }: { children: React.ReactNode, user: User }) {

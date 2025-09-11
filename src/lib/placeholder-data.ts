@@ -312,34 +312,3 @@ export const appointments = [
     price: 45.0,
   },
 ];
-
-export const trends = [
-  {
-    id: "trend_01",
-    name: "Glass Hair",
-    description:
-      "A super-sleek, glossy finish that makes your hair look like a sheet of glass. Achieved with smoothing treatments and shine sprays.",
-    image: "https://picsum.photos/seed/glass-hair/600/400",
-  },
-  {
-    id: "trend_02",
-    name: "Curtain Bangs",
-    description:
-      "A soft, face-framing fringe that grows out gracefully. This '70s-inspired look is versatile and suits most face shapes.",
-    image: "https://picsum.photos/seed/curtain-bangs/600/400",
-  },
-  {
-    id: "trend_03",
-    name: "Jelly Nails",
-    description:
-      "A translucent, colorful manicure that resembles a jelly bean. It's a fun and playful look for any season.",
-    image: "https://picsum.photos/seed/jelly-nails/600/400",
-  },
-  {
-    id: "trend_04",
-    name: "Wolf Cut",
-    description:
-      "A shaggy, layered hairstyle that combines the volume of a shag with the texture of a mullet. It's edgy and effortlessly cool.",
-    image: "https://picsum.photos/seed/wolf-cut/600/400",
-  },
-];

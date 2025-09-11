@@ -10,13 +10,10 @@ export function QuickActions() {
       </CardHeader>
       <CardContent className="grid gap-4">
         <Button asChild>
-          <Link href="/book-appointment">Book New Appointment</Link>
+          <Link href="/appointments">Book New Appointment</Link>
         </Button>
         <Button asChild variant="secondary">
           <Link href="/services">Manage Services</Link>
-        </Button>
-        <Button asChild variant="secondary">
-          <Link href="/trends">View Trends</Link>
         </Button>
         <Button asChild variant="secondary">
           <Link href="/staff/schedule">View Schedule</Link>
