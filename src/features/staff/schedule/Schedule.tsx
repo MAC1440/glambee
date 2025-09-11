@@ -106,18 +106,19 @@ export function Schedule({ appointments }: { appointments: ScheduleAppointment[]
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="text-left">
-        <h1 className="text-4xl font-headline font-bold">Schedule</h1>
-        <p className="text-muted-foreground mt-2">
-          Here are your upcoming appointments.
-        </p>
-      </div>
-
-      <Tabs defaultValue="calendar">
-        <TabsList>
-          <TabsTrigger value="grid">Grid View</TabsTrigger>
-          <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-        </TabsList>
+       <Tabs defaultValue="calendar">
+        <div className="flex items-center justify-between">
+            <div className="text-left">
+                <h1 className="text-4xl font-headline font-bold">Schedule</h1>
+                <p className="text-muted-foreground mt-2">
+                Here are your upcoming appointments.
+                </p>
+            </div>
+            <TabsList>
+                <TabsTrigger value="grid">Grid View</TabsTrigger>
+                <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+            </TabsList>
+        </div>
 
         <TabsContent value="grid" className="mt-4">
           <Tabs defaultValue="day">
