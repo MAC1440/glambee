@@ -150,10 +150,12 @@ export const services = [
 
 
 export const staff = [
-  { id: "staff_01", name: "Jessica Miller", salonId: "salon_01" },
-  { id: "staff_02", name: "Michael Chen", salonId: "salon_01" },
-  { id: "staff_03", name: "Emily Rodriguez", salonId: "salon_02" },
-  { id: "staff_04", name: "David Wilson", salonId: "salon_02" },
+  { id: "staff_01", name: "Jessica Miller", department: "Stylist", salonId: "salon_01" },
+  { id: "staff_02", name: "Michael Chen", department: "Stylist", salonId: "salon_01" },
+  { id: "staff_03", name: "Emily Rodriguez", department: "Nail Artist", salonId: "salon_02" },
+  { id: "staff_04", name: "David Wilson", department: "Nail Artist", salonId: "salon_02" },
+  { id: "staff_05", name: "Olivia Brown", department: "Receptionist", salonId: "salon_01" },
+  { id: "staff_06", name: "Daniel Green", department: "Assistant", salonId: "salon_02" },
 ];
 
 export const mockCustomers = [
