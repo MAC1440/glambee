@@ -13,7 +13,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Search, CalendarPlus } from "lucide-react";
+import { Search, CalendarPlus, Info } from "lucide-react";
 import { appointments } from "@/lib/placeholder-data";
 import {
   Table,
@@ -209,6 +209,25 @@ export function Appointments() {
           </form>
         </Card>
       )}
+
+      <Card className="w-full max-w-2xl mt-8 bg-muted/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Info className="h-5 w-5 text-primary" />
+            For Testing
+          </CardTitle>
+          <CardDescription>
+            Use these phone numbers to test the client search functionality. This card will be removed after backend integration.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <ul className="list-disc pl-5 space-y-1 text-sm">
+                {mockCustomers.map(c => (
+                    <li key={c.phone}><strong>{c.name}:</strong> <code className="bg-background p-1 rounded-sm">{c.phone}</code></li>
+                ))}
+            </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 }
