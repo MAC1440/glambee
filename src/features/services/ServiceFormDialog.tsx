@@ -62,7 +62,16 @@ const formSchema = z.object({
     value: z.string(),
     label: z.string(),
   })).optional(),
+}).refine(data => {
+    if (data.category === 'Deal' && data.originalPrice !== null) {
+        return Number(data.price) <= data.originalPrice;
+    }
+    return true;
+}, {
+    message: "Deal price cannot be higher than the original price.",
+    path: ["price"],
 });
+
 
 export function ServiceFormDialog({
   isOpen,
