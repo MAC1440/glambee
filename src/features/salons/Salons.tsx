@@ -131,9 +131,6 @@ export function Salons() {
                         {salon.address}
                       </CardDescription>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenDialog('edit', salon)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-grow">
@@ -143,7 +140,13 @@ export function Salons() {
                   </div>
                 </CardContent>
                 <CardFooter className="bg-muted/50 p-4">
-                  <Button className="w-full">Manage Salon</Button>
+                  <Button
+                    className="w-full"
+                    onClick={() => handleOpenDialog("edit", salon)}
+                  >
+                    <Edit className="mr-2" />
+                    Edit Salon
+                  </Button>
                 </CardFooter>
               </Card>
             );
