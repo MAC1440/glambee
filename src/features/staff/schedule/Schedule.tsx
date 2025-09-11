@@ -16,7 +16,7 @@ import {
   isToday,
   isThisWeek,
   isThisMonth,
-  parseISO,
+  parse,
   format,
 } from "date-fns";
 import { CalendarView } from "./CalendarView";
@@ -37,30 +37,39 @@ type Appointment = {
   price: number;
 };
 
+// Helper to parse date without timezone issues
+const parseDate = (dateString: string) => {
+  return parse(dateString, 'yyyy-MM-dd', new Date());
+};
+
+const parseDateTime = (dateString: string, timeString: string) => {
+    // Combine date and time and parse it in a way that respects local time
+    // The format 'yyyy-MM-dd h:mm a' handles times like '09:00 AM'
+    return parse(`${dateString} ${timeString}`, 'yyyy-MM-dd h:mm a', new Date());
+}
+
 export function Schedule({ appointments }: { appointments: Appointment[] }) {
   const todayAppointments = appointments.filter((apt) =>
-    isToday(parseISO(apt.date))
+    isToday(parseDate(apt.date))
   );
 
   const weeklyAppointments = appointments.filter((apt) =>
-    isThisWeek(parseISO(apt.date), { weekStartsOn: 1 })
+    isThisWeek(parseDate(apt.date), { weekStartsOn: 1 })
   );
 
   const monthlyAppointments = appointments.filter((apt) =>
-    isThisMonth(parseISO(apt.date))
+    isThisMonth(parseDate(apt.date))
   );
   
   const calendarEvents = appointments.map(apt => {
-    const [hours, minutes] = apt.time.split(/[:\s]/);
-    const date = parseISO(apt.date);
-    date.setHours(parseInt(hours, 10) + (apt.time.includes('PM') && parseInt(hours, 10) !== 12 ? 12 : 0));
-    date.setMinutes(parseInt(minutes, 10));
-
-    const endDate = new Date(date.getTime() + (60 * 60 * 1000)); // Assuming 1 hour duration for now
+    const startDate = parseDateTime(apt.date, apt.time);
+    
+    // Assuming 1 hour duration for now, can be replaced by service duration later
+    const endDate = new Date(startDate.getTime() + (60 * 60 * 1000)); 
 
     return {
       title: `${apt.service} - ${apt.customer.name}`,
-      start: date,
+      start: startDate,
       end: endDate,
       resource: apt,
     }
@@ -111,7 +120,7 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
                 <TableCell>{apt.service}</TableCell>
                 {showDate && (
                   <TableCell className="hidden md:table-cell">
-                    {format(parseISO(apt.date), "PPP")}
+                    {format(parseDate(apt.date), "PPP")}
                   </TableCell>
                 )}
                 <TableCell className="text-right">{apt.time}</TableCell>
