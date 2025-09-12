@@ -38,6 +38,7 @@ export type CartItem = {
 
 type ServiceSelectionProps = {
   onAddToCart: (item: CartItem) => void;
+  buttonText?: string;
 };
 
 // Group services for the dropdown
@@ -96,7 +97,7 @@ const customSelectStyles: StylesConfig<any, boolean> = {
 };
 
 
-export function ServiceSelection({ onAddToCart }: ServiceSelectionProps) {
+export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: ServiceSelectionProps) {
   const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
   const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(null);
 
@@ -154,7 +155,7 @@ export function ServiceSelection({ onAddToCart }: ServiceSelectionProps) {
             disabled={!selectedService}
             onClick={handleAddClick}
         >
-            Add to Cart
+            {buttonText}
         </Button>
       </CardContent>
     </Card>
