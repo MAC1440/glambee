@@ -423,7 +423,7 @@ export const appointments = [
     customer: mockCustomers[14], // Harper Harris
     service: "Luxury Manicure",
     staff: "David Wilson",
-    date: "2024-08-01",
+    date: "2024-8-01",
     time: "10:00 AM",
     price: 45.0,
   },
