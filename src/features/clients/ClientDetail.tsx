@@ -22,7 +22,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { appointments } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
-import { Mail, Phone, Edit, CalendarPlus, ArrowLeft } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  Edit,
+  CalendarPlus,
+  ArrowLeft,
+  DollarSign,
+} from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
 
@@ -108,13 +115,27 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="w-full flex justify-start">
+      <div className="flex w-full items-center justify-between">
         <Button variant="ghost" asChild>
           <Link href="/clients">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Client List
           </Link>
         </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline">
+            <DollarSign className="mr-2 h-4 w-4" />
+            Add Payment
+          </Button>
+          <Button variant="outline">
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Client
+          </Button>
+          <Button>
+            <CalendarPlus className="mr-2 h-4 w-4" />
+            Book Appointment
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -153,21 +174,6 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
                 <Phone className="h-5 w-5 text-muted-foreground" />
                 <span className="text-muted-foreground">{client.phone}</span>
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Client Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2">
-              <Button>
-                <CalendarPlus className="mr-2 h-4 w-4" />
-                Book New Appointment
-              </Button>
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Client Profile
-              </Button>
             </CardContent>
           </Card>
         </div>
@@ -272,13 +278,17 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
                       <TableRow>
                         <TableHead>Service Name</TableHead>
                         <TableHead>Times Booked</TableHead>
-                        <TableHead className="text-right">Total Spent</TableHead>
+                        <TableHead className="text-right">
+                          Total Spent
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {servicesHistory.map((service) => (
                         <TableRow key={service.name}>
-                          <TableCell className="font-medium">{service.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {service.name}
+                          </TableCell>
                           <TableCell>{service.count}</TableCell>
                           <TableCell className="text-right">
                             ${service.total.toFixed(2)}
