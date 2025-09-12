@@ -110,18 +110,18 @@ export function ClientsList() {
                 <TableHead>Last Visit</TableHead>
                 <TableHead>Total Appointments</TableHead>
                 <TableHead className="text-right">Total Spent</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {clients.map((client) => (
                 <TableRow
                   key={client.email}
+                  className="hover:bg-muted/50 cursor-pointer"
                 >
                   <TableCell>
                     <Link
                       href={`/clients/${encodeURIComponent(client.email)}`}
-                      className="flex items-center gap-3 w-full hover:underline"
+                      className="flex items-center gap-3 w-full"
                     >
                       <Avatar className="h-9 w-9">
                         <AvatarImage
@@ -157,14 +157,6 @@ export function ClientsList() {
                   <TableCell>{client.appointments}</TableCell>
                   <TableCell className="text-right">
                     ${client.totalSpent.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="outline" size="sm" asChild>
-                       <Link href={`/appointments/book/${encodeURIComponent(client.email)}`}>
-                          <CalendarPlus className="mr-2 h-4 w-4" />
-                          Book
-                       </Link>
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

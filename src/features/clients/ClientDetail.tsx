@@ -19,26 +19,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { appointments, mockCustomers } from "@/lib/placeholder-data";
+import { appointments } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
-import { Mail, Phone, Edit, MessageSquare, CalendarPlus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { Mail, Phone, Edit, CalendarPlus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-// Simplified Customer type to match placeholder data
 type Customer = {
   id: string;
   phone: string;
@@ -47,9 +32,6 @@ type Customer = {
 };
 
 export function ClientDetail({ client }: { client: Customer | undefined }) {
-  const { toast } = useToast();
-  const [message, setMessage] = useState("");
-
   if (!client) {
     return (
       <Card>
@@ -96,139 +78,115 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
     }
   };
 
-  const handleSendMessage = () => {
-    console.log("Sending message:", message);
-    toast({
-      title: "Message Sent!",
-      description: `Your message has been sent to ${client.name}.`,
-    });
-    setMessage("");
-  };
-
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage
-              src={`https://picsum.photos/seed/${client.name}/100`}
-              alt={client.name}
-            />
-            <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="text-4xl font-headline font-bold">{client.name}</h1>
-            <div className="flex items-center gap-4 text-muted-foreground mt-2">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                <span>{client.email}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                <span>{client.phone}</span>
-              </div>
-            </div>
-            <div className="flex gap-2 mt-2">
-              {tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className={cn(getTagColor(tag))}
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-           <Button asChild>
-            <Link href={`/appointments/book/${encodeURIComponent(client.email)}`}>
-              <CalendarPlus className="mr-2 h-4 w-4" />
-              Book Appointment
-            </Link>
-          </Button>
-          <Button variant="outline">
-            <Edit className="mr-2 h-4 w-4" />
-            Edit Profile
-          </Button>
-        </div>
+       <div className="w-full flex justify-start">
+        <Button variant="ghost" asChild>
+          <Link href="/clients">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Client List
+          </Link>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Appointments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">{clientAppointments.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Spent</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">${totalSpent.toFixed(2)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Last Visit</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-4xl font-bold">
-              {clientAppointments.length > 0 ? [...clientAppointments].sort(
-                (a, b) =>
-                  new Date(b.date).getTime() - new Date(a.date).getTime()
-              )[0].date : 'N/A'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column */}
+        <div className="lg:col-span-1 flex flex-col gap-8">
+          <Card>
+            <CardHeader className="items-center text-center">
+              <Avatar className="h-24 w-24 mb-4">
+                <AvatarImage
+                  src={`https://picsum.photos/seed/${client.name}/150`}
+                  alt={client.name}
+                />
+                <AvatarFallback className="text-3xl">{client.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <CardTitle className="text-2xl">{client.name}</CardTitle>
+              <div className="flex gap-2 mt-2">
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className={cn("text-sm", getTagColor(tag))}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </CardHeader>
+            <CardContent className="text-sm space-y-4">
+               <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-muted-foreground">{client.email}</span>
+               </div>
+                <div className="flex items-center gap-3">
+                    <Phone className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{client.phone}</span>
+                </div>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+                <CardTitle>Client Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-2">
+                <Button>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Book New Appointment
+                </Button>
+                <Button variant="outline">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Client Profile
+                </Button>
+            </CardContent>
+           </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Appointment History</CardTitle>
-          <CardDescription>
-            A record of {client.name}'s past appointments.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Service</TableHead>
-                <TableHead>Staff</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {clientAppointments.length > 0 ? (
-                clientAppointments.map((apt) => (
-                  <TableRow key={apt.id}>
-                    <TableCell>{apt.date}</TableCell>
-                    <TableCell>{apt.time}</TableCell>
-                    <TableCell className="font-medium">{apt.service}</TableCell>
-                    <TableCell>{apt.staff}</TableCell>
-                    <TableCell className="text-right">
-                      ${apt.price.toFixed(2)}
-                    </TableCell>
+        {/* Right Column */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Appointment History</CardTitle>
+              <CardDescription>
+                A record of {client.name}'s past appointments.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Staff</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center h-24">
-                    No appointment history for this client.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {clientAppointments.length > 0 ? (
+                    clientAppointments.map((apt) => (
+                      <TableRow key={apt.id}>
+                        <TableCell>{apt.date}</TableCell>
+                        <TableCell className="font-medium">{apt.service}</TableCell>
+                        <TableCell>{apt.staff}</TableCell>
+                        <TableCell className="text-right">
+                          ${apt.price.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center h-24">
+                        No appointment history for this client.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
+

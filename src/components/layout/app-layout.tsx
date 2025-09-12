@@ -37,7 +37,6 @@ import {
   User as UserIcon,
   Users,
   Briefcase,
-  CalendarPlus,
   Building,
   Sun,
   Moon,
@@ -60,15 +59,14 @@ type User = {
 
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
-  { href: "/appointments", icon: CalendarPlus, label: "Appointments" },
+  { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
+  { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
   { href: "/services", icon: Scissors, label: "Services" },
   { href: "/deals", icon: Package, label: "Deals" },
   { href: "/promotions", icon: Tag, label: "Promotions" },
-  { href: "/salons", icon: Building, label: "Salons", roles: ["SUPER_ADMIN"]},
-  { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
   { href: "/staff", icon: Briefcase, label: "Staff" },
-  { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
   { href: "/billing", icon: CreditCard, label: "Billing" },
+  { href: "/salons", icon: Building, label: "Salons", roles: ["SUPER_ADMIN"]},
 ];
 
 export function AppLayout({ children, user }: { children: React.ReactNode, user: User }) {
