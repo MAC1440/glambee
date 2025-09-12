@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Select from "react-select";
+import Select, { StylesConfig } from "react-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -56,6 +56,45 @@ const groupedOptions = [
   },
 ];
 
+const customSelectStyles: StylesConfig<any, boolean> = {
+  control: (provided) => ({
+    ...provided,
+    backgroundColor: 'hsl(var(--input))',
+    borderColor: 'hsl(var(--border))',
+    color: 'hsl(var(--foreground))',
+    minHeight: '40px',
+  }),
+  menu: (provided) => ({
+    ...provided,
+    backgroundColor: 'hsl(var(--popover))',
+    borderColor: 'hsl(var(--border))',
+  }),
+  option: (provided, state) => ({
+    ...provided,
+    backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'hsl(var(--popover))',
+    color: 'hsl(var(--popover-foreground))',
+    ':active': {
+      backgroundColor: 'hsl(var(--accent))',
+    },
+  }),
+  singleValue: (provided) => ({
+    ...provided,
+    color: 'hsl(var(--foreground))',
+  }),
+  groupHeading: (provided) => ({
+    ...provided,
+    color: 'hsl(var(--muted-foreground))',
+  }),
+  input: (provided) => ({
+    ...provided,
+    color: 'hsl(var(--foreground))',
+  }),
+  placeholder: (provided) => ({
+    ...provided,
+    color: 'hsl(var(--muted-foreground))',
+  }),
+};
+
 
 export function ServiceSelection({ onAddToCart }: ServiceSelectionProps) {
   const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
@@ -92,6 +131,7 @@ export function ServiceSelection({ onAddToCart }: ServiceSelectionProps) {
             onChange={handleServiceChange}
             placeholder="Search for a service or deal..."
             isClearable
+            styles={customSelectStyles}
           />
         </div>
 
@@ -104,6 +144,7 @@ export function ServiceSelection({ onAddToCart }: ServiceSelectionProps) {
               onChange={(option) => setSelectedArtist(option)}
               placeholder="Select an artist..."
               isClearable
+              styles={customSelectStyles}
             />
           </div>
         )}
