@@ -7,6 +7,7 @@ import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CustomToolbar } from './Toolbar';
 import { useState } from 'react';
+import type { SlotInfo } from 'react-big-calendar';
 
 const locales = {
   'en-US': enUS,
@@ -19,13 +20,6 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales,
 });
-
-type SlotInfo = {
-    start: Date;
-    end: Date;
-    slots: Date[] | string[];
-    action: 'select' | 'click' | 'doubleClick';
-}
 
 export function CalendarView({ events, onSelectSlot }: { events: any[], onSelectSlot?: (slotInfo: SlotInfo) => void }) {
   const [view, setView] = useState<View>(Views.WEEK);

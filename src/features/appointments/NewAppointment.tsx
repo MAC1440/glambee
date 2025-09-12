@@ -12,6 +12,7 @@ import { X, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeSelection } from "./TimeSelection";
+import type { SlotInfo } from 'react-big-calendar';
 
 export function NewAppointment({ appointments }: { appointments: ScheduleAppointment[] }) {
   const { toast } = useToast();
@@ -45,6 +46,14 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
         variant: "destructive"
     });
   }
+
+  const handleSlotSelect = (slotInfo: SlotInfo) => {
+    setSelectedSlot({ start: slotInfo.start, end: slotInfo.end });
+    toast({
+      title: "Time Slot Selected",
+      description: `Selected start time: ${slotInfo.start.toLocaleTimeString()}`,
+    });
+  };
 
   const handleBookAllAppointments = () => {
     if (!selectedSlot) {
@@ -103,7 +112,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
             <h1 className="text-4xl font-headline font-bold">Book Appointment</h1>
             <p className="text-muted-foreground mt-2">
             {selectedSlot 
-                ? `Selected slot starts at: ${selectedSlot.start.toLocaleTimeString()}` 
+                ? `Selected slot starts at: ${selectedSlot.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` 
                 : "Select a time on the calendar to book."
             }
             </p>
@@ -143,7 +152,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
 
       {/* Right Column: Calendar and Time Selection */}
       <div className="lg:col-span-2">
-        <Tabs defaultValue="time">
+        <Tabs defaultValue="schedule">
             <TabsList>
                 <TabsTrigger value="time">Select Time</TabsTrigger>
                 <TabsTrigger value="schedule">Full Schedule</TabsTrigger>
@@ -155,7 +164,8 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
                 <Card className="h-full">
                     <CardContent className="p-2 md:p-4 h-full">
                         <CalendarView 
-                            events={calendarEvents} 
+                            events={calendarEvents}
+                            onSelectSlot={handleSlotSelect}
                         />
                     </CardContent>
                 </Card>
