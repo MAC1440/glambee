@@ -2,53 +2,51 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Select from "react-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarView } from "@/features/staff/schedule/CalendarView";
 import { ServiceSelection, type CartItem } from "@/features/checkout/ServiceSelection";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
-import { staff } from "@/lib/placeholder-data";
-import { X, User, Clock } from "lucide-react";
+import { X, Clock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeSelection } from "./TimeSelection";
 import type { SlotInfo } from 'react-big-calendar';
 import { format } from "date-fns";
-import { Label } from "@/components/ui/label";
-
-type ArtistOption = {
-  value: string;
-  label: string;
-};
 
 export function NewAppointment({ appointments }: { appointments: ScheduleAppointment[] }) {
   const { toast } = useToast();
   const [newAppointments, setNewAppointments] = useState<ScheduleAppointment[]>(appointments);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
-  const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(null);
-
-  const artistOptions = useMemo(() => {
-    return staff.map(s => ({ value: s.id, label: s.name }));
-  }, []);
 
   const calendarEvents = useMemo(() => {
-    const filteredAppointments = selectedArtist 
-      ? newAppointments.filter(apt => apt.staffId === selectedArtist.value)
-      : newAppointments;
+    // Get unique artist IDs from the services-to-book list
+    const selectedArtistIds = new Set(
+      servicesToBook.map(item => item.artist?.value).filter(Boolean)
+    );
 
-    return filteredAppointments.map((apt) => {
-      const staffMember = staff.find(s => s.id === apt.staffId);
-      return {
+    // If no artists are selected in the list, show all appointments
+    if (selectedArtistIds.size === 0) {
+      return newAppointments.map((apt) => ({
         title: `${apt.service} - ${apt.customerName}`,
         start: apt.start,
         end: apt.end,
-        resource: { ...apt, staffName: staffMember?.name || 'Unknown' },
-      };
-    });
-  }, [newAppointments, selectedArtist]);
+        resource: apt,
+      }));
+    }
+
+    // Filter appointments to show only those for the selected artists
+    const filteredAppointments = newAppointments.filter(apt => selectedArtistIds.has(apt.staffId));
+
+    return filteredAppointments.map((apt) => ({
+      title: `${apt.service} - ${apt.customerName}`,
+      start: apt.start,
+      end: apt.end,
+      resource: apt,
+    }));
+  }, [newAppointments, servicesToBook]);
 
   const handleAddServiceToList = (item: CartItem) => {
     setServicesToBook(prev => [...prev, item]);
@@ -93,23 +91,18 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
       });
       return;
     }
-     if (!selectedArtist) {
-      toast({
-        title: "No Artist Selected",
-        description: "Please select an artist to assign the appointments to.",
-        variant: "destructive",
-      });
-      return;
-    }
     
     let cumulativeEndTime = new Date(selectedSlot.start);
+    let allArtistsAssigned = true;
 
     const appointmentsToAdd = servicesToBook.map(item => {
+        if (!item.artist) {
+            allArtistsAssigned = false;
+        }
         const serviceDuration = item.service.duration || 30; // Default to 30 mins if not specified
         const appointmentStart = new Date(cumulativeEndTime);
         const appointmentEnd = new Date(appointmentStart.getTime() + serviceDuration * 60000);
         
-        // Update cumulative end time for the next appointment
         cumulativeEndTime = appointmentEnd;
 
         return {
@@ -119,15 +112,25 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
             service: item.service.name,
             start: appointmentStart,
             end: appointmentEnd,
-            staffId: selectedArtist.value,
+            staffId: item.artist?.value || '',
         };
     });
+
+    if (!allArtistsAssigned) {
+         toast({
+            title: "Artist Not Assigned",
+            description: "Please select an artist for each service before booking.",
+            variant: "destructive",
+        });
+        return;
+    }
+
 
     setNewAppointments(prev => [...prev, ...appointmentsToAdd]);
     
     toast({
       title: "Appointments Booked!",
-      description: `${servicesToBook.length} service(s) have been scheduled with ${selectedArtist.label} starting at ${format(selectedSlot.start, "p")}.`,
+      description: `${servicesToBook.length} service(s) have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
     });
 
     setServicesToBook([]); // Clear the list
@@ -170,16 +173,6 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
         </div>
 
         <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Artist</Label>
-              <Select
-                options={artistOptions}
-                value={selectedArtist}
-                onChange={(option) => setSelectedArtist(option as ArtistOption)}
-                placeholder="Select an artist to see their schedule..."
-                isClearable
-              />
-            </div>
           <ServiceSelection onAddToCart={handleAddServiceToList} buttonText="Add Service to List" />
         </div>
 
@@ -187,13 +180,14 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
         {servicesToBook.length > 0 && (
              <Card>
                 <CardHeader>
-                    <CardTitle>Services for {selectedArtist?.label || '...'}</CardTitle>
+                    <CardTitle>Services to Book</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     {servicesWithTime.map((item, index) => (
                         <div key={index} className="flex justify-between items-start text-sm p-2 rounded-md bg-muted/50">
                             <div>
                                 <p className="font-medium">{item.service.name}</p>
+                                <p className="text-xs text-muted-foreground">{item.artist?.label || 'No artist selected'}</p>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                     <Clock className="h-3 w-3" />
                                     {item.time ? `${format(item.time.start, 'p')} - ${format(item.time.end, 'p')}` : 'Select a start time'}
@@ -205,7 +199,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
                         </div>
                     ))}
                     <Separator className="my-4" />
-                     <Button className="w-full" onClick={handleBookAllAppointments} disabled={!selectedSlot || !selectedArtist}>
+                     <Button className="w-full" onClick={handleBookAllAppointments} disabled={!selectedSlot}>
                         Book All ({servicesToBook.length}) Appointments
                     </Button>
                 </CardContent>
@@ -238,3 +232,5 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
     </div>
   );
 }
+
+    
