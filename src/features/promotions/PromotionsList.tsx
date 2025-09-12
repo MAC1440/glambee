@@ -91,7 +91,7 @@ export function PromotionsList() {
         description: `${newService.name} has been successfully created.`,
       });
     } else if (editingService) {
-      const updatedService = { ...serviceData };
+      const updatedService = { ...serviceData, id: editingService.id };
       setPromotions((prev) =>
         prev.map((s) => (s.id === updatedService.id ? updatedService : s))
       );

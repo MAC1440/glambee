@@ -91,7 +91,7 @@ export function ServicesList() {
         description: `${newService.name} has been successfully created.`,
       });
     } else if (editingService) {
-      const updatedService = { ...serviceData };
+      const updatedService = { ...serviceData, id: editingService.id };
       setServices((prev) =>
         prev.map((s) => (s.id === updatedService.id ? updatedService : s))
       );
@@ -201,7 +201,7 @@ export function ServicesList() {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-getFilteredRowModel: getFilteredRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
