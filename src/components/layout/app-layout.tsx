@@ -68,7 +68,7 @@ const navItems = [
   { href: "/promotions", icon: Tag, label: "Promotions" },
   { href: "/staff", icon: Briefcase, label: "Staff" },
   { href: "/billing", icon: CreditCard, label: "Billing" },
-  { href: "/salons", icon: Building, label: "Salons", roles: ["SUPER_ADMIN"]},
+  { href: "/branches", icon: Building, label: "Branches", roles: ["SUPER_ADMIN"]},
 ];
 
 export function AppLayout({ children, user }: { children: React.ReactNode, user: User }) {

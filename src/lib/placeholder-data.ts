@@ -1,5 +1,5 @@
 
-export const salons = [
+export const branches = [
   {
     id: "salon_01",
     name: "Downtown Studio",
@@ -477,5 +477,3 @@ export const appointments = [
     price: 45.0,
   },
 ];
-
-    
