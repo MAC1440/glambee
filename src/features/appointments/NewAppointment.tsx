@@ -1,18 +1,19 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarView } from "@/features/staff/schedule/CalendarView";
 import { ServiceSelection, type CartItem } from "@/features/checkout/ServiceSelection";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
-import { X, User } from "lucide-react";
+import { X, User, Clock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeSelection } from "./TimeSelection";
 import type { SlotInfo } from 'react-big-calendar';
+import { format } from "date-fns";
 
 export function NewAppointment({ appointments }: { appointments: ScheduleAppointment[] }) {
   const { toast } = useToast();
@@ -28,7 +29,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
       resource: apt,
     };
   });
-  
+
   const handleAddServiceToList = (item: CartItem) => {
     setServicesToBook(prev => [...prev, item]);
      toast({
@@ -51,7 +52,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
     setSelectedSlot({ start: slotInfo.start, end: slotInfo.end });
     toast({
       title: "Time Slot Selected",
-      description: `Selected start time: ${slotInfo.start.toLocaleTimeString()}`,
+      description: `Selected start time: ${format(slotInfo.start, "p")}`,
     });
   };
 
@@ -97,12 +98,33 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
     
     toast({
       title: "Appointments Booked!",
-      description: `${servicesToBook.length} service(s) have been scheduled starting at ${selectedSlot.start.toLocaleTimeString()}.`,
+      description: `${servicesToBook.length} service(s) have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
     });
 
     setServicesToBook([]); // Clear the list
     setSelectedSlot(null); // Reset slot after booking
   };
+  
+  const servicesWithTime = useMemo(() => {
+    if (!selectedSlot) return servicesToBook.map(item => ({ ...item, time: null }));
+
+    let cumulativeEndTime = new Date(selectedSlot.start);
+    return servicesToBook.map(item => {
+      const serviceDuration = item.service.duration || 30;
+      const appointmentStart = new Date(cumulativeEndTime);
+      const appointmentEnd = new Date(appointmentStart.getTime() + serviceDuration * 60000);
+      cumulativeEndTime = appointmentEnd;
+      
+      return {
+        ...item,
+        time: {
+          start: appointmentStart,
+          end: appointmentEnd
+        }
+      };
+    });
+  }, [servicesToBook, selectedSlot]);
+
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
@@ -112,7 +134,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
             <h1 className="text-4xl font-headline font-bold">Book Appointment</h1>
             <p className="text-muted-foreground mt-2">
             {selectedSlot 
-                ? `Selected slot starts at: ${selectedSlot.start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` 
+                ? `Selected slot starts at: ${format(selectedSlot.start, 'p')}` 
                 : "Select a time on the calendar to book."
             }
             </p>
@@ -125,16 +147,20 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
                     <CardTitle>Services to Book</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                    {servicesToBook.map((item, index) => (
+                    {servicesWithTime.map((item, index) => (
                         <div key={index} className="flex justify-between items-start text-sm p-2 rounded-md bg-muted/50">
                             <div>
                                 <p className="font-medium">{item.service.name}</p>
                                 {item.artist && (
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                         <User className="h-3 w-3" />
                                         {item.artist.label}
                                     </p>
                                 )}
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                    <Clock className="h-3 w-3" />
+                                    {item.time ? `${format(item.time.start, 'p')} - ${format(item.time.end, 'p')}` : 'Select a start time'}
+                                </p>
                             </div>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFromList(index)}>
                                 <X className="h-4 w-4" />
@@ -142,7 +168,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
                         </div>
                     ))}
                     <Separator className="my-4" />
-                     <Button className="w-full" onClick={handleBookAllAppointments}>
+                     <Button className="w-full" onClick={handleBookAllAppointments} disabled={!selectedSlot}>
                         Book All ({servicesToBook.length}) Appointments
                     </Button>
                 </CardContent>
