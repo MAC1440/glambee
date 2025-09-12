@@ -26,13 +26,13 @@ export function CustomToolbar(toolbar: ToolbarProps) {
   ];
 
   return (
-    <div className="rbc-toolbar flex-wrap">
+    <div className="rbc-toolbar flex flex-col md:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-2">
         <Button variant="outline" size="icon" onClick={goToBack}><ChevronLeft className="h-4 w-4" /></Button>
         <Button variant="outline" onClick={goToCurrent}>Today</Button>
         <Button variant="outline" size="icon" onClick={goToNext}><ChevronRight className="h-4 w-4" /></Button>
       </div>
-      <span className="rbc-toolbar-label">{toolbar.label}</span>
+      <span className="rbc-toolbar-label order-first md:order-none">{toolbar.label}</span>
       <div className="rbc-btn-group">
         {views.map((v) => (
           <Button
