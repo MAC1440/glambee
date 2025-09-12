@@ -42,6 +42,7 @@ import {
   Moon,
   Tag,
   Package,
+  CalendarPlus,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
@@ -60,6 +61,7 @@ type User = {
 const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
   { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
+  { href: "/appointments", icon: CalendarPlus, label: "Appointments" },
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
   { href: "/services", icon: Scissors, label: "Services" },
   { href: "/deals", icon: Package, label: "Deals" },
