@@ -2,33 +2,53 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Select from "react-select";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarView } from "@/features/staff/schedule/CalendarView";
 import { ServiceSelection, type CartItem } from "@/features/checkout/ServiceSelection";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
+import { staff } from "@/lib/placeholder-data";
 import { X, User, Clock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeSelection } from "./TimeSelection";
 import type { SlotInfo } from 'react-big-calendar';
 import { format } from "date-fns";
+import { Label } from "@/components/ui/label";
+
+type ArtistOption = {
+  value: string;
+  label: string;
+};
 
 export function NewAppointment({ appointments }: { appointments: ScheduleAppointment[] }) {
   const { toast } = useToast();
   const [newAppointments, setNewAppointments] = useState<ScheduleAppointment[]>(appointments);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
+  const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(null);
 
-  const calendarEvents = newAppointments.map((apt) => {
-    return {
-      title: `${apt.service} - ${apt.customerName}`,
-      start: apt.start,
-      end: apt.end,
-      resource: apt,
-    };
-  });
+  const artistOptions = useMemo(() => {
+    return staff.map(s => ({ value: s.id, label: s.name }));
+  }, []);
+
+  const calendarEvents = useMemo(() => {
+    const filteredAppointments = selectedArtist 
+      ? newAppointments.filter(apt => apt.staffId === selectedArtist.value)
+      : newAppointments;
+
+    return filteredAppointments.map((apt) => {
+      const staffMember = staff.find(s => s.id === apt.staffId);
+      return {
+        title: `${apt.service} - ${apt.customerName}`,
+        start: apt.start,
+        end: apt.end,
+        resource: { ...apt, staffName: staffMember?.name || 'Unknown' },
+      };
+    });
+  }, [newAppointments, selectedArtist]);
 
   const handleAddServiceToList = (item: CartItem) => {
     setServicesToBook(prev => [...prev, item]);
@@ -73,6 +93,14 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
       });
       return;
     }
+     if (!selectedArtist) {
+      toast({
+        title: "No Artist Selected",
+        description: "Please select an artist to assign the appointments to.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     let cumulativeEndTime = new Date(selectedSlot.start);
 
@@ -91,6 +119,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
             service: item.service.name,
             start: appointmentStart,
             end: appointmentEnd,
+            staffId: selectedArtist.value,
         };
     });
 
@@ -98,7 +127,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
     
     toast({
       title: "Appointments Booked!",
-      description: `${servicesToBook.length} service(s) have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
+      description: `${servicesToBook.length} service(s) have been scheduled with ${selectedArtist.label} starting at ${format(selectedSlot.start, "p")}.`,
     });
 
     setServicesToBook([]); // Clear the list
@@ -139,24 +168,32 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
             }
             </p>
         </div>
-        <ServiceSelection onAddToCart={handleAddServiceToList} buttonText="Add Service to List" />
+
+        <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Artist</Label>
+              <Select
+                options={artistOptions}
+                value={selectedArtist}
+                onChange={(option) => setSelectedArtist(option as ArtistOption)}
+                placeholder="Select an artist to see their schedule..."
+                isClearable
+              />
+            </div>
+          <ServiceSelection onAddToCart={handleAddServiceToList} buttonText="Add Service to List" />
+        </div>
+
 
         {servicesToBook.length > 0 && (
              <Card>
                 <CardHeader>
-                    <CardTitle>Services to Book</CardTitle>
+                    <CardTitle>Services for {selectedArtist?.label || '...'}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                     {servicesWithTime.map((item, index) => (
                         <div key={index} className="flex justify-between items-start text-sm p-2 rounded-md bg-muted/50">
                             <div>
                                 <p className="font-medium">{item.service.name}</p>
-                                {item.artist && (
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                        <User className="h-3 w-3" />
-                                        {item.artist.label}
-                                    </p>
-                                )}
                                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                     <Clock className="h-3 w-3" />
                                     {item.time ? `${format(item.time.start, 'p')} - ${format(item.time.end, 'p')}` : 'Select a start time'}
@@ -168,7 +205,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
                         </div>
                     ))}
                     <Separator className="my-4" />
-                     <Button className="w-full" onClick={handleBookAllAppointments} disabled={!selectedSlot}>
+                     <Button className="w-full" onClick={handleBookAllAppointments} disabled={!selectedSlot || !selectedArtist}>
                         Book All ({servicesToBook.length}) Appointments
                     </Button>
                 </CardContent>

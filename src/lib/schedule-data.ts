@@ -6,6 +6,7 @@ export type ScheduleAppointment = {
   service: string;
   start: Date;
   end: Date;
+  staffId: string;
 };
 
 const today = new Date();
@@ -29,6 +30,7 @@ export const scheduleAppointments: ScheduleAppointment[] = [
     service: "Balayage / Ombré",
     start: setTimeToDate(today, 9, 0),
     end: setTimeToDate(today, 10, 30),
+    staffId: "staff_01",
   },
   {
     id: "sch_apt_02",
@@ -37,6 +39,7 @@ export const scheduleAppointments: ScheduleAppointment[] = [
     service: "Signature Haircut & Style",
     start: setTimeToDate(today, 11, 0),
     end: setTimeToDate(today, 12, 0),
+    staffId: "staff_02",
   },
   {
     id: "sch_apt_03",
@@ -45,6 +48,7 @@ export const scheduleAppointments: ScheduleAppointment[] = [
     service: "Luxury Manicure",
     start: setTimeToDate(today, 14, 0),
     end: setTimeToDate(today, 15, 0),
+    staffId: "staff_03",
   },
   {
     id: "sch_apt_04",
@@ -53,6 +57,7 @@ export const scheduleAppointments: ScheduleAppointment[] = [
     service: "Full Color & Gloss",
     start: setTimeToDate(yesterday, 10, 0),
     end: setTimeToDate(yesterday, 12, 0),
+    staffId: "staff_01",
   },
   {
     id: "sch_apt_05",
@@ -61,6 +66,7 @@ export const scheduleAppointments: ScheduleAppointment[] = [
     service: "Spa Pedicure",
     start: setTimeToDate(tomorrow, 13, 0),
     end: setTimeToDate(tomorrow, 14, 0),
+    staffId: "staff_04",
   },
    {
     id: "sch_apt_06",
@@ -69,5 +75,15 @@ export const scheduleAppointments: ScheduleAppointment[] = [
     service: "Signature Haircut & Style",
     start: setTimeToDate(tomorrow, 15, 0),
     end: setTimeToDate(tomorrow, 16, 0),
+    staffId: "staff_02",
+  },
+    {
+    id: "sch_apt_07",
+    customerName: "Olivia Brown",
+    customerAvatar: "https://picsum.photos/seed/Olivia Brown/100",
+    service: "Deep Conditioning Treatment",
+    start: setTimeToDate(today, 12, 0),
+    end: setTimeToDate(today, 12, 30),
+    staffId: "staff_02",
   },
 ];

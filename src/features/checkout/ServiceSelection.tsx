@@ -33,7 +33,6 @@ type ServiceOption = {
 
 export type CartItem = {
     service: Service;
-    artist: ArtistOption | null;
 }
 
 type ServiceSelectionProps = {
@@ -99,22 +98,15 @@ const customSelectStyles: StylesConfig<any, boolean> = {
 
 export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: ServiceSelectionProps) {
   const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
-  const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(null);
-
-  const artistOptions = useMemo(() => {
-    return selectedService?.value.artists || [];
-  }, [selectedService]);
 
   const handleServiceChange = (option: ServiceOption | null) => {
     setSelectedService(option);
-    setSelectedArtist(null); // Reset artist when service changes
   };
   
   const handleAddClick = () => {
     if (selectedService) {
-        onAddToCart({ service: selectedService.value, artist: selectedArtist });
+        onAddToCart({ service: selectedService.value });
         setSelectedService(null);
-        setSelectedArtist(null);
     }
   }
 
@@ -135,20 +127,6 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: Se
             styles={customSelectStyles}
           />
         </div>
-
-        {selectedService && artistOptions.length > 0 && (
-          <div className="space-y-2">
-            <Label>Artist (Optional)</Label>
-            <Select
-              options={artistOptions}
-              value={selectedArtist}
-              onChange={(option) => setSelectedArtist(option)}
-              placeholder="Select an artist..."
-              isClearable
-              styles={customSelectStyles}
-            />
-          </div>
-        )}
         
         <Button 
             className="w-full"
