@@ -58,7 +58,7 @@ type Service = {
   originalPrice: number | null;
   duration: number | null;
   image: string;
-  category: "Service" | "Deal" | "Discount";
+  category: "Service" | "Deal" | "Promotion";
   includedServices?: { value: string; label: string }[];
 };
 
@@ -82,9 +82,9 @@ const ServiceCard = ({
         className="object-cover"
         data-ai-hint="hair salon service"
       />
-      {service.category === "Discount" && (
+      {service.category === "Promotion" && (
         <Badge className="absolute top-2 right-2 bg-red-500 text-white border-red-500">
-          Discount
+          Promotion
         </Badge>
       )}
       {service.category === "Deal" && (
@@ -215,7 +215,7 @@ export function Services() {
   };
 
 
-  const discounts = services.filter((s) => s.category === "Discount");
+  const promotions = services.filter((s) => s.category === "Promotion");
   const deals = services.filter((s) => s.category === "Deal");
   const individualServices = services.filter((s) => s.category === "Service");
 
@@ -262,7 +262,7 @@ export function Services() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleOpenDialog('add', 'Discount')}>
+                <DropdownMenuItem onClick={() => handleOpenDialog('add', 'Promotion')}>
                   Add Promotion/Discount
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleOpenDialog('add', 'Deal')}>
@@ -276,7 +276,7 @@ export function Services() {
           )}
         </div>
 
-        {renderServiceSection("Promotions & Discounts", discounts)}
+        {renderServiceSection("Promotions & Discounts", promotions)}
         {renderServiceSection("Package Deals", deals)}
         {renderServiceSection("Individual Services", individualServices)}
       </div>

@@ -41,10 +41,11 @@ import {
   Building,
   Sun,
   Moon,
+  Tag,
+  Package,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
-import { Badge } from "@/components/ui/badge";
 import { useTheme } from "next-themes";
 
 // Mock user type for prototype
@@ -61,6 +62,8 @@ const navItems = [
   { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
   { href: "/appointments", icon: CalendarPlus, label: "Appointments" },
   { href: "/services", icon: Scissors, label: "Services" },
+  { href: "/deals", icon: Package, label: "Deals" },
+  { href: "/promotions", icon: Tag, label: "Promotions" },
   { href: "/salons", icon: Building, label: "Salons", roles: ["SUPER_ADMIN"]},
   { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
   { href: "/staff", icon: Briefcase, label: "Staff" },

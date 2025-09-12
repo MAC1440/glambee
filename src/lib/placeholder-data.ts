@@ -43,7 +43,7 @@ export const users = [
 ];
 
 export const services = [
-  // Discounts
+  // Promotions
   {
     id: "promo_01",
     name: "20% Off First Visit",
@@ -52,7 +52,7 @@ export const services = [
     originalPrice: null,
     duration: null,
     image: "https://picsum.photos/seed/promo-new/600/400",
-    category: "Discount",
+    category: "Promotion",
   },
   {
     id: "promo_02",
@@ -62,7 +62,7 @@ export const services = [
     originalPrice: null,
     duration: null,
     image: "https://picsum.photos/seed/promo-refer/600/400",
-    category: "Discount",
+    category: "Promotion",
   },
   // Deals
   {

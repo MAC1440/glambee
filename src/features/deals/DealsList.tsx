@@ -1,0 +1,288 @@
+
+"use client";
+
+import * as React from "react";
+import {
+  CaretSortIcon,
+  ChevronDownIcon,
+} from "@radix-ui/react-icons";
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { services as allServices } from "@/lib/placeholder-data";
+import { ServiceFormDialog } from "../services/ServiceFormDialog";
+import { DataTable } from "@/components/ui/data-table";
+import { DebouncedInput } from "@/components/ui/debounced-input";
+
+type Service = {
+  id: string;
+  name: string;
+  description: string;
+  price: number | string;
+  originalPrice: number | null;
+  duration: number | null;
+  image: string;
+  category: "Service" | "Deal" | "Promotion";
+  includedServices?: { value: string; label: string }[];
+};
+
+export function DealsList() {
+  const { toast } = useToast();
+  const [deals, setDeals] = React.useState<Service[]>(
+    allServices.filter((s) => s.category === "Deal")
+  );
+
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
+  const [editingService, setEditingService] = React.useState<
+    Service | undefined
+  >(undefined);
+
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+  
+  const [globalFilter, setGlobalFilter] = React.useState("");
+
+  const handleOpenDialog = (
+    mode: "add" | "edit",
+    service?: Service
+  ) => {
+    setDialogMode(mode);
+    setEditingService(service);
+    setDialogOpen(true);
+  };
+
+  const handleSave = (serviceData: Service) => {
+    if (dialogMode === "add") {
+      const newService = {
+        ...serviceData,
+        id: `deal_${Date.now()}`,
+      };
+      setDeals((prev) => [newService, ...prev]);
+      toast({
+        title: "Deal Added",
+        description: `${newService.name} has been successfully created.`,
+      });
+    } else if (editingService) {
+      const updatedService = { ...serviceData };
+      setDeals((prev) =>
+        prev.map((s) => (s.id === updatedService.id ? updatedService : s))
+      );
+      toast({
+        title: "Deal Updated",
+        description: `${updatedService.name}'s details have been updated.`,
+      });
+    }
+  };
+
+  const handleDelete = (serviceId: string) => {
+    const serviceName = deals.find((s) => s.id === serviceId)?.name || "The deal";
+    setDeals((prev) => prev.filter((s) => s.id !== serviceId));
+    toast({
+      title: "Deal Deleted",
+      description: `${serviceName} has been removed.`,
+    });
+  };
+
+  const columns: ColumnDef<Service>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Name
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
+    },
+     {
+      accessorKey: "price",
+      header: () => <div className="text-right">Price</div>,
+      cell: ({ row }) => {
+        const price = parseFloat(row.getValue("price"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(price);
+
+        return <div className="text-right font-medium">{formatted}</div>;
+      },
+    },
+     {
+      accessorKey: "originalPrice",
+      header: () => <div className="text-right">Original Price</div>,
+      cell: ({ row }) => {
+        const price = row.getValue("originalPrice") as number | null;
+        if (!price) return <div className="text-right text-muted-foreground">N/A</div>;
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(price);
+
+        return <div className="text-right font-medium line-through">{formatted}</div>;
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const deal = row.original;
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleOpenDialog("edit", deal)}>
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleDelete(deal.id)} className="text-red-600">
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  const table = useReactTable({
+    data: deals,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: "includesString",
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      globalFilter,
+    },
+  });
+
+  return (
+    <>
+    <div className="flex flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <div className="text-left">
+          <h1 className="text-4xl font-headline font-bold">Package Deals</h1>
+          <p className="text-muted-foreground mt-2">
+            Bundle services together for special value.
+          </p>
+        </div>
+        <Button onClick={() => handleOpenDialog("add")}>
+          <PlusCircle className="mr-2" /> Add Deal
+        </Button>
+      </div>
+      
+       <div className="flex items-center justify-between">
+          <DebouncedInput
+            value={globalFilter ?? ""}
+            onValueChange={(value) => setGlobalFilter(String(value))}
+            className="max-w-sm"
+            placeholder="Search all columns..."
+          />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <DataTable columns={columns} data={deals} />
+    </div>
+    <ServiceFormDialog
+        isOpen={dialogOpen}
+        onOpenChange={setDialogOpen}
+        mode={dialogMode}
+        category="Deal"
+        service={editingService}
+        onSave={handleSave}
+        individualServices={allServices.filter(s => s.category === 'Service')}
+      />
+    </>
+  );
+}

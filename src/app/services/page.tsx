@@ -1,5 +1,6 @@
-import { Services } from "@/features/services/Services";
+
+import { ServicesList } from "@/features/services/ServicesList";
 
 export default function ServicesPage() {
-  return <Services />;
+  return <ServicesList />;
 }

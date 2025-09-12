@@ -35,7 +35,7 @@ type Service = {
   originalPrice: number | null;
   duration: number | null;
   image: string;
-  category: "Service" | "Deal" | "Discount";
+  category: "Service" | "Deal" | "Promotion";
   includedServices?: { value: string; label: string }[];
 };
 
@@ -56,7 +56,7 @@ const formSchema = z.object({
   price: z.union([z.string(), z.number()]),
   originalPrice: z.union([z.number(), z.null()]),
   image: z.string().url({ message: "Please enter a valid image URL." }),
-  category: z.enum(["Service", "Deal", "Discount"]),
+  category: z.enum(["Service", "Deal", "Promotion"]),
   duration: z.union([z.number(), z.null()]),
   includedServices: z.array(z.object({
     value: z.string(),
@@ -125,7 +125,7 @@ export function ServiceFormDialog({
         id: service?.id || undefined,
         name: service?.name || "",
         description: service?.description || "",
-        price: service?.price || (category === "Discount" ? "" : 0),
+        price: service?.price || (category === "Promotion" ? "" : 0),
         originalPrice: service?.originalPrice || null,
         image: service?.image || `https://picsum.photos/seed/${Math.random()}/600/400`,
         category: service?.category || category,
@@ -146,8 +146,8 @@ export function ServiceFormDialog({
       ? `Fill out the details to add a new ${category.toLowerCase()} to your menu.`
       : "Update the details for this item.";
 
-  const priceLabel = category === 'Discount' ? 'Discount Value (e.g., "20% Off")' : "Price ($)";
-  const priceType = category === 'Discount' ? 'text' : 'number';
+  const priceLabel = category === 'Promotion' ? 'Discount Value (e.g., "20% Off")' : "Price ($)";
+  const priceType = category === 'Promotion' ? 'text' : 'number';
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -247,6 +247,27 @@ export function ServiceFormDialog({
                         value={field.value ?? ""}
                         onChange={e => field.onChange(parseFloat(e.target.value) || null)}
                         disabled
+                       />
+                     </FormControl>
+                     <FormMessage />
+                   </FormItem>
+                 )}
+               />
+              )}
+
+               {category === 'Service' && (
+                 <FormField
+                 control={form.control}
+                 name="duration"
+                 render={({ field }) => (
+                   <FormItem>
+                     <FormLabel>Duration (minutes)</FormLabel>
+                     <FormControl>
+                       <Input 
+                        type="number"
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={e => field.onChange(parseInt(e.target.value) || null)}
                        />
                      </FormControl>
                      <FormMessage />
