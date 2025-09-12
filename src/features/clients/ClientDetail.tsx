@@ -29,15 +29,20 @@ import {
   CalendarPlus,
   ArrowLeft,
   DollarSign,
+  Cake,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
+import { format, parseISO, differenceInYears } from "date-fns";
 
 type Customer = {
   id: string;
   phone: string;
   name: string;
   email: string;
+  gender: string;
+  dob: string;
 };
 
 export function ClientDetail({ client }: { client: Customer | undefined }) {
@@ -113,6 +118,8 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
     }));
   }, [clientAppointments]);
 
+  const age = client.dob ? differenceInYears(new Date(), parseISO(client.dob)) : null;
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex w-full items-center justify-between">
@@ -173,6 +180,16 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-muted-foreground" />
                 <span className="text-muted-foreground">{client.phone}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <span className="text-muted-foreground">{client.gender}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Cake className="h-5 w-5 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  {client.dob ? `${format(parseISO(client.dob), "MMMM d, yyyy")} (${age} years old)` : "Not specified"}
+                </span>
               </div>
             </CardContent>
           </Card>

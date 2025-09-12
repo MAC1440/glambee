@@ -86,6 +86,10 @@ export const services = [
     image: "https://picsum.photos/seed/mani-pedi/600/400",
     category: "Deal",
     artists: staff.filter(s => s.department === 'Nail Artist').map(s => ({ value: s.id, label: s.name })), // Only nail artists
+    includedServices: [
+        { value: "svc_04", label: "Luxury Manicure" },
+        { value: "svc_05", label: "Spa Pedicure" }
+    ]
   },
   {
     id: "deal_02",
@@ -97,6 +101,11 @@ export const services = [
     image: "https://picsum.photos/seed/hair-package/600/400",
     category: "Deal",
     artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })), // Only stylists
+    includedServices: [
+        { value: "svc_01", label: "Signature Haircut & Style" },
+        { value: "svc_02", label: "Full Color & Gloss" },
+        { value: "svc_06", label: "Deep Conditioning Treatment" }
+    ]
   },
   // Individual Services
   {
@@ -185,6 +194,8 @@ export const mockCustomers = [
     name: "Sophia Davis",
     email: "sophia@example.com",
     salonId: "salon_01",
+    gender: "Female",
+    dob: "1990-05-15",
   },
   {
     id: "cust_02",
@@ -192,6 +203,8 @@ export const mockCustomers = [
     name: "Liam Garcia",
     email: "liam@example.com",
     salonId: "salon_01",
+    gender: "Male",
+    dob: "1988-11-22",
   },
   {
     id: "cust_03",
@@ -199,6 +212,8 @@ export const mockCustomers = [
     name: "Ava Johnson",
     email: "ava@example.com",
     salonId: "salon_02",
+    gender: "Female",
+    dob: "1995-02-10",
   },
   {
     id: "cust_04",
@@ -206,6 +221,8 @@ export const mockCustomers = [
     name: "Noah Brown",
     email: "noah@example.com",
     salonId: "salon_02",
+    gender: "Male",
+    dob: "2001-09-01",
   },
   {
     id: "cust_05",
@@ -213,6 +230,8 @@ export const mockCustomers = [
     name: "Isabella Smith",
     email: "isabella@example.com",
     salonId: "salon_01",
+    gender: "Female",
+    dob: "1998-07-19",
   },
   {
     id: "cust_06",
@@ -220,6 +239,8 @@ export const mockCustomers = [
     name: "James Williams",
     email: "james@example.com",
     salonId: "salon_02",
+    gender: "Male",
+    dob: "1985-03-25",
   },
   {
     id: "cust_07",
@@ -227,6 +248,8 @@ export const mockCustomers = [
     name: "Olivia Jones",
     email: "olivia.jones@example.com",
     salonId: "salon_01",
+    gender: "Female",
+    dob: "1992-12-30",
   },
   {
     id: "cust_08",
@@ -234,6 +257,8 @@ export const mockCustomers = [
     name: "Benjamin Garcia",
     email: "benjamin.garcia@example.com",
     salonId: "salon_02",
+    gender: "Male",
+    dob: "1993-08-14",
   },
   {
     id: "cust_09",
@@ -241,6 +266,8 @@ export const mockCustomers = [
     name: "Mia Martinez",
     email: "mia.martinez@example.com",
     salonId: "salon_01",
+    gender: "Female",
+    dob: "2000-01-20",
   },
   {
     id: "cust_10",
@@ -248,6 +275,8 @@ export const mockCustomers = [
     name: "Ethan Rodriguez",
     email: "ethan.rodriguez@example.com",
     salonId: "salon_02",
+    gender: "Male",
+    dob: "1999-06-05",
   },
   {
     id: "cust_11",
@@ -255,6 +284,8 @@ export const mockCustomers = [
     name: "Abigail Taylor",
     email: "abigail.taylor@example.com",
     salonId: "salon_01",
+    gender: "Female",
+    dob: "1997-04-12",
   },
   {
     id: "cust_12",
@@ -262,6 +293,8 @@ export const mockCustomers = [
     name: "William Anderson",
     email: "william.anderson@example.com",
     salonId: "salon_02",
+    gender: "Male",
+    dob: "1980-10-18",
   },
   {
     id: "cust_13",
@@ -269,6 +302,8 @@ export const mockCustomers = [
     name: "Charlotte Thomas",
     email: "charlotte.thomas@example.com",
     salonId: "salon_01",
+    gender: "Female",
+    dob: "1994-05-28",
   },
   {
     id: "cust_14",
@@ -276,6 +311,8 @@ export const mockCustomers = [
     name: "Daniel White",
     email: "daniel.white@example.com",
     salonId: "salon_02",
+    gender: "Male",
+    dob: "1991-02-17",
   },
   {
     id: "cust_15",
@@ -283,6 +320,8 @@ export const mockCustomers = [
     name: "Harper Harris",
     email: "harper.harris@example.com",
     salonId: "salon_01",
+    gender: "Female",
+    dob: "2002-08-21",
   },
 ];
 
