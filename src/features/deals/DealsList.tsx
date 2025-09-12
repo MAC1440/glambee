@@ -45,6 +45,7 @@ type Service = {
   image: string;
   category: "Service" | "Deal" | "Promotion";
   includedServices?: { value: string; label: string }[];
+  artists?: { value: string; label: string }[];
 };
 
 export function DealsList() {
@@ -286,3 +287,5 @@ export function DealsList() {
     </>
   );
 }
+
+    

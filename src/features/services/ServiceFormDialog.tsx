@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
+import { staff } from "@/lib/placeholder-data";
 
 type Service = {
   id: string;
@@ -37,6 +38,7 @@ type Service = {
   image: string;
   category: "Service" | "Deal" | "Promotion";
   includedServices?: { value: string; label: string }[];
+  artists?: { value: string; label: string }[];
 };
 
 type ServiceFormDialogProps = {
@@ -59,6 +61,10 @@ const formSchema = z.object({
   category: z.enum(["Service", "Deal", "Promotion"]),
   duration: z.union([z.number(), z.null()]),
   includedServices: z.array(z.object({
+    value: z.string(),
+    label: z.string(),
+  })).optional(),
+  artists: z.array(z.object({
     value: z.string(),
     label: z.string(),
   })).optional(),
@@ -94,6 +100,7 @@ export function ServiceFormDialog({
       category: service?.category || category,
       duration: service?.duration || null,
       includedServices: service?.includedServices || [],
+      artists: service?.artists || [],
     },
   });
 
@@ -102,6 +109,10 @@ export function ServiceFormDialog({
   const serviceOptions = useMemo(() => {
     return individualServices.map((s) => ({ value: s.id, label: `${s.name} ($${s.price})` }));
   }, [individualServices]);
+
+  const artistOptions = useMemo(() => {
+    return staff.map(s => ({ value: s.id, label: s.name }));
+  }, []);
 
   useEffect(() => {
     if (category === 'Deal' && includedServices && includedServices.length > 0) {
@@ -131,6 +142,7 @@ export function ServiceFormDialog({
         category: service?.category || category,
         duration: service?.duration || null,
         includedServices: service?.includedServices || [],
+        artists: service?.artists || [],
       });
     }
   }, [isOpen, service, category, form]);
@@ -279,6 +291,25 @@ export function ServiceFormDialog({
 
             <FormField
               control={form.control}
+              name="artists"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned Artists</FormLabel>
+                  <Select
+                    isMulti
+                    options={artistOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    className="text-sm"
+                    classNamePrefix="select"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="image"
               render={({ field }) => (
                 <FormItem>
@@ -303,3 +334,5 @@ export function ServiceFormDialog({
     </Dialog>
   );
 }
+
+    

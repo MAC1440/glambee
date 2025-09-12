@@ -42,6 +42,15 @@ export const users = [
   },
 ];
 
+export const staff = [
+  { id: "staff_01", name: "Jessica Miller", department: "Stylist", salonId: "salon_01" },
+  { id: "staff_02", name: "Michael Chen", department: "Stylist", salonId: "salon_01" },
+  { id: "staff_03", name: "Emily Rodriguez", department: "Nail Artist", salonId: "salon_02" },
+  { id: "staff_04", name: "David Wilson", department: "Nail Artist", salonId: "salon_02" },
+  { id: "staff_05", name: "Olivia Brown", department: "Receptionist", salonId: "salon_01" },
+  { id: "staff_06", name: "Daniel Green", department: "Assistant", salonId: "salon_02" },
+];
+
 export const services = [
   // Promotions
   {
@@ -53,6 +62,7 @@ export const services = [
     duration: null,
     image: "https://picsum.photos/seed/promo-new/600/400",
     category: "Promotion",
+    artists: staff.map(s => ({ value: s.id, label: s.name })), // All staff can apply this promo
   },
   {
     id: "promo_02",
@@ -63,6 +73,7 @@ export const services = [
     duration: null,
     image: "https://picsum.photos/seed/promo-refer/600/400",
     category: "Promotion",
+    artists: staff.map(s => ({ value: s.id, label: s.name })), // All staff can apply this promo
   },
   // Deals
   {
@@ -74,6 +85,7 @@ export const services = [
     duration: 105,
     image: "https://picsum.photos/seed/mani-pedi/600/400",
     category: "Deal",
+    artists: staff.filter(s => s.department === 'Nail Artist').map(s => ({ value: s.id, label: s.name })), // Only nail artists
   },
   {
     id: "deal_02",
@@ -84,6 +96,7 @@ export const services = [
     duration: 210,
     image: "https://picsum.photos/seed/hair-package/600/400",
     category: "Deal",
+    artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })), // Only stylists
   },
   // Individual Services
   {
@@ -95,6 +108,7 @@ export const services = [
     duration: 60,
     image: "https://picsum.photos/seed/haircut/600/400",
     category: "Service",
+    artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
   },
   {
     id: "svc_02",
@@ -105,6 +119,7 @@ export const services = [
     duration: 120,
     image: "https://picsum.photos/seed/hair-color/600/400",
     category: "Service",
+    artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
   },
   {
     id: "svc_03",
@@ -115,6 +130,7 @@ export const services = [
     duration: 180,
     image: "https://picsum.photos/seed/balayage/600/400",
     category: "Service",
+    artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
   },
   {
     id: "svc_04",
@@ -125,6 +141,7 @@ export const services = [
     duration: 45,
     image: "https://picsum.photos/seed/manicure/600/400",
     category: "Service",
+    artists: staff.filter(s => s.department === 'Nail Artist').map(s => ({ value: s.id, label: s.name })),
   },
   {
     id: "svc_05",
@@ -135,6 +152,7 @@ export const services = [
     duration: 60,
     image: "https://picsum.photos/seed/pedicure/600/400",
     category: "Service",
+    artists: staff.filter(s => s.department === 'Nail Artist').map(s => ({ value: s.id, label: s.name })),
   },
   {
     id: "svc_06",
@@ -145,18 +163,10 @@ export const services = [
     duration: 30,
     image: "https://picsum.photos/seed/hair-mask/600/400",
     category: "Service",
+    artists: staff.filter(s => s.department === 'Stylist' || s.department === 'Assistant').map(s => ({ value: s.id, label: s.name })),
   },
 ];
 
-
-export const staff = [
-  { id: "staff_01", name: "Jessica Miller", department: "Stylist", salonId: "salon_01" },
-  { id: "staff_02", name: "Michael Chen", department: "Stylist", salonId: "salon_01" },
-  { id: "staff_03", name: "Emily Rodriguez", department: "Nail Artist", salonId: "salon_02" },
-  { id: "staff_04", name: "David Wilson", department: "Nail Artist", salonId: "salon_02" },
-  { id: "staff_05", name: "Olivia Brown", department: "Receptionist", salonId: "salon_01" },
-  { id: "staff_06", name: "Daniel Green", department: "Assistant", salonId: "salon_02" },
-];
 
 export const departments = [
   "Stylist",
@@ -428,3 +438,5 @@ export const appointments = [
     price: 45.0,
   },
 ];
+
+    
