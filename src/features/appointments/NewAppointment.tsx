@@ -10,6 +10,8 @@ import { ServiceSelection, type CartItem } from "@/features/checkout/ServiceSele
 import type { ScheduleAppointment } from "@/lib/schedule-data";
 import { X, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TimeSelection } from "./TimeSelection";
 
 export function NewAppointment({ appointments }: { appointments: ScheduleAppointment[] }) {
   const { toast } = useToast();
@@ -139,16 +141,26 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
         )}
       </div>
 
-      {/* Right Column: Calendar View */}
+      {/* Right Column: Calendar and Time Selection */}
       <div className="lg:col-span-2">
-        <Card className="h-full">
-          <CardContent className="p-2 md:p-4 h-full">
-            <CalendarView 
-                events={calendarEvents} 
-                onSelectSlot={(slotInfo) => setSelectedSlot(slotInfo)}
-            />
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="time">
+            <TabsList>
+                <TabsTrigger value="time">Select Time</TabsTrigger>
+                <TabsTrigger value="schedule">Full Schedule</TabsTrigger>
+            </TabsList>
+            <TabsContent value="time" className="mt-4">
+                 <TimeSelection onSelectTime={(date) => setSelectedSlot({start: date, end: date})} />
+            </TabsContent>
+            <TabsContent value="schedule" className="mt-4">
+                <Card className="h-full">
+                    <CardContent className="p-2 md:p-4 h-full">
+                        <CalendarView 
+                            events={calendarEvents} 
+                        />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -20,7 +20,14 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-export function CalendarView({ events, onSelectSlot }: { events: any[], onSelectSlot?: (slotInfo: { start: Date, end: Date }) => void }) {
+type SlotInfo = {
+    start: Date;
+    end: Date;
+    slots: Date[] | string[];
+    action: 'select' | 'click' | 'doubleClick';
+}
+
+export function CalendarView({ events, onSelectSlot }: { events: any[], onSelectSlot?: (slotInfo: SlotInfo) => void }) {
   const [view, setView] = useState<View>(Views.WEEK);
 
   return (
