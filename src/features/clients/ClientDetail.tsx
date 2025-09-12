@@ -130,9 +130,11 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
           </Link>
         </Button>
         <div className="flex items-center gap-2">
-          <Button variant="outline">
-            <DollarSign className="mr-2 h-4 w-4" />
-            Add Payment
+          <Button variant="outline" asChild>
+             <Link href={`/checkout/${encodeURIComponent(client.email)}`}>
+              <DollarSign className="mr-2 h-4 w-4" />
+              Add Payment
+            </Link>
           </Button>
           <Button variant="outline">
             <Edit className="mr-2 h-4 w-4" />
@@ -323,3 +325,5 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
     </div>
   );
 }
+
+    
