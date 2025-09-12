@@ -16,6 +16,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarProvider,
@@ -43,10 +46,12 @@ import {
   Tag,
   Package,
   CalendarPlus,
+  ChevronsUpDown,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
 import { useTheme } from "next-themes";
+import { branches as allBranches } from "@/lib/placeholder-data";
 
 // Mock user type for prototype
 type User = {
@@ -75,6 +80,10 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const [selectedBranch, setSelectedBranch] = React.useState(
+    user.salonId ? allBranches.find(b => b.id === user.salonId)?.name : 'All Branches'
+  );
+
 
   const handleLogout = () => {
     localStorage.removeItem("session");
@@ -141,14 +150,40 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
           <SidebarTrigger className="md:hidden" />
           <div className="flex-1"></div>
           <GlobalClientSearch />
+          
+          {user.role === 'SUPER_ADMIN' && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between hidden md:flex">
+                  {selectedBranch}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[180px]">
+                <DropdownMenuLabel>Select a Branch</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setSelectedBranch('All Branches')}>
+                  All Branches
+                </DropdownMenuItem>
+                {allBranches.map(branch => (
+                  <DropdownMenuItem key={branch.id} onSelect={() => setSelectedBranch(branch.name)}>
+                    {branch.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           <Button
             variant="outline"
-            className="hidden md:flex items-center gap-2"
+            size="icon"
+            className="h-9 w-9 hidden md:flex"
             onClick={toggleTheme}
+            aria-label="Toggle theme"
           >
-            {resolvedTheme === 'dark' ? <Sun /> : <Moon />}
-            <span className="capitalize">{user.role.replace('_', ' ')}</span>
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -164,6 +199,11 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+              <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <span className="text-xs text-muted-foreground capitalize">{user.role.replace('_', ' ')}</span>
+                  </DropdownMenuSubTrigger>
+              </DropdownMenuSub>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/profile">
