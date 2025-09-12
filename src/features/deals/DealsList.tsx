@@ -4,22 +4,13 @@
 import * as React from "react";
 import {
   CaretSortIcon,
-  ChevronDownIcon,
 } from "@radix-ui/react-icons";
 import {
   ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
 } from "@tanstack/react-table";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
@@ -27,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { services as allServices } from "@/lib/placeholder-data";
@@ -104,25 +94,6 @@ export function DealsList() {
   };
 
   const columns: ColumnDef<Service>[] = [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
     {
       accessorKey: "name",
       header: ({ column }) => {
@@ -216,31 +187,6 @@ export function DealsList() {
             className="max-w-sm"
             placeholder="Search all columns..."
           />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {/* This is a bit of a hack, but it works for now */}
-            {columns.filter(c => c.id !== 'select' && c.id !== 'actions' && c.accessorKey).map(column => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.accessorKey as string}
-                    className="capitalize"
-                    checked={true} // Simplified for this example
-                    onCheckedChange={(value) => {
-                      // In a real app, you'd get the column and call toggleVisibility
-                      console.log(`${column.accessorKey} visibility changed to ${value}`)
-                    }}
-                  >
-                    {column.accessorKey as string}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
       <DataTable 
         columns={columns} 
