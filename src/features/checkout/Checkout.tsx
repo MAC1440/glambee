@@ -14,10 +14,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { services } from "@/lib/placeholder-data";
-import { ArrowLeft, CreditCard, Gift, Percent, Tag, Trash2, X } from "lucide-react";
+import { ArrowLeft, CreditCard, Gift, Percent, Tag, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { ServiceSelection } from "./ServiceSelection";
 
 type Customer = {
   id: string;
@@ -41,7 +41,6 @@ type Service = {
 
 export function Checkout({ client }: { client: Customer | undefined }) {
   const [cart, setCart] = useState<Service[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
 
   if (!client) {
     return (
@@ -65,9 +64,10 @@ export function Checkout({ client }: { client: Customer | undefined }) {
   const discountAmount = 0;
   const total = 0;
 
-  const filteredServices = services.filter((service) =>
-    service.name.toLowerCase().includes(searchTerm.toLowerCase()) && service.category !== 'Promotion'
-  );
+  const handleAddToCart = (service: Service) => {
+    // Logic to add to cart will be implemented later
+    console.log("Adding to cart:", service.name);
+  };
 
   return (
     <div className="flex flex-col gap-4 h-[calc(100vh-4rem)]">
@@ -81,43 +81,7 @@ export function Checkout({ client }: { client: Customer | undefined }) {
         </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-grow">
         {/* Left Column: Service Selection */}
-        <Card className="flex flex-col">
-          <CardHeader>
-            <CardTitle>Select Services</CardTitle>
-            <Input
-              placeholder="Search services or deals..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </CardHeader>
-          <CardContent className="flex-grow p-0">
-            <ScrollArea className="h-[50vh] p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredServices.map((service) => (
-                  <Card key={service.id} className="overflow-hidden">
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-base flex justify-between items-start">
-                        {service.name}
-                         <Badge variant={service.category === 'Deal' ? 'secondary' : 'default'} className="whitespace-nowrap">
-                            {service.category}
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0 text-sm text-muted-foreground">
-                        <p className="line-clamp-2">{service.description}</p>
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0 flex justify-between items-center">
-                      <div className="font-bold text-lg">
-                        {typeof service.price === 'number' ? `$${service.price.toFixed(2)}` : 'Promo'}
-                      </div>
-                      <Button size="sm">Add to Cart</Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+        <ServiceSelection onAddToCart={handleAddToCart} />
 
         {/* Right Column: Order Summary */}
         <Card className="flex flex-col">
@@ -171,5 +135,3 @@ export function Checkout({ client }: { client: Customer | undefined }) {
     </div>
   );
 }
-
-    
