@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,11 +13,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { services } from "@/lib/placeholder-data";
-import { ArrowLeft, CreditCard, Gift, Percent, Tag, X } from "lucide-react";
+import { ArrowLeft, CreditCard, Gift, Percent, Tag, Trash2, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 import { ServiceSelection } from "./ServiceSelection";
+import { useToast } from "@/hooks/use-toast";
 
 type Customer = {
   id: string;
@@ -41,6 +41,8 @@ type Service = {
 
 export function Checkout({ client }: { client: Customer | undefined }) {
   const [cart, setCart] = useState<Service[]>([]);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const { toast } = useToast();
 
   if (!client) {
     return (
@@ -50,36 +52,87 @@ export function Checkout({ client }: { client: Customer | undefined }) {
           <CardDescription>
             Please select a client to start a transaction.
           </CardDescription>
-          <CardFooter>
-            <Button asChild>
-                <Link href="/clients">Go to Client List</Link>
-            </Button>
-          </CardFooter>
         </CardHeader>
+        <CardFooter>
+          <Button asChild>
+            <Link href="/clients">Go to Client List</Link>
+          </Button>
+        </CardFooter>
       </Card>
     );
   }
-  
-  const subtotal = 0;
-  const discountAmount = 0;
-  const total = 0;
 
   const handleAddToCart = (service: Service) => {
-    // Logic to add to cart will be implemented later
-    console.log("Adding to cart:", service.name);
+    // For promotions with non-numeric prices, we can't add them to the cart total
+    if (typeof service.price !== 'number') {
+        toast({
+            title: "Cannot Add Promotion",
+            description: "Promotional items must be applied manually at checkout.",
+            variant: "default",
+        })
+        return;
+    }
+    setCart((prevCart) => [...prevCart, service]);
+    toast({
+        title: "Item Added",
+        description: `${service.name} has been added to the cart.`,
+    });
   };
+
+  const handleRemoveFromCart = (index: number) => {
+    const item = cart[index];
+    setCart((prevCart) => prevCart.filter((_, i) => i !== index));
+    toast({
+        title: "Item Removed",
+        description: `${item.name} has been removed from the cart.`,
+        variant: "destructive"
+    });
+  };
+
+  const handleClearCart = () => {
+    setCart([]);
+    setDiscountAmount(0);
+    toast({
+        title: "Cart Cleared",
+        description: "All items have been removed from the cart."
+    });
+  }
+
+  const subtotal = useMemo(() => {
+    return cart.reduce((total, item) => total + (Number(item.price) || 0), 0);
+  }, [cart]);
+
+  const total = useMemo(() => {
+    const finalTotal = subtotal - discountAmount;
+    return finalTotal > 0 ? finalTotal : 0;
+  }, [subtotal, discountAmount]);
+
+  const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    if (value > subtotal) {
+      setDiscountAmount(subtotal);
+      toast({
+        title: "Discount Limit Exceeded",
+        description: `Discount cannot be greater than the subtotal of $${subtotal.toFixed(2)}.`,
+        variant: "destructive",
+      });
+    } else {
+      setDiscountAmount(value);
+    }
+  };
+
 
   return (
     <div className="flex flex-col gap-4 h-[calc(100vh-4rem)]">
-        <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" asChild>
-                <Link href={`/clients/${encodeURIComponent(client.email)}`}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Link>
-            </Button>
-            <h1 className="text-xl font-semibold">Checkout for {client.name}</h1>
-        </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-grow">
+      <div className="flex items-center gap-4">
+        <Button variant="outline" size="icon" asChild>
+          <Link href={`/clients/${encodeURIComponent(client.email)}`}>
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <h1 className="text-xl font-semibold">Checkout for {client.name}</h1>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-grow min-h-0">
         {/* Left Column: Service Selection */}
         <ServiceSelection onAddToCart={handleAddToCart} />
 
@@ -89,46 +142,66 @@ export function Checkout({ client }: { client: Customer | undefined }) {
             <CardTitle>Order Summary</CardTitle>
             <CardDescription>Review the items before payment.</CardDescription>
           </CardHeader>
-          <CardContent className="flex-grow space-y-4">
-            <ScrollArea className="h-[40vh] pr-4">
-                {cart.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-muted-foreground">
-                        No items in cart.
+          <CardContent className="flex-grow space-y-4 overflow-y-auto">
+            <ScrollArea className="h-[calc(100%-250px)] pr-4">
+              {cart.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No items in cart.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {cart.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center text-sm p-2 rounded-md bg-muted/50">
+                        <div>
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">{item.category}</p>
+                        </div>
+                      <div className="flex items-center gap-4">
+                        <span className="font-medium">${(Number(item.price) || 0).toFixed(2)}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFromCart(index)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                ): (
-                    <div className="space-y-4">
-                        {/* Cart items will be rendered here */}
-                    </div>
-                )}
+                  ))}
+                </div>
+              )}
             </ScrollArea>
             <Separator />
             <div className="space-y-2">
-                <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                    <span>Discount</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
-                </div>
-            </div>
-            <div className="flex gap-2">
-                <Input placeholder="Discount Code" className="flex-grow" />
-                <Button variant="secondary"><Tag className="mr-2 h-4 w-4" />Apply</Button>
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                 <Label htmlFor="discount" className="text-muted-foreground">Discount</Label>
+                 <div className="flex items-center gap-1 w-24">
+                    <span className="text-muted-foreground text-sm">-$</span>
+                    <Input 
+                        id="discount"
+                        type="number"
+                        value={discountAmount}
+                        onChange={handleDiscountChange}
+                        className="h-8 text-right"
+                        placeholder="0.00"
+                        max={subtotal}
+                    />
+                 </div>
+              </div>
+              <Separator />
+              <div className="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>${total.toFixed(2)}</span>
+              </div>
             </div>
           </CardContent>
-          <CardFooter className="grid grid-cols-3 gap-2">
-            <Button size="lg" className="col-span-3">
+          <CardFooter className="grid grid-cols-2 gap-2 mt-auto pt-6 bg-muted/50">
+            <Button size="lg" className="col-span-2" disabled={cart.length === 0}>
               <CreditCard className="mr-2" /> Pay ${total.toFixed(2)}
             </Button>
-             <Button variant="outline" size="sm"><Percent className="mr-2 h-4 w-4" />Add Custom Discount</Button>
-             <Button variant="outline" size="sm"><Gift className="mr-2 h-4 w-4" />Use Gift Card</Button>
-             <Button variant="destructive" size="sm"><X className="mr-2 h-4 w-4" />Clear Cart</Button>
+            <Button variant="destructive" className="col-span-2" onClick={handleClearCart}>
+              <Trash2 className="mr-2 h-4 w-4" /> Clear Cart
+            </Button>
           </CardFooter>
         </Card>
       </div>
