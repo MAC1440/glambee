@@ -76,7 +76,7 @@
 }
 
 .rbc-toolbar {
-  @apply mb-4 flex flex-wrap items-center justify-between;
+  @apply mb-4 flex flex-wrap items-center justify-between gap-y-4;
 }
 
 .rbc-toolbar button {

@@ -26,7 +26,7 @@ export function CustomToolbar(toolbar: ToolbarProps) {
   ];
 
   return (
-    <div className="rbc-toolbar">
+    <div className="rbc-toolbar flex-wrap">
       <div className="flex items-center gap-2">
         <Button variant="outline" size="icon" onClick={goToBack}><ChevronLeft className="h-4 w-4" /></Button>
         <Button variant="outline" onClick={goToCurrent}>Today</Button>
