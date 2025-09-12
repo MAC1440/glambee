@@ -1,14 +1,12 @@
 
 "use client";
 
-import React from "react";
-import { ColumnDef } from "@tanstack/react-table";
+import React, { useState, useMemo } from "react";
+import Select from "react-select";
 import { Button } from "@/components/ui/button";
-import { DebouncedInput } from "@/components/ui/debounced-input";
-import { DataTable } from "@/components/ui/data-table";
-import { services } from "@/lib/placeholder-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { services as allServices } from "@/lib/placeholder-data";
 
 type Service = {
   id: string;
@@ -19,70 +17,104 @@ type Service = {
   duration: number | null;
   image: string;
   category: "Service" | "Deal" | "Promotion";
+  includedServices?: { value: string; label: string }[];
+  artists?: { value: string; label: string }[];
 };
+
+type ArtistOption = {
+  value: string;
+  label: string;
+};
+
+type ServiceOption = {
+  value: Service;
+  label: string;
+};
+
+export type CartItem = {
+    service: Service;
+    artist: ArtistOption | null;
+}
 
 type ServiceSelectionProps = {
-  onAddToCart: (service: Service) => void;
+  onAddToCart: (item: CartItem) => void;
 };
 
+// Group services for the dropdown
+const groupedOptions = [
+  {
+    label: "Package Deals",
+    options: allServices
+      .filter((s) => s.category === "Deal")
+      .map((s) => ({ value: s, label: s.name })),
+  },
+  {
+    label: "Individual Services",
+    options: allServices
+      .filter((s) => s.category === "Service")
+      .map((s) => ({ value: s, label: s.name })),
+  },
+];
+
+
 export function ServiceSelection({ onAddToCart }: ServiceSelectionProps) {
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
+  const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(null);
 
-  const columns: ColumnDef<Service>[] = [
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => <div>{row.getValue("name")}</div>,
-    },
-    {
-      accessorKey: "category",
-      header: "Category",
-      cell: ({ row }) => <Badge variant={row.getValue("category") === 'Deal' ? 'secondary' : 'default'}>{row.getValue("category")}</Badge>,
-    },
-    {
-      accessorKey: "price",
-      header: "Price",
-      cell: ({ row }) => {
-        const price = row.getValue("price");
-        if (typeof price === 'number') {
-            return new Intl.NumberFormat("en-US", {
-                style: "currency",
-                currency: "USD",
-            }).format(price);
-        }
-        return price;
-      },
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <Button size="sm" onClick={() => onAddToCart(row.original)}>
-          Add to Cart
-        </Button>
-      ),
-    },
-  ];
+  const artistOptions = useMemo(() => {
+    return selectedService?.value.artists || [];
+  }, [selectedService]);
 
-  const availableServices = services.filter(s => s.category !== 'Promotion');
+  const handleServiceChange = (option: ServiceOption | null) => {
+    setSelectedService(option);
+    setSelectedArtist(null); // Reset artist when service changes
+  };
+  
+  const handleAddClick = () => {
+    if (selectedService) {
+        onAddToCart({ service: selectedService.value, artist: selectedArtist });
+        setSelectedService(null);
+        setSelectedArtist(null);
+    }
+  }
 
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <CardTitle>Select Services & Deals</CardTitle>
-         <DebouncedInput
-            value={globalFilter ?? ""}
-            onValueChange={(value) => setGlobalFilter(String(value))}
-            className="w-full"
-            placeholder="Search services or deals..."
-          />
+        <CardTitle>Select Service</CardTitle>
       </CardHeader>
-      <CardContent className="flex-grow p-0">
-         <DataTable
-            columns={columns}
-            data={availableServices}
-            globalFilter={globalFilter}
-            onGlobalFilterChange={setGlobalFilter}
-         />
+      <CardContent className="flex-grow p-4 space-y-4">
+        <div className="space-y-2">
+          <Label>Service or Deal</Label>
+          <Select
+            options={groupedOptions}
+            value={selectedService}
+            onChange={handleServiceChange}
+            placeholder="Search for a service or deal..."
+            isClearable
+          />
+        </div>
+
+        {selectedService && artistOptions.length > 0 && (
+          <div className="space-y-2">
+            <Label>Artist (Optional)</Label>
+            <Select
+              options={artistOptions}
+              value={selectedArtist}
+              onChange={(option) => setSelectedArtist(option)}
+              placeholder="Select an artist..."
+              isClearable
+            />
+          </div>
+        )}
+        
+        <Button 
+            className="w-full"
+            disabled={!selectedService}
+            onClick={handleAddClick}
+        >
+            Add to Cart
+        </Button>
       </CardContent>
     </Card>
   );

@@ -14,10 +14,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, CreditCard, Gift, Percent, Tag, Trash2, X } from "lucide-react";
+import { ArrowLeft, CreditCard, Trash2, X, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
-import { ServiceSelection } from "./ServiceSelection";
+import { ServiceSelection, type CartItem } from "./ServiceSelection";
 import { useToast } from "@/hooks/use-toast";
 
 type Customer = {
@@ -29,19 +29,8 @@ type Customer = {
   dob: string;
 };
 
-type Service = {
-  id: string;
-  name: string;
-  description: string;
-  price: number | string;
-  originalPrice: number | null;
-  duration: number | null;
-  image: string;
-  category: "Service" | "Deal" | "Promotion";
-};
-
 export function Checkout({ client }: { client: Customer | undefined }) {
-  const [cart, setCart] = useState<Service[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [discountAmount, setDiscountAmount] = useState(0);
   const { toast } = useToast();
 
@@ -63,9 +52,9 @@ export function Checkout({ client }: { client: Customer | undefined }) {
     );
   }
 
-  const handleAddToCart = (service: Service) => {
+  const handleAddToCart = (item: CartItem) => {
     // For promotions with non-numeric prices, we can't add them to the cart total
-    if (typeof service.price !== 'number') {
+    if (typeof item.service.price !== 'number') {
         toast({
             title: "Cannot Add Promotion",
             description: "Promotional items must be applied manually at checkout.",
@@ -73,10 +62,10 @@ export function Checkout({ client }: { client: Customer | undefined }) {
         })
         return;
     }
-    setCart((prevCart) => [...prevCart, service]);
+    setCart((prevCart) => [...prevCart, item]);
     toast({
         title: "Item Added",
-        description: `${service.name} has been added to the cart.`,
+        description: `${item.service.name} has been added to the cart.`,
     });
   };
 
@@ -85,7 +74,7 @@ export function Checkout({ client }: { client: Customer | undefined }) {
     setCart((prevCart) => prevCart.filter((_, i) => i !== index));
     toast({
         title: "Item Removed",
-        description: `${item.name} has been removed from the cart.`,
+        description: `${item.service.name} has been removed from the cart.`,
         variant: "destructive"
     });
   };
@@ -100,7 +89,7 @@ export function Checkout({ client }: { client: Customer | undefined }) {
   }
 
   const subtotal = useMemo(() => {
-    return cart.reduce((total, item) => total + (Number(item.price) || 0), 0);
+    return cart.reduce((total, item) => total + (Number(item.service.price) || 0), 0);
   }, [cart]);
 
   const total = useMemo(() => {
@@ -152,13 +141,18 @@ export function Checkout({ client }: { client: Customer | undefined }) {
               ) : (
                 <div className="space-y-2">
                   {cart.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center text-sm p-2 rounded-md bg-muted/50">
+                    <div key={index} className="flex justify-between items-start text-sm p-2 rounded-md bg-muted/50">
                         <div>
-                            <p className="font-medium">{item.name}</p>
-                            <p className="text-xs text-muted-foreground">{item.category}</p>
+                            <p className="font-medium">{item.service.name}</p>
+                             {item.artist && (
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <User className="h-3 w-3" />
+                                    {item.artist.label}
+                                </p>
+                             )}
                         </div>
                       <div className="flex items-center gap-4">
-                        <span className="font-medium">${(Number(item.price) || 0).toFixed(2)}</span>
+                        <span className="font-medium">${(Number(item.service.price) || 0).toFixed(2)}</span>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFromCart(index)}>
                             <X className="h-4 w-4" />
                         </Button>
