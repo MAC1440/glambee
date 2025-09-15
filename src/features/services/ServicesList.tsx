@@ -20,10 +20,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { services as allServices } from "@/lib/placeholder-data";
+import { allServices } from "@/lib/placeholder-data";
 import { ServiceFormDialog } from "../services/ServiceFormDialog";
 import { DataTable } from "@/components/ui/data-table";
 import { DebouncedInput } from "@/components/ui/debounced-input";
+import { Badge } from "@/components/ui/badge";
 
 type Service = {
   id: string;
@@ -34,6 +35,7 @@ type Service = {
   duration: number | null;
   image: string;
   category: "Service" | "Deal" | "Promotion";
+  serviceCategory?: string;
   includedServices?: { value: string; label: string }[];
   artists?: { value: string; label: string }[];
 };
@@ -108,6 +110,24 @@ export function ServicesList() {
         );
       },
       cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
+    },
+    {
+      accessorKey: "serviceCategory",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Category
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const category = row.getValue("serviceCategory");
+        return category ? <Badge variant="outline">{category as string}</Badge> : null;
+      },
     },
     {
       accessorKey: "duration",
@@ -198,3 +218,5 @@ export function ServicesList() {
     </>
   );
 }
+
+    

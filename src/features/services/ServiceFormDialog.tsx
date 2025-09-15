@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/form";
 import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
-import { staff } from "@/lib/placeholder-data";
+import { staff, serviceCategories } from "@/lib/placeholder-data";
+import { Select as ShadSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 type Service = {
   id: string;
@@ -37,6 +39,7 @@ type Service = {
   duration: number | null;
   image: string;
   category: "Service" | "Deal" | "Promotion";
+  serviceCategory?: string;
   includedServices?: { value: string; label: string }[];
   artists?: { value: string; label: string }[];
 };
@@ -59,6 +62,7 @@ const formSchema = z.object({
   originalPrice: z.union([z.number(), z.null()]),
   image: z.string().url({ message: "Please enter a valid image URL." }),
   category: z.enum(["Service", "Deal", "Promotion"]),
+  serviceCategory: z.string().optional(),
   duration: z.union([z.number(), z.null()]),
   includedServices: z.array(z.object({
     value: z.string(),
@@ -98,6 +102,7 @@ export function ServiceFormDialog({
       originalPrice: service?.originalPrice || null,
       image: service?.image || "https://picsum.photos/seed/new-service/600/400",
       category: service?.category || category,
+      serviceCategory: service?.serviceCategory || undefined,
       duration: service?.duration || null,
       includedServices: service?.includedServices || [],
       artists: service?.artists || [],
@@ -140,6 +145,7 @@ export function ServiceFormDialog({
         originalPrice: service?.originalPrice || null,
         image: service?.image || `https://picsum.photos/seed/${Math.random()}/600/400`,
         category: service?.category || category,
+        serviceCategory: service?.serviceCategory || undefined,
         duration: service?.duration || null,
         includedServices: service?.includedServices || [],
         artists: service?.artists || [],
@@ -206,6 +212,31 @@ export function ServiceFormDialog({
               />
             )}
             
+            {category === 'Service' && (
+               <FormField
+                control={form.control}
+                name="serviceCategory"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                     <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {serviceCategories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </ShadSelect>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="description"

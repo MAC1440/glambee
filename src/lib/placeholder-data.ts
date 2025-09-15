@@ -51,6 +51,8 @@ export const staff = [
   { id: "staff_06", name: "Daniel Green", department: "Assistant", salonId: "salon_02" },
 ];
 
+export const serviceCategories = ["Hair", "Nails", "Makeup", "Skin", "Spa", "Aesthetics", "Others"];
+
 export const services = [
   // Promotions
   {
@@ -117,6 +119,7 @@ export const services = [
     duration: 60,
     image: "https://picsum.photos/seed/haircut/600/400",
     category: "Service",
+    serviceCategory: "Hair",
     artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
   },
   {
@@ -128,6 +131,7 @@ export const services = [
     duration: 120,
     image: "https://picsum.photos/seed/hair-color/600/400",
     category: "Service",
+    serviceCategory: "Hair",
     artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
   },
   {
@@ -139,6 +143,7 @@ export const services = [
     duration: 180,
     image: "https://picsum.photos/seed/balayage/600/400",
     category: "Service",
+    serviceCategory: "Hair",
     artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
   },
   {
@@ -150,6 +155,7 @@ export const services = [
     duration: 45,
     image: "https://picsum.photos/seed/manicure/600/400",
     category: "Service",
+    serviceCategory: "Nails",
     artists: staff.filter(s => s.department === 'Nail Artist').map(s => ({ value: s.id, label: s.name })),
   },
   {
@@ -161,6 +167,7 @@ export const services = [
     duration: 60,
     image: "https://picsum.photos/seed/pedicure/600/400",
     category: "Service",
+    serviceCategory: "Nails",
     artists: staff.filter(s => s.department === 'Nail Artist').map(s => ({ value: s.id, label: s.name })),
   },
   {
@@ -172,6 +179,7 @@ export const services = [
     duration: 30,
     image: "https://picsum.photos/seed/hair-mask/600/400",
     category: "Service",
+    serviceCategory: "Hair",
     artists: staff.filter(s => s.department === 'Stylist' || s.department === 'Assistant').map(s => ({ value: s.id, label: s.name })),
   },
 ];
@@ -477,3 +485,5 @@ export const appointments = [
     price: 45.0,
   },
 ];
+
+    
