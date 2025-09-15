@@ -21,8 +21,9 @@ export function CustomToolbar(toolbar: ToolbarProps) {
   };
 
   const views: {name: string, view: View}[] = [
-    { name: 'Day', view: 'day' },
+    { name: 'Month', view: 'month' },
     { name: 'Week', view: 'week' },
+    { name: 'Day', view: 'day' },
   ];
 
   return (

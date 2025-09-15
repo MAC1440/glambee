@@ -15,7 +15,8 @@ import {
   Users,
 } from "lucide-react";
 import { RevenueChart } from "./RevenueChart";
-import { RecentActivity } from "./RecentActivity";
+import { CalendarView } from "../staff/schedule/CalendarView";
+import type { ScheduleAppointment } from "@/lib/schedule-data";
 
 type Appointment = {
     id: string;
@@ -35,9 +36,20 @@ type Appointment = {
 
 export function Dashboard({
   todayAppointments,
+  allAppointments,
 }: {
   todayAppointments: Appointment[];
+  allAppointments: ScheduleAppointment[];
 }) {
+  const calendarEvents = allAppointments.map((apt) => {
+    return {
+      title: `${apt.service} - ${apt.customerName}`,
+      start: apt.start,
+      end: apt.end,
+      resource: apt,
+    };
+  });
+
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -109,13 +121,13 @@ export function Dashboard({
         </Card>
         <Card>
            <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Schedule</CardTitle>
             <CardDescription>
-              Latest bookings and client registrations.
+              A monthly overview of your appointments.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentActivity />
+             <CalendarView events={calendarEvents} view="month" />
           </CardContent>
         </Card>
       </div>

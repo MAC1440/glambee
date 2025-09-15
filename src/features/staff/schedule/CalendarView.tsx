@@ -21,8 +21,8 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-export function CalendarView({ events, onSelectSlot }: { events: any[], onSelectSlot?: (slotInfo: SlotInfo) => void }) {
-  const [view, setView] = useState<View>(Views.WEEK);
+export function CalendarView({ events, onSelectSlot, view: defaultView = Views.WEEK }: { events: any[], onSelectSlot?: (slotInfo: SlotInfo) => void, view?: View }) {
+  const [view, setView] = useState<View>(defaultView);
 
   return (
     <div className="h-[75vh]">
@@ -32,7 +32,7 @@ export function CalendarView({ events, onSelectSlot }: { events: any[], onSelect
         startAccessor="start"
         endAccessor="end"
         style={{ height: '100%' }}
-        views={[Views.WEEK, Views.DAY]}
+        views={[Views.MONTH, Views.WEEK, Views.DAY]}
         view={view}
         onView={(view) => setView(view)}
         selectable={!!onSelectSlot}
