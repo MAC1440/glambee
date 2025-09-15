@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { appointments } from "@/lib/placeholder-data";
+import { appointments, mockCustomers } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
 import {
   Mail,
@@ -33,8 +33,10 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { format, parseISO, differenceInYears } from "date-fns";
+import { ClientFormDialog } from "./ClientFormDialog";
+import { useToast } from "@/hooks/use-toast";
 
 type Customer = {
   id: string;
@@ -45,7 +47,11 @@ type Customer = {
   dob: string;
 };
 
-export function ClientDetail({ client }: { client: Customer | undefined }) {
+export function ClientDetail({ client: initialClient }: { client: Customer | undefined }) {
+  const [client, setClient] = useState(initialClient);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const { toast } = useToast();
+  
   if (!client) {
     return (
       <Card>
@@ -117,10 +123,32 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
       ...data,
     }));
   }, [clientAppointments]);
+  
+  const handleSaveClient = (updatedClientData: Omit<Customer, 'id'>) => {
+    // In a real app, you'd send this to your API.
+    // For this prototype, we'll just update the local state.
+    const updatedClient = { ...client, ...updatedClientData };
+    setClient(updatedClient);
+
+    // This is a mock update to the placeholder data array. 
+    // This won't persist across page loads.
+    const customerIndex = mockCustomers.findIndex(c => c.id === client.id);
+    if(customerIndex !== -1) {
+        mockCustomers[customerIndex] = updatedClient;
+    }
+    
+    toast({
+        title: "Client Updated",
+        description: `${updatedClient.name}'s details have been successfully updated.`
+    });
+    setIsFormOpen(false);
+  };
+
 
   const age = client.dob ? differenceInYears(new Date(), parseISO(client.dob)) : null;
 
   return (
+    <>
     <div className="flex flex-col gap-8">
       <div className="flex w-full items-center justify-between">
         <Button variant="ghost" asChild>
@@ -136,7 +164,7 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
               Add Payment
             </Link>
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setIsFormOpen(true)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit Client
           </Button>
@@ -323,7 +351,12 @@ export function ClientDetail({ client }: { client: Customer | undefined }) {
         </div>
       </div>
     </div>
+    <ClientFormDialog 
+        isOpen={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        client={client}
+        onSave={handleSaveClient}
+    />
+    </>
   );
 }
-
-    
