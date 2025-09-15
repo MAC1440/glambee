@@ -8,6 +8,8 @@ import {
 import {
   ColumnDef,
   getFilteredRowModel,
+  ColumnFiltersState,
+  SortingState,
 } from "@tanstack/react-table";
 import {
   DropdownMenu,
@@ -20,15 +22,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { services as allServices } from "@/lib/placeholder-data";
+import { services as allServices, serviceCategories } from "@/lib/placeholder-data";
 import { ServiceFormDialog } from "../services/ServiceFormDialog";
 import { DataTable } from "@/components/ui/data-table";
 import { DebouncedInput } from "@/components/ui/debounced-input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Service = {
   id: string;
-  name: string;
+  name:string;
   description: string;
   price: number | string;
   originalPrice: number | null;
@@ -128,15 +131,40 @@ export function ServicesList() {
         const category = row.getValue("serviceCategory");
         return category ? <Badge variant="outline">{category as string}</Badge> : null;
       },
+      filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id))
+      },
     },
     {
       accessorKey: "duration",
-      header: "Duration (min)",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Duration (min)
+            <CaretSortIcon className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
       cell: ({ row }) => <div>{row.getValue("duration")}</div>,
     },
     {
       accessorKey: "price",
-      header: () => <div className="text-right">Price</div>,
+      header: ({ column }) => {
+        return (
+          <div className="text-right">
+             <Button
+                variant="ghost"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+             >
+                Price
+                <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("price"));
         const formatted = new Intl.NumberFormat("en-US", {
@@ -144,7 +172,7 @@ export function ServicesList() {
           currency: "USD",
         }).format(amount);
 
-        return <div className="text-right font-medium">{formatted}</div>;
+        return <div className="text-right font-medium pr-4">{formatted}</div>;
       },
     },
     {
@@ -192,12 +220,37 @@ export function ServicesList() {
       </div>
       
        <div className="flex items-center justify-between">
-          <DebouncedInput
-            value={globalFilter ?? ""}
-            onValueChange={(value) => setGlobalFilter(String(value))}
-            className="max-w-sm"
-            placeholder="Search all columns..."
-          />
+          <div className="flex items-center gap-4">
+            <DebouncedInput
+                value={globalFilter ?? ""}
+                onValueChange={(value) => setGlobalFilter(String(value))}
+                className="max-w-sm"
+                placeholder="Search all columns..."
+            />
+            <Select
+              onValueChange={(value) => {
+                const table = document.querySelector('table'); // A bit of a hack to get table instance
+                if (table) {
+                    const column = table. TANSTACK_TABLE_INSTANCE.getColumn('serviceCategory');
+                    if (column) {
+                        column.setFilterValue(value === 'all' ? '' : value);
+                    }
+                }
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {serviceCategories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
       </div>
       <DataTable 
         columns={columns} 
@@ -218,5 +271,3 @@ export function ServicesList() {
     </>
   );
 }
-
-    

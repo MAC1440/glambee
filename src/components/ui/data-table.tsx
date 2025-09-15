@@ -46,6 +46,8 @@ export function DataTable<TData, TValue>({
     []
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
+  const tableRef = React.useRef<HTMLTableElement>(null);
+
 
   const table = useReactTable({
     data,
@@ -68,11 +70,19 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
   })
+  
+    React.useEffect(() => {
+    if (tableRef.current) {
+      // Attach the table instance to the DOM element for access
+      (tableRef.current as any).TANSTACK_TABLE_INSTANCE = table;
+    }
+  });
+
 
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
-        <Table>
+        <Table ref={tableRef}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
