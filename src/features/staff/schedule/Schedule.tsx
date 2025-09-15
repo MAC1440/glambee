@@ -22,7 +22,7 @@ import { CalendarView } from "./CalendarView";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, LayoutGrid, Calendar } from "lucide-react";
 
 export function Schedule({ appointments }: { appointments: ScheduleAppointment[] }) {
   
@@ -119,8 +119,8 @@ export function Schedule({ appointments }: { appointments: ScheduleAppointment[]
             </div>
             <div className="flex items-center gap-4">
               <TabsList>
-                  <TabsTrigger value="grid">Grid View</TabsTrigger>
-                  <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+                  <TabsTrigger value="grid" className="w-10 h-10"><LayoutGrid className="h-5 w-5" /></TabsTrigger>
+                  <TabsTrigger value="calendar" className="w-10 h-10"><Calendar className="h-5 w-5" /></TabsTrigger>
               </TabsList>
                <Button asChild>
                   <Link href="/appointments">
