@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useMemo, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -22,23 +23,41 @@ import { CalendarView } from "./CalendarView";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, LayoutGrid, Calendar } from "lucide-react";
+import { PlusCircle, LayoutGrid, Calendar, ChevronsUpDown } from "lucide-react";
+import { staff as allStaff } from "@/lib/placeholder-data";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 export function Schedule({ appointments }: { appointments: ScheduleAppointment[] }) {
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+
+  const filteredAppointments = useMemo(() => {
+    if (!selectedStaffId) {
+      return appointments;
+    }
+    return appointments.filter((apt) => apt.staffId === selectedStaffId);
+  }, [appointments, selectedStaffId]);
   
-  const todayAppointments = appointments.filter((apt) =>
+  const todayAppointments = filteredAppointments.filter((apt) =>
     isToday(apt.start)
   );
 
-  const weeklyAppointments = appointments.filter((apt) =>
+  const weeklyAppointments = filteredAppointments.filter((apt) =>
     isThisWeek(apt.start, { weekStartsOn: 1 })
   );
 
-  const monthlyAppointments = appointments.filter((apt) =>
+  const monthlyAppointments = filteredAppointments.filter((apt) =>
     isThisMonth(apt.start)
   );
 
-  const calendarEvents = appointments.map((apt) => {
+  const calendarEvents = filteredAppointments.map((apt) => {
     return {
       title: `${apt.service} - ${apt.customerName}`,
       start: apt.start,
@@ -46,6 +65,13 @@ export function Schedule({ appointments }: { appointments: ScheduleAppointment[]
       resource: apt,
     };
   });
+
+  const selectedStaffName = useMemo(() => {
+    if (!selectedStaffId) {
+      return "All Staff";
+    }
+    return allStaff.find(s => s.id === selectedStaffId)?.name || "All Staff";
+  }, [selectedStaffId]);
 
   const renderAppointmentTable = (
     appointments: ScheduleAppointment[],
@@ -122,6 +148,31 @@ export function Schedule({ appointments }: { appointments: ScheduleAppointment[]
                   <TabsTrigger value="grid" className="w-10 h-10"><LayoutGrid className="h-5 w-5" /></TabsTrigger>
                   <TabsTrigger value="calendar" className="w-10 h-10"><Calendar className="h-5 w-5" /></TabsTrigger>
               </TabsList>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-[180px] justify-between">
+                    {selectedStaffName}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[180px]">
+                  <DropdownMenuLabel>Filter by Staff</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => setSelectedStaffId(null)}>
+                    All Staff
+                  </DropdownMenuItem>
+                  {allStaff.map((staff) => (
+                    <DropdownMenuItem
+                      key={staff.id}
+                      onSelect={() => setSelectedStaffId(staff.id)}
+                    >
+                      {staff.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
                <Button asChild>
                   <Link href="/appointments">
                     <PlusCircle className="mr-2 h-4 w-4" />
