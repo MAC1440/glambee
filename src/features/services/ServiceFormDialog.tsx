@@ -169,7 +169,7 @@ export function ServiceFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-md">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
@@ -197,44 +197,45 @@ export function ServiceFormDialog({
                 )}
               />
             ) : (
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Signature Haircut" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            
-            {category === 'Service' && (
-               <FormField
-                control={form.control}
-                name="serviceCategory"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                     <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {serviceCategories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </ShadSelect>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="e.g., Signature Haircut" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                     {category === 'Service' && (
+                        <FormField
+                            control={form.control}
+                            name="serviceCategory"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Category</FormLabel>
+                                <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                    <SelectValue placeholder="Select a category" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {serviceCategories.map((cat) => (
+                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                                </ShadSelect>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    )}
+                </div>
             )}
 
             <FormField
@@ -275,7 +276,7 @@ export function ServiceFormDialog({
                 )}
               />
 
-              {category === 'Deal' && (
+              {category === 'Deal' ? (
                  <FormField
                  control={form.control}
                  name="originalPrice"
@@ -296,9 +297,7 @@ export function ServiceFormDialog({
                    </FormItem>
                  )}
                />
-              )}
-
-               {category === 'Service' && (
+              ) : category === 'Service' ? (
                  <FormField
                  control={form.control}
                  name="duration"
@@ -317,7 +316,7 @@ export function ServiceFormDialog({
                    </FormItem>
                  )}
                />
-              )}
+              ) : null}
             </div>
 
             <FormField
@@ -365,5 +364,3 @@ export function ServiceFormDialog({
     </Dialog>
   );
 }
-
-    
