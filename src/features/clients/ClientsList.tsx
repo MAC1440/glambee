@@ -1,4 +1,7 @@
 
+"use client";
+
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,57 +19,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { appointments } from "@/lib/placeholder-data";
+import { appointments, mockCustomers as initialMockCustomers } from "@/lib/placeholder-data";
 import { PlusCircle, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-
-// Process appointments to build detailed client data
-const clientsMap = new Map<
-  string,
-  {
-    name: string;
-    email: string;
-    appointments: number;
-    totalSpent: number;
-    lastVisit: string;
-    tags: string[];
-  }
->();
-
-appointments.forEach((apt) => {
-  if (!clientsMap.has(apt.customer.email)) {
-    clientsMap.set(apt.customer.email, {
-      name: apt.customer.name,
-      email: apt.customer.email,
-      appointments: 0,
-      totalSpent: 0,
-      lastVisit: "1970-01-01",
-      tags: [],
-    });
-  }
-  const clientData = clientsMap.get(apt.customer.email)!;
-  clientData.appointments++;
-  clientData.totalSpent += apt.price;
-  if (new Date(apt.date) > new Date(clientData.lastVisit)) {
-    clientData.lastVisit = apt.date;
-  }
-});
-
-const clients = Array.from(clientsMap.values()).map((client) => {
-  const tags: string[] = [];
-  if (client.appointments > 5) {
-    tags.push("VIP");
-  }
-  if (client.appointments === 1) {
-    tags.push("New");
-  }
-  if (client.totalSpent > 500) {
-    tags.push("High Spender");
-  }
-  client.tags = tags;
-  return client;
-});
+import { ClientFormDialog } from "./ClientFormDialog";
+import { useToast } from "@/hooks/use-toast";
+import type { Client, ClientFormData } from "./ClientForm";
 
 const getTagColor = (tag: string) => {
   switch (tag.toLowerCase()) {
@@ -81,8 +40,85 @@ const getTagColor = (tag: string) => {
   }
 };
 
+
 export function ClientsList() {
+    const [mockCustomers, setMockCustomers] = useState(initialMockCustomers);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const { toast } = useToast();
+
+    // Process appointments to build detailed client data
+    const clientsMap = new Map<
+    string,
+    {
+        name: string;
+        email: string;
+        appointments: number;
+        totalSpent: number;
+        lastVisit: string;
+        tags: string[];
+    }
+    >();
+
+    appointments.forEach((apt) => {
+    if (!clientsMap.has(apt.customer.email)) {
+        clientsMap.set(apt.customer.email, {
+        name: apt.customer.name,
+        email: apt.customer.email,
+        appointments: 0,
+        totalSpent: 0,
+        lastVisit: "1970-01-01",
+        tags: [],
+        });
+    }
+    const clientData = clientsMap.get(apt.customer.email)!;
+    clientData.appointments++;
+    clientData.totalSpent += apt.price;
+    if (new Date(apt.date) > new Date(clientData.lastVisit)) {
+        clientData.lastVisit = apt.date;
+    }
+    });
+
+    const clients = mockCustomers.map(customer => {
+        const clientDetails = clientsMap.get(customer.email) || {
+            appointments: 0,
+            totalSpent: 0,
+            lastVisit: 'N/A',
+            tags: ['New']
+        };
+
+        const tags: string[] = [];
+        if (clientDetails.appointments > 5) tags.push("VIP");
+        if (clientDetails.appointments > 0 && clientDetails.appointments <= 2) tags.push("New");
+        if (clientDetails.totalSpent > 500) tags.push("High Spender");
+
+        return {
+            ...customer,
+            ...clientDetails,
+            tags
+        };
+    }).sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime());
+
+
+  const handleSaveClient = (clientData: ClientFormData) => {
+    const newClient: Client = {
+      ...clientData,
+      id: `cust_${Date.now()}`,
+      dob: clientData.dob,
+    };
+    
+    // Add to the local state. In a real app, this would be an API call.
+    setMockCustomers(prev => [newClient, ...prev]);
+
+    toast({
+        title: "Client Added",
+        description: `${newClient.name} has been successfully added.`
+    });
+    setIsFormOpen(false);
+  };
+
+
   return (
+    <>
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div className="text-left">
@@ -91,7 +127,7 @@ export function ClientsList() {
             View and manage your clients.
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsFormOpen(true)}>
           <PlusCircle className="mr-2" />
           Add Client
         </Button>
@@ -174,5 +210,11 @@ export function ClientsList() {
         </CardContent>
       </Card>
     </div>
+    <ClientFormDialog 
+        isOpen={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        onSave={handleSaveClient}
+    />
+    </>
   );
 }
