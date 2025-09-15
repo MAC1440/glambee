@@ -21,7 +21,19 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-export function CalendarView({ events, onSelectSlot, view: defaultView = Views.WEEK, showToolbar = true }: { events: any[], onSelectSlot?: (slotInfo: SlotInfo) => void, view?: View, showToolbar?: boolean }) {
+export function CalendarView({ 
+    events, 
+    onSelectSlot, 
+    onDrillDown,
+    view: defaultView = Views.WEEK, 
+    showToolbar = true 
+}: { 
+    events: any[], 
+    onSelectSlot?: (slotInfo: SlotInfo) => void,
+    onDrillDown?: (date: Date) => void,
+    view?: View, 
+    showToolbar?: boolean 
+}) {
   const [view, setView] = useState<View>(defaultView);
 
   return (
@@ -35,6 +47,7 @@ export function CalendarView({ events, onSelectSlot, view: defaultView = Views.W
         views={[Views.MONTH, Views.WEEK, Views.DAY]}
         view={view}
         onView={(view) => setView(view)}
+        onDrillDown={onDrillDown}
         selectable={!!onSelectSlot}
         onSelectSlot={onSelectSlot}
         components={{

@@ -15,9 +15,8 @@ import {
   Users,
 } from "lucide-react";
 import { RevenueChart } from "./RevenueChart";
-import { CalendarView } from "../staff/schedule/CalendarView";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
-import { RecentActivity } from "./RecentActivity";
+import { DashboardCalendar } from "./DashboardCalendar";
 
 type Appointment = {
     id: string;
@@ -42,15 +41,6 @@ export function Dashboard({
   todayAppointments: Appointment[];
   allAppointments: ScheduleAppointment[];
 }) {
-  const calendarEvents = allAppointments.map((apt) => {
-    return {
-      title: `${apt.service} - ${apt.customerName}`,
-      start: apt.start,
-      end: apt.end,
-      resource: apt,
-    };
-  });
-
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -124,11 +114,11 @@ export function Dashboard({
            <CardHeader>
             <CardTitle>Schedule</CardTitle>
             <CardDescription>
-              A monthly overview of your appointments.
+              A monthly overview of your appointments. Click a date to see details.
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <CalendarView events={calendarEvents} view="month" showToolbar={false} />
+             <DashboardCalendar allAppointments={allAppointments} />
           </CardContent>
         </Card>
       </div>
