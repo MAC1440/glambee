@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { allServices } from "@/lib/placeholder-data";
+import { services as allServices } from "@/lib/placeholder-data";
 import { ServiceFormDialog } from "../services/ServiceFormDialog";
 import { DataTable } from "@/components/ui/data-table";
 import { DebouncedInput } from "@/components/ui/debounced-input";
