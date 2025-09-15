@@ -25,6 +25,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Calendar,
   CreditCard,
   LayoutDashboard,
@@ -171,26 +177,35 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
           </div>
           
           {user.role === 'SUPER_ADMIN' && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-[180px] justify-between hidden md:flex">
-                  {selectedBranch}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-[180px]">
-                <DropdownMenuLabel>Select a Branch</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setSelectedBranch('All Branches')}>
-                  All Branches
-                </DropdownMenuItem>
-                {allBranches.map(branch => (
-                  <DropdownMenuItem key={branch.id} onSelect={() => setSelectedBranch(branch.name)}>
-                    {branch.name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <TooltipProvider>
+              <Tooltip>
+                <DropdownMenu>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-9 w-9 hidden md:flex">
+                        <Building className="h-4 w-4" />
+                        <span className="sr-only">Select Branch</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>Branch: {selectedBranch}</p>
+                  </TooltipContent>
+                  <DropdownMenuContent className="w-56" align="end">
+                    <DropdownMenuLabel>Select a Branch</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setSelectedBranch('All Branches')}>
+                      All Branches
+                    </DropdownMenuItem>
+                    {allBranches.map(branch => (
+                      <DropdownMenuItem key={branch.id} onSelect={() => setSelectedBranch(branch.name)}>
+                        {branch.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </Tooltip>
+            </TooltipProvider>
           )}
 
           <Button
