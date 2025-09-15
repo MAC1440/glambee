@@ -95,8 +95,8 @@ export function Dashboard({
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
            <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
             <CardDescription>
