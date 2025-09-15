@@ -1,67 +1,112 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, User, X } from "lucide-react";
 import { mockCustomers } from "@/lib/placeholder-data";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
+
+type Customer = (typeof mockCustomers)[0];
 
 export function GlobalClientSearch() {
-  const [phone, setPhone] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Customer[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSearch = () => {
-    if (!phone) return;
-
-    setIsSearching(true);
-    setTimeout(() => {
-      const customer = mockCustomers.find((c) => c.phone === phone);
-      if (customer) {
-        toast({
-            title: "Client Found!",
-            description: `Redirecting to ${customer.name}'s profile.`,
-        });
-        router.push(`/clients/${encodeURIComponent(customer.email)}`);
-      } else {
-        toast({
-            title: "Client Not Found",
-            description: "Redirecting to the new client registration page.",
-            variant: "default"
-        });
-        // We can pass the phone number to the appointments page to pre-fill the form
-        router.push(`/appointments?phone=${encodeURIComponent(phone)}`);
-      }
-      setIsSearching(false);
-      setPhone(""); // Clear input after search
-    }, 500);
+  useEffect(() => {
+    if (query.length > 0) {
+      const filteredCustomers = mockCustomers.filter((customer) =>
+        customer.phone.includes(query)
+      );
+      setResults(filteredCustomers);
+      setIsOpen(true);
+    } else {
+      setResults([]);
+      setIsOpen(false);
+    }
+  }, [query]);
+  
+  const handleSelectClient = () => {
+    setQuery("");
+    setResults([]);
+    setIsOpen(false);
   };
 
   return (
     <div className="relative w-full max-w-xs items-center">
-      <Input
-        type="tel"
-        placeholder="Search client..."
-        className="w-full rounded-lg bg-background pl-3 pr-10"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-        disabled={isSearching}
-      />
-       <Button 
-        size="icon"
-        variant="ghost"
-        className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-        onClick={handleSearch} 
-        disabled={!phone || isSearching}
-        aria-label="Search"
-      >
-        <Search className="h-4 w-4" />
-      </Button>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              ref={inputRef}
+              type="tel"
+              placeholder="Search client by phone..."
+              className="w-full rounded-lg bg-background pl-10 pr-10"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query && (
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search"
+                >
+                    <X className="h-4 w-4" />
+                </Button>
+            )}
+          </div>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-[--radix-popover-trigger-width] p-0"
+          align="start"
+          onOpenAutoFocus={(e) => e.preventDefault()} // Prevents input from losing focus
+        >
+          <div className="flex flex-col space-y-1 p-2">
+            {results.length > 0 ? (
+              results.map((customer) => (
+                <Link
+                  key={customer.id}
+                  href={`/clients/${encodeURIComponent(customer.email)}`}
+                  className="flex items-center gap-3 rounded-md p-2 hover:bg-accent"
+                  onClick={handleSelectClient}
+                >
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage
+                      src={`https://picsum.photos/seed/${customer.name}/100`}
+                      alt={customer.name}
+                    />
+                    <AvatarFallback>{customer.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-sm">{customer.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {customer.phone}
+                    </p>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No results found.
+              </div>
+            )}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
