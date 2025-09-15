@@ -17,6 +17,7 @@ import {
 import { RevenueChart } from "./RevenueChart";
 import { CalendarView } from "../staff/schedule/CalendarView";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
+import { RecentActivity } from "./RecentActivity";
 
 type Appointment = {
     id: string;
@@ -127,7 +128,7 @@ export function Dashboard({
             </CardDescription>
           </CardHeader>
           <CardContent>
-             <CalendarView events={calendarEvents} view="month" />
+             <CalendarView events={calendarEvents} view="month" showToolbar={false} />
           </CardContent>
         </Card>
       </div>
