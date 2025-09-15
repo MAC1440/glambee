@@ -72,7 +72,7 @@ const navItems = [
   { href: "/deals", icon: Package, label: "Deals" },
   { href: "/promotions", icon: Tag, label: "Promotions" },
   { href: "/staff", icon: Briefcase, label: "Staff" },
-  { href: "/billing", icon: CreditCard, label: "Billing" },
+  // { href: "/billing", icon: CreditCard, label: "Billing" },
   { href: "/branches", icon: Building, label: "Branches", roles: ["SUPER_ADMIN"]},
 ];
 
