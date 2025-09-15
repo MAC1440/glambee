@@ -24,8 +24,8 @@ export function DashboardCalendar({ allAppointments }: { allAppointments: Schedu
     }));
   }, [allAppointments]);
 
-  const handleDateClick = (slotInfo: SlotInfo) => {
-    const date = slotInfo.start;
+  const handleDateClick = (slotInfo: SlotInfo | Date) => {
+    const date = slotInfo instanceof Date ? slotInfo : slotInfo.start;
     const appointmentsForDay = allAppointments.filter(apt => isSameDay(apt.start, date));
     if (appointmentsForDay.length > 0) {
       setSelectedDate(date);
@@ -41,6 +41,7 @@ export function DashboardCalendar({ allAppointments }: { allAppointments: Schedu
         view="month" 
         showToolbar={false} 
         onSelectSlot={handleDateClick}
+        onDrillDown={handleDateClick}
       />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
