@@ -18,18 +18,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
-  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu";
 import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarTrigger,
-  SidebarInset,
-} from "@/components/ui/sidebar";
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Calendar,
   CreditCard,
@@ -45,13 +39,14 @@ import {
   Moon,
   Tag,
   Package,
-  CalendarPlus,
+  Menu,
   ChevronsUpDown,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
 import { useTheme } from "next-themes";
 import { branches as allBranches } from "@/lib/placeholder-data";
+import { cn } from "@/lib/utils";
 
 // Mock user type for prototype
 type User = {
@@ -71,7 +66,6 @@ const navItems = [
   { href: "/deals", icon: Package, label: "Deals" },
   { href: "/promotions", icon: Tag, label: "Promotions" },
   { href: "/staff", icon: Briefcase, label: "Staff" },
-  // { href: "/billing", icon: CreditCard, label: "Billing" },
   { href: "/branches", icon: Building, label: "Branches", roles: ["SUPER_ADMIN"]},
 ];
 
@@ -82,7 +76,6 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   const [selectedBranch, setSelectedBranch] = React.useState(
     user.salonId ? allBranches.find(b => b.id === user.salonId)?.name : 'All Branches'
   );
-
 
   const handleLogout = () => {
     localStorage.removeItem("session");
@@ -95,14 +88,11 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
       return pathname === item.href;
     }
     if (item.activeMatch) {
-      // For Clients, we want to match /clients and /clients/[email]
       return pathname.startsWith(item.activeMatch);
     }
-    // For Staff, we want to match /staff but not /staff/schedule
     if (item.href === "/staff") {
       return pathname === "/staff";
     }
-
     return pathname.startsWith(item.href);
   };
   
@@ -115,40 +105,70 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   };
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center gap-2">
-            <SalonFlowLogo className="h-8 w-8 text-primary" />
-            <span className="text-lg font-semibold font-headline">SalonFlow</span>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {visibleNavItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <Button
-                  className="w-full justify-start"
-                  variant={isNavItemActive(item) ? "default" : "ghost"}
-                  size="default"
-                  asChild
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
+        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-lg font-semibold md:text-base"
+          >
+            <SalonFlowLogo className="h-6 w-6 text-primary" />
+            <span className="sr-only">SalonFlow</span>
+          </Link>
+          {visibleNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "transition-colors hover:text-foreground",
+                isNavItemActive(item) ? "text-foreground" : "text-muted-foreground"
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0 md:hidden"
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle navigation menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left">
+            <nav className="grid gap-6 text-lg font-medium">
+              <Link
+                href="#"
+                className="flex items-center gap-2 text-lg font-semibold"
+              >
+                <SalonFlowLogo className="h-6 w-6 text-primary" />
+                <span >SalonFlow</span>
+              </Link>
+              {visibleNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "hover:text-foreground",
+                    isNavItemActive(item) ? "text-foreground" : "text-muted-foreground"
+                  )}
                 >
-                  <Link href={item.href} className="flex items-center gap-2">
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </Link>
-                </Button>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        {/* Footer is removed as profile is in the header dropdown */}
-      </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
-          <SidebarTrigger className="md:hidden" />
-          <div className="flex-1"></div>
-          <GlobalClientSearch />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </SheetContent>
+        </Sheet>
+        
+        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+          <div className="ml-auto flex-1 sm:flex-initial">
+             <GlobalClientSearch />
+          </div>
           
           {user.role === 'SUPER_ADMIN' && (
             <DropdownMenu>
@@ -220,9 +240,11 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </header>
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+        </div>
+      </header>
+      <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+        {children}
+      </main>
+    </div>
   );
 }
