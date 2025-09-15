@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, isSameDay } from 'date-fns';
 import type { ScheduleAppointment } from '@/lib/schedule-data';
+import type { SlotInfo } from 'react-big-calendar';
 
 export function DashboardCalendar({ allAppointments }: { allAppointments: ScheduleAppointment[] }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,7 +24,8 @@ export function DashboardCalendar({ allAppointments }: { allAppointments: Schedu
     }));
   }, [allAppointments]);
 
-  const handleDateClick = (date: Date) => {
+  const handleDateClick = (slotInfo: SlotInfo) => {
+    const date = slotInfo.start;
     const appointmentsForDay = allAppointments.filter(apt => isSameDay(apt.start, date));
     if (appointmentsForDay.length > 0) {
       setSelectedDate(date);
@@ -38,7 +40,7 @@ export function DashboardCalendar({ allAppointments }: { allAppointments: Schedu
         events={calendarEvents} 
         view="month" 
         showToolbar={false} 
-        onDrillDown={handleDateClick}
+        onSelectSlot={handleDateClick}
       />
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
