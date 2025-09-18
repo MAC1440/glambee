@@ -76,7 +76,7 @@ export function Attendance() {
             <CardHeader>
               <CardTitle>Select Date</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex justify-center">
               <Calendar
                 mode="single"
                 selected={selectedDate}
