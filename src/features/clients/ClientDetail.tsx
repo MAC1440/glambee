@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { appointments, mockCustomers } from "@/lib/placeholder-data";
+import { appointments, mockCustomers, user } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
 import {
   Mail,
@@ -31,12 +31,15 @@ import {
   DollarSign,
   Cake,
   User,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { format, parseISO, differenceInYears } from "date-fns";
 import { ClientFormDialog } from "./ClientFormDialog";
 import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 type Customer = {
   id: string;
@@ -47,9 +50,18 @@ type Customer = {
   dob: string;
 };
 
+type Feedback = {
+    id: string;
+    date: string;
+    author: string;
+    note: string;
+}
+
 export function ClientDetail({ client: initialClient }: { client: Customer | undefined }) {
   const [client, setClient] = useState(initialClient);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback[]>([]);
+  const [newFeedbackNote, setNewFeedbackNote] = useState('');
   const { toast } = useToast();
   
   if (!client) {
@@ -125,13 +137,9 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
   }, [clientAppointments]);
   
   const handleSaveClient = (updatedClientData: Omit<Customer, 'id'>) => {
-    // In a real app, you'd send this to your API.
-    // For this prototype, we'll just update the local state.
     const updatedClient = { ...client, ...updatedClientData };
     setClient(updatedClient);
 
-    // This is a mock update to the placeholder data array. 
-    // This won't persist across page loads.
     const customerIndex = mockCustomers.findIndex(c => c.id === client.id);
     if(customerIndex !== -1) {
         mockCustomers[customerIndex] = updatedClient;
@@ -143,6 +151,22 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
     });
     setIsFormOpen(false);
   };
+  
+  const handleAddFeedback = () => {
+    if(newFeedbackNote.trim() === '') {
+        toast({ title: 'Note is empty', description: 'Please write a note before saving.', variant: 'destructive'});
+        return;
+    }
+    const newFeedback: Feedback = {
+        id: `feedback_${Date.now()}`,
+        date: new Date().toISOString(),
+        author: user.name, // In a real app, this would be the logged in user
+        note: newFeedbackNote,
+    };
+    setFeedback(prev => [newFeedback, ...prev]);
+    setNewFeedbackNote('');
+    toast({ title: 'Feedback Added', description: 'The new note has been saved.'});
+  }
 
 
   const age = client.dob ? differenceInYears(new Date(), parseISO(client.dob)) : null;
@@ -241,6 +265,7 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
                     <TabsTrigger value="appointments">Appointments</TabsTrigger>
                     <TabsTrigger value="payments">Payments</TabsTrigger>
                     <TabsTrigger value="services">Services</TabsTrigger>
+                    <TabsTrigger value="feedback">Training/Feedback</TabsTrigger>
                   </TabsList>
                 </div>
               </CardHeader>
@@ -344,6 +369,36 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
                       ))}
                     </TableBody>
                   </Table>
+                </TabsContent>
+                <TabsContent value="feedback">
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="feedback-note">Add New Note</Label>
+                        <Textarea 
+                            id="feedback-note"
+                            placeholder="Type training note or feedback here..."
+                            value={newFeedbackNote}
+                            onChange={(e) => setNewFeedbackNote(e.target.value)}
+                        />
+                         <Button onClick={handleAddFeedback}>Save Note</Button>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h4 className="font-medium">History</h4>
+                        {feedback.length > 0 ? (
+                            feedback.map(item => (
+                                <div key={item.id} className="p-4 rounded-lg border bg-muted/50">
+                                    <p className="text-sm text-muted-foreground">
+                                        <span className="font-semibold">{item.author}</span> on <span className="font-semibold">{format(parseISO(item.date), "MMMM d, yyyy 'at' p")}</span>
+                                    </p>
+                                    <p className="mt-2">{item.note}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">No feedback or training records yet.</p>
+                        )}
+                    </div>
+                  </div>
                 </TabsContent>
               </CardContent>
             </Card>

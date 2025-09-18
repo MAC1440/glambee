@@ -33,9 +33,6 @@ import {
   Moon,
   Tag,
   Package,
-  FileText,
-  Clock,
-  TrendingUp,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
