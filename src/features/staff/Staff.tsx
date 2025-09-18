@@ -18,8 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { staff as initialStaff, appointments } from "@/lib/placeholder-data";
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { staff as initialStaff } from "@/lib/placeholder-data";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, NotebookPen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { StaffFormDialog } from "./StaffFormDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -40,7 +40,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
+import { StaffDetailDialog } from "./StaffDetailDialog";
 
 export type StaffMember = {
   id: string;
@@ -53,11 +53,23 @@ export type StaffMember = {
   shiftTimings: string;
 };
 
+export type Feedback = {
+  id: string;
+  date: string;
+  author: string;
+  note: string;
+};
+
+
 export function Staff() {
   const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [editingStaff, setEditingStaff] = useState<StaffMember | undefined>(
+    undefined
+  );
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | undefined>(
     undefined
   );
   const { toast } = useToast();
@@ -84,6 +96,11 @@ export function Staff() {
     setEditingStaff(member);
     setDialogOpen(true);
   };
+  
+  const handleOpenDetailDialog = (member: StaffMember) => {
+    setSelectedStaff(member);
+    setDetailDialogOpen(true);
+  }
 
   const handleSaveStaff = (staffData: Omit<StaffMember, "id" | "salonId">) => {
     if (dialogMode === "add") {
@@ -200,6 +217,11 @@ export function Staff() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                               <DropdownMenuItem
+                                onClick={() => handleOpenDetailDialog(member)}
+                              >
+                                <NotebookPen className="mr-2 h-4 w-4" /> View Details & Feedback
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleOpenDialog("edit", member)}
                               >
@@ -245,6 +267,13 @@ export function Staff() {
         staffMember={editingStaff}
         onSave={handleSaveStaff}
       />
+      {selectedStaff && (
+         <StaffDetailDialog
+            isOpen={detailDialogOpen}
+            onOpenChange={setDetailDialogOpen}
+            staffMember={selectedStaff}
+        />
+      )}
     </>
   );
 }
