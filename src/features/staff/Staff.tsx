@@ -40,12 +40,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 export type StaffMember = {
   id: string;
   name: string;
+  role: string;
   department: string;
   salonId: string;
+  skills: string[];
+  commission: number;
+  shiftTimings: string;
 };
 
 export function Staff() {
@@ -65,10 +70,10 @@ export function Staff() {
         return "bg-pink-100 text-pink-800 dark:bg-pink-900/50 dark:text-pink-300";
       case "receptionist":
         return "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300";
-      case "assistant":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300";
-      default:
+       case "manager":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300";
     }
   };
 
@@ -139,25 +144,15 @@ export function Staff() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Appointments Today</TableHead>
-                    <TableHead>Total Revenue Generated</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Commission</TableHead>
+                    <TableHead>Shift</TableHead>
+                    <TableHead>Skills</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {staff.map((member) => {
-                    const memberAppointments = appointments.filter(
-                      (apt) => apt.staff === member.name
-                    );
-                    const todayAppointments = memberAppointments.filter(
-                      (apt) =>
-                        apt.date === new Date().toISOString().slice(0, 10)
-                    ).length;
-                    const totalRevenue = memberAppointments.reduce(
-                      (sum, apt) => sum + apt.price,
-                      0
-                    );
                     return (
                       <TableRow key={member.id}>
                         <TableCell>
@@ -175,24 +170,25 @@ export function Staff() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge
+                           <Badge
                             variant="outline"
                             className={getDepartmentColor(member.department)}
                           >
-                            {member.department}
+                            {member.role}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {member.department.toLowerCase().includes("artist") ||
-                          member.department.toLowerCase().includes("stylist")
-                            ? todayAppointments
-                            : "N/A"}
+                          {member.commission}%
                         </TableCell>
                         <TableCell>
-                          {member.department.toLowerCase().includes("artist") ||
-                          member.department.toLowerCase().includes("stylist")
-                            ? `$${totalRevenue.toFixed(2)}`
-                            : "N/A"}
+                          {member.shiftTimings}
+                        </TableCell>
+                         <TableCell>
+                           <div className="flex flex-wrap gap-1">
+                            {member.skills.map(skill => (
+                                <Badge key={skill} variant="secondary">{skill}</Badge>
+                            ))}
+                           </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>

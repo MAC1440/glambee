@@ -43,15 +43,17 @@ export const users = [
 ];
 
 export const staff = [
-  { id: "staff_01", name: "Jessica Miller", department: "Stylist", salonId: "salon_01" },
-  { id: "staff_02", name: "Michael Chen", department: "Stylist", salonId: "salon_01" },
-  { id: "staff_03", name: "Emily Rodriguez", department: "Nail Artist", salonId: "salon_02" },
-  { id: "staff_04", name: "David Wilson", department: "Nail Artist", salonId: "salon_02" },
-  { id: "staff_05", name: "Olivia Brown", department: "Receptionist", salonId: "salon_01" },
-  { id: "staff_06", name: "Daniel Green", department: "Assistant", salonId: "salon_02" },
+  { id: "staff_01", name: "Jessica Miller", role: "Senior Stylist", department: "Stylist", salonId: "salon_01", skills: ["Coloring", "Balayage", "Updos"], commission: 15, shiftTimings: "10 AM - 6 PM" },
+  { id: "staff_02", name: "Michael Chen", role: "Stylist", department: "Stylist", salonId: "salon_01", skills: ["Men's Cuts", "Fades", "Styling"], commission: 10, shiftTimings: "9 AM - 5 PM" },
+  { id: "staff_03", name: "Emily Rodriguez", role: "Lead Nail Tech", department: "Nail Artist", salonId: "salon_02", skills: ["Gel-X", "Nail Art", "Acrylics"], commission: 12, shiftTimings: "11 AM - 7 PM" },
+  { id: "staff_04", name: "David Wilson", role: "Nail Technician", department: "Nail Artist", salonId: "salon_02", skills: ["Manicures", "Pedicures"], commission: 10, shiftTimings: "10 AM - 6 PM" },
+  { id: "staff_05", name: "Olivia Brown", role: "Front Desk Coordinator", department: "Receptionist", salonId: "salon_01", skills: ["Booking", "Client Relations"], commission: 0, shiftTimings: "9 AM - 5 PM" },
+  { id: "staff_06", name: "Daniel Green", role: "Salon Assistant", department: "Assistant", salonId: "salon_02", skills: ["Shampooing", "Cleaning"], commission: 0, shiftTimings: "10 AM - 6 PM" },
 ];
 
 export const serviceCategories = ["Hair", "Nails", "Makeup", "Skin", "Spa", "Aesthetics", "Others"];
+export const staffRoles = ["Manager", "Senior Stylist", "Stylist", "Lead Nail Tech", "Nail Technician", "Esthetician", "Front Desk Coordinator", "Salon Assistant"];
+export const staffSkills = ["Coloring", "Balayage", "Updos", "Men's Cuts", "Fades", "Styling", "Gel-X", "Nail Art", "Acrylics", "Manicures", "Pedicures", "Booking", "Client Relations", "Shampooing", "Cleaning"];
 
 export const services = [
   // Promotions
