@@ -23,14 +23,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { appointments, user } from "@/lib/placeholder-data";
 import { performanceData } from "@/lib/performance-data";
-import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   Calendar,
   ClipboardList,
   Edit,
   FileText,
-  MessageSquare,
   Percent,
   Timer,
   Wrench,
@@ -43,11 +41,16 @@ import { Star } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { StaffFormDialog } from "./StaffFormDialog";
+import { LeaveRequestDialog } from "./LeaveRequestDialog";
 
-export function StaffDetail({ staffMember }: { staffMember: StaffMember | undefined }) {
+export function StaffDetail({ staffMember: initialStaffMember }: { staffMember: StaffMember | undefined }) {
+  const [staffMember, setStaffMember] = useState(initialStaffMember);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [newFeedbackNote, setNewFeedbackNote] = useState('');
   const { toast } = useToast();
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
 
   if (!staffMember) {
     return (
@@ -85,7 +88,41 @@ export function StaffDetail({ staffMember }: { staffMember: StaffMember | undefi
     toast({ title: 'Feedback Added', description: 'The new note has been saved.'});
   }
 
+  const handleSaveStaff = (updatedData: Omit<StaffMember, "id" | "salonId">) => {
+    if (staffMember) {
+      const updatedStaffMember = {
+        ...staffMember,
+        ...updatedData,
+        skills: Array.isArray(updatedData.skills) ? updatedData.skills : [],
+      };
+      setStaffMember(updatedStaffMember);
+      setIsEditFormOpen(false);
+      toast({
+        title: "Staff Updated",
+        description: `${staffMember.name}'s profile has been updated.`,
+      });
+    }
+  };
+
+  const handleGenerateSalarySlip = () => {
+    toast({
+        title: "Salary Slip Generated",
+        description: `A salary slip for ${staffMember.name} has been generated and is ready for download.`,
+    });
+  }
+
+  const handleLeaveRequest = (values: {type: string; dates: {from: Date, to: Date}; reason: string}) => {
+    console.log("Leave Request Submitted", values);
+    toast({
+      title: "Request Submitted",
+      description: `Your ${values.type} request for ${staffMember.name} has been submitted for approval.`,
+    });
+    setIsLeaveDialogOpen(false);
+  };
+
+
   return (
+    <>
     <div className="flex flex-col gap-8">
       <div className="flex w-full items-center justify-between">
         <Button variant="ghost" asChild>
@@ -95,15 +132,15 @@ export function StaffDetail({ staffMember }: { staffMember: StaffMember | undefi
           </Link>
         </Button>
         <div className="flex items-center gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleGenerateSalarySlip}>
             <FileText className="mr-2 h-4 w-4" />
             Generate Salary Slip
           </Button>
-           <Button variant="outline">
+           <Button variant="outline" onClick={() => setIsLeaveDialogOpen(true)}>
             <Calendar className="mr-2 h-4 w-4" />
             Request Leave/Loan
           </Button>
-          <Button>
+          <Button onClick={() => setIsEditFormOpen(true)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit Profile
           </Button>
@@ -275,5 +312,19 @@ export function StaffDetail({ staffMember }: { staffMember: StaffMember | undefi
         </div>
       </div>
     </div>
+    <StaffFormDialog 
+        isOpen={isEditFormOpen}
+        onOpenChange={setIsEditFormOpen}
+        mode="edit"
+        staffMember={staffMember}
+        onSave={handleSaveStaff}
+    />
+    <LeaveRequestDialog
+      isOpen={isLeaveDialogOpen}
+      onOpenChange={setIsLeaveDialogOpen}
+      onSave={handleLeaveRequest}
+      staffName={staffMember.name}
+    />
+    </>
   );
 }
