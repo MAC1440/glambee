@@ -576,6 +576,15 @@ export const appointments = [
   },
 ];
 
+export const salarySlips = [
+  { slipId: "slip_01", staffId: "staff_01", month: 7, year: 2024, baseSalary: 3000, commission: 450.50, deductions: 250, totalEarnings: 3200.50 },
+  { slipId: "slip_02", staffId: "staff_01", month: 6, year: 2024, baseSalary: 3000, commission: 420.00, deductions: 250, totalEarnings: 3170.00 },
+  { slipId: "slip_03", staffId: "staff_02", month: 7, year: 2024, baseSalary: 2500, commission: 255.00, deductions: 200, totalEarnings: 2555.00 },
+  { slipId: "slip_04", staffId: "staff_03", month: 7, year: 2024, baseSalary: 2800, commission: 310.20, deductions: 220, totalEarnings: 2890.20 },
+  { slipId: "slip_05", staffId: "staff_04", month: 7, year: 2024, baseSalary: 2200, commission: 180.00, deductions: 180, totalEarnings: 2200.00 },
+  { slipId: "slip_06", staffId: "staff_05", month: 7, year: 2024, baseSalary: 2000, commission: 0, deductions: 150, totalEarnings: 1850.00 },
+  { slipId: "slip_07", staffId: "staff_06", month: 7, year: 2024, baseSalary: 1800, commission: 0, deductions: 120, totalEarnings: 1680.00 },
+];
     
 
     

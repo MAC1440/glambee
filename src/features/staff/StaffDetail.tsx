@@ -43,6 +43,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { StaffFormDialog } from "./StaffFormDialog";
 import { LeaveRequestDialog } from "./LeaveRequestDialog";
+import { SalarySlipDialog } from "./SalarySlipDialog";
+
 
 export function StaffDetail({ staffMember: initialStaffMember }: { staffMember: StaffMember | undefined }) {
   const [staffMember, setStaffMember] = useState(initialStaffMember);
@@ -51,6 +53,8 @@ export function StaffDetail({ staffMember: initialStaffMember }: { staffMember: 
   const { toast } = useToast();
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
+  const [isSalarySlipOpen, setIsSalarySlipOpen] = useState(false);
+
 
   if (!staffMember) {
     return (
@@ -104,13 +108,6 @@ export function StaffDetail({ staffMember: initialStaffMember }: { staffMember: 
     }
   };
 
-  const handleGenerateSalarySlip = () => {
-    toast({
-        title: "Salary Slip Generated",
-        description: `A salary slip for ${staffMember.name} has been generated and is ready for download.`,
-    });
-  }
-
   const handleLeaveRequest = (values: {type: string; dates: {from: Date, to: Date}; reason: string}) => {
     console.log("Leave Request Submitted", values);
     toast({
@@ -132,7 +129,7 @@ export function StaffDetail({ staffMember: initialStaffMember }: { staffMember: 
           </Link>
         </Button>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleGenerateSalarySlip}>
+          <Button variant="outline" onClick={() => setIsSalarySlipOpen(true)}>
             <FileText className="mr-2 h-4 w-4" />
             Generate Salary Slip
           </Button>
@@ -324,6 +321,11 @@ export function StaffDetail({ staffMember: initialStaffMember }: { staffMember: 
       onOpenChange={setIsLeaveDialogOpen}
       onSave={handleLeaveRequest}
       staffName={staffMember.name}
+    />
+    <SalarySlipDialog 
+        isOpen={isSalarySlipOpen}
+        onOpenChange={setIsSalarySlipOpen}
+        staffMember={staffMember}
     />
     </>
   );
