@@ -1,4 +1,6 @@
 
+import { format, subDays, addDays } from 'date-fns';
+
 export const branches = [
   {
     id: "salon_01",
@@ -42,16 +44,29 @@ export const users = [
   },
 ];
 
+const today = new Date();
+const yesterday = subDays(today, 1);
+const tomorrow = addDays(today, 1);
+
 export const attendanceRecords = [
-  { staffId: "staff_01", date: "2024-07-31", clockIn: "09:55 AM", clockOut: "06:05 PM", status: "Present" },
-  { staffId: "staff_02", date: "2024-07-31", clockIn: "08:58 AM", clockOut: "05:02 PM", status: "Present" },
-  { staffId: "staff_03", date: "2024-07-31", clockIn: "10:50 AM", clockOut: "07:10 PM", status: "Present" },
-  { staffId: "staff_04", date: "2024-07-31", clockIn: "10:05 AM", clockOut: "06:15 PM", status: "Late" },
-  { staffId: "staff_05", date: "2024-07-31", clockIn: "09:00 AM", clockOut: "05:00 PM", status: "Present" },
-  { staffId: "staff_06", date: "2024-07-31", clockIn: null, clockOut: null, status: "Absent" },
-  { staffId: "staff_01", date: "2024-07-30", clockIn: "10:00 AM", clockOut: "06:00 PM", status: "Present" },
-  { staffId: "staff_02", date: "2024-07-30", clockIn: "09:02 AM", clockOut: "05:00 PM", status: "Present" },
-  { staffId: "staff_03", date: "2024-07-30", clockIn: null, clockOut: null, status: "On Leave" },
+  // Today's records
+  { staffId: "staff_01", date: format(today, "yyyy-MM-dd"), clockIn: "09:55 AM", clockOut: "06:05 PM", status: "Present" },
+  { staffId: "staff_02", date: format(today, "yyyy-MM-dd"), clockIn: "08:58 AM", clockOut: "05:02 PM", status: "Present" },
+  { staffId: "staff_03", date: format(today, "yyyy-MM-dd"), clockIn: "10:50 AM", clockOut: "07:10 PM", status: "Present" },
+  { staffId: "staff_04", date: format(today, "yyyy-MM-dd"), clockIn: "10:05 AM", clockOut: "06:15 PM", status: "Late" },
+  { staffId: "staff_05", date: format(today, "yyyy-MM-dd"), clockIn: "09:00 AM", clockOut: "05:00 PM", status: "Present" },
+  { staffId: "staff_06", date: format(today, "yyyy-MM-dd"), clockIn: null, clockOut: null, status: "Absent" },
+  
+  // Yesterday's records
+  { staffId: "staff_01", date: format(yesterday, "yyyy-MM-dd"), clockIn: "10:00 AM", clockOut: "06:00 PM", status: "Present" },
+  { staffId: "staff_02", date: format(yesterday, "yyyy-MM-dd"), clockIn: "09:02 AM", clockOut: "05:00 PM", status: "Present" },
+  { staffId: "staff_03", date: format(yesterday, "yyyy-MM-dd"), clockIn: null, clockOut: null, status: "On Leave" },
+  { staffId: "staff_04", date: format(yesterday, "yyyy-MM-dd"), clockIn: "10:15 AM", clockOut: "06:00 PM", status: "Late" },
+  { staffId: "staff_05", date: format(yesterday, "yyyy-MM-dd"), clockIn: "09:05 AM", clockOut: "05:05 PM", status: "Present" },
+  { staffId: "staff_06", date: format(yesterday, "yyyy-MM-dd"), clockIn: "10:00 AM", clockOut: "06:00 PM", status: "Present" },
+
+  // Tomorrow's records (for leave)
+  { staffId: "staff_02", date: format(tomorrow, "yyyy-MM-dd"), clockIn: null, clockOut: null, status: "On Leave" },
 ];
 
 
@@ -560,5 +575,7 @@ export const appointments = [
     price: 45.0,
   },
 ];
+
+    
 
     
