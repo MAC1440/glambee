@@ -35,6 +35,7 @@ import {
   Package,
   FileText,
   Clock,
+  TrendingUp,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
@@ -87,6 +88,7 @@ const navItems = [
       { href: "/staff", label: "Staff" },
       { href: "/hr/attendance", label: "Attendance" },
       { href: "/hr/payroll", label: "Payroll" },
+      { href: "/hr/performance", label: "Performance" },
     ],
     roles: ["SUPER_ADMIN", "SALON_ADMIN"]
   },
