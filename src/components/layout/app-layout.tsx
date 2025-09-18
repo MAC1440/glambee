@@ -33,6 +33,8 @@ import {
   Moon,
   Tag,
   Package,
+  FileText,
+  Clock,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
@@ -83,6 +85,8 @@ const navItems = [
     icon: Briefcase,
     subItems: [
       { href: "/staff", label: "Staff" },
+      { href: "/hr/attendance", label: "Attendance" },
+      { href: "/hr/payroll", label: "Payroll" },
     ],
     roles: ["SUPER_ADMIN", "SALON_ADMIN"]
   },

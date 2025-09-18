@@ -42,13 +42,26 @@ export const users = [
   },
 ];
 
+export const attendanceRecords = [
+  { staffId: "staff_01", date: "2024-07-31", clockIn: "09:55 AM", clockOut: "06:05 PM", status: "Present" },
+  { staffId: "staff_02", date: "2024-07-31", clockIn: "08:58 AM", clockOut: "05:02 PM", status: "Present" },
+  { staffId: "staff_03", date: "2024-07-31", clockIn: "10:50 AM", clockOut: "07:10 PM", status: "Present" },
+  { staffId: "staff_04", date: "2024-07-31", clockIn: "10:05 AM", clockOut: "06:15 PM", status: "Late" },
+  { staffId: "staff_05", date: "2024-07-31", clockIn: "09:00 AM", clockOut: "05:00 PM", status: "Present" },
+  { staffId: "staff_06", date: "2024-07-31", clockIn: null, clockOut: null, status: "Absent" },
+  { staffId: "staff_01", date: "2024-07-30", clockIn: "10:00 AM", clockOut: "06:00 PM", status: "Present" },
+  { staffId: "staff_02", date: "2024-07-30", clockIn: "09:02 AM", clockOut: "05:00 PM", status: "Present" },
+  { staffId: "staff_03", date: "2024-07-30", clockIn: null, clockOut: null, status: "On Leave" },
+];
+
+
 export const staff = [
-  { id: "staff_01", name: "Jessica Miller", role: "Senior Stylist", department: "Stylist", salonId: "salon_01", skills: ["Coloring", "Balayage", "Updos"], commission: 15, shiftTimings: "10 AM - 6 PM" },
-  { id: "staff_02", name: "Michael Chen", role: "Stylist", department: "Stylist", salonId: "salon_01", skills: ["Men's Cuts", "Fades", "Styling"], commission: 10, shiftTimings: "9 AM - 5 PM" },
-  { id: "staff_03", name: "Emily Rodriguez", role: "Lead Nail Tech", department: "Nail Artist", salonId: "salon_02", skills: ["Gel-X", "Nail Art", "Acrylics"], commission: 12, shiftTimings: "11 AM - 7 PM" },
-  { id: "staff_04", name: "David Wilson", role: "Nail Technician", department: "Nail Artist", salonId: "salon_02", skills: ["Manicures", "Pedicures"], commission: 10, shiftTimings: "10 AM - 6 PM" },
-  { id: "staff_05", name: "Olivia Brown", role: "Front Desk Coordinator", department: "Receptionist", salonId: "salon_01", skills: ["Booking", "Client Relations"], commission: 0, shiftTimings: "9 AM - 5 PM" },
-  { id: "staff_06", name: "Daniel Green", role: "Salon Assistant", department: "Assistant", salonId: "salon_02", skills: ["Shampooing", "Cleaning"], commission: 0, shiftTimings: "10 AM - 6 PM" },
+  { id: "staff_01", name: "Jessica Miller", role: "Senior Stylist", department: "Stylist", salonId: "salon_01", skills: ["Coloring", "Balayage", "Updos"], commission: 15, shiftTimings: "10 AM - 6 PM", attendance: attendanceRecords.filter(a => a.staffId === 'staff_01') },
+  { id: "staff_02", name: "Michael Chen", role: "Stylist", department: "Stylist", salonId: "salon_01", skills: ["Men's Cuts", "Fades", "Styling"], commission: 10, shiftTimings: "9 AM - 5 PM", attendance: attendanceRecords.filter(a => a.staffId === 'staff_02') },
+  { id: "staff_03", name: "Emily Rodriguez", role: "Lead Nail Tech", department: "Nail Artist", salonId: "salon_02", skills: ["Gel-X", "Nail Art", "Acrylics"], commission: 12, shiftTimings: "11 AM - 7 PM", attendance: attendanceRecords.filter(a => a.staffId === 'staff_03') },
+  { id: "staff_04", name: "David Wilson", role: "Nail Technician", department: "Nail Artist", salonId: "salon_02", skills: ["Manicures", "Pedicures"], commission: 10, shiftTimings: "10 AM - 6 PM", attendance: attendanceRecords.filter(a => a.staffId === 'staff_04') },
+  { id: "staff_05", name: "Olivia Brown", role: "Front Desk Coordinator", department: "Receptionist", salonId: "salon_01", skills: ["Booking", "Client Relations"], commission: 0, shiftTimings: "9 AM - 5 PM", attendance: attendanceRecords.filter(a => a.staffId === 'staff_05') },
+  { id: "staff_06", name: "Daniel Green", role: "Salon Assistant", department: "Assistant", salonId: "salon_02", skills: ["Shampooing", "Cleaning"], commission: 0, shiftTimings: "10 AM - 6 PM", attendance: attendanceRecords.filter(a => a.staffId === 'staff_06') },
 ];
 
 export const serviceCategories = ["Hair", "Nails", "Makeup", "Skin", "Spa", "Aesthetics", "Others"];

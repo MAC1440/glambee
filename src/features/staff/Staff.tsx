@@ -70,8 +70,10 @@ export function Staff() {
         return "bg-pink-100 text-pink-800 dark:bg-pink-900/50 dark:text-pink-300";
       case "receptionist":
         return "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300";
-       case "manager":
+      case "manager":
         return "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300";
+      case "assistant":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300";
     }
