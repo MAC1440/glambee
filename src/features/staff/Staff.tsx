@@ -40,7 +40,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { StaffDetailDialog } from "./StaffDetailDialog";
+import Link from "next/link";
 
 export type StaffMember = {
   id: string;
@@ -64,12 +64,8 @@ export type Feedback = {
 export function Staff() {
   const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [editingStaff, setEditingStaff] = useState<StaffMember | undefined>(
-    undefined
-  );
-  const [selectedStaff, setSelectedStaff] = useState<StaffMember | undefined>(
     undefined
   );
   const { toast } = useToast();
@@ -97,11 +93,6 @@ export function Staff() {
     setDialogOpen(true);
   };
   
-  const handleOpenDetailDialog = (member: StaffMember) => {
-    setSelectedStaff(member);
-    setDetailDialogOpen(true);
-  }
-
   const handleSaveStaff = (staffData: Omit<StaffMember, "id" | "salonId">) => {
     if (dialogMode === "add") {
       const newStaff = {
@@ -173,9 +164,9 @@ export function Staff() {
                 <TableBody>
                   {staff.map((member) => {
                     return (
-                      <TableRow key={member.id}>
+                      <TableRow key={member.id} className="hover:bg-muted/50 cursor-pointer">
                         <TableCell>
-                          <div className="flex items-center gap-3">
+                          <Link href={`/staff/${member.id}`} className="flex items-center gap-3">
                             <Avatar className="h-9 w-9">
                               <AvatarImage
                                 src={`https://picsum.photos/seed/${member.name}/100`}
@@ -186,7 +177,7 @@ export function Staff() {
                               </AvatarFallback>
                             </Avatar>
                             <div className="font-medium">{member.name}</div>
-                          </div>
+                          </Link>
                         </TableCell>
                         <TableCell>
                            <Badge
@@ -217,10 +208,10 @@ export function Staff() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                               <DropdownMenuItem
-                                onClick={() => handleOpenDetailDialog(member)}
-                              >
-                                <NotebookPen className="mr-2 h-4 w-4" /> View Details & Feedback
+                               <DropdownMenuItem asChild>
+                                <Link href={`/staff/${member.id}`}>
+                                  <NotebookPen className="mr-2 h-4 w-4" /> View Details
+                                </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleOpenDialog("edit", member)}
@@ -267,13 +258,6 @@ export function Staff() {
         staffMember={editingStaff}
         onSave={handleSaveStaff}
       />
-      {selectedStaff && (
-         <StaffDetailDialog
-            isOpen={detailDialogOpen}
-            onOpenChange={setDetailDialogOpen}
-            staffMember={selectedStaff}
-        />
-      )}
     </>
   );
 }
