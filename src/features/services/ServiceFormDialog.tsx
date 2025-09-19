@@ -59,6 +59,7 @@ type ServiceFormDialogProps = {
   onSave: (service: Service) => void;
   individualServices: Service[];
   inventoryItems: InventoryItem[];
+  defaultTab?: "basic" | "recipe";
 };
 
 const formSchema = z.object({
@@ -103,6 +104,7 @@ export function ServiceFormDialog({
   onSave,
   individualServices = [],
   inventoryItems = [],
+  defaultTab = "basic",
 }: ServiceFormDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -202,7 +204,7 @@ export function ServiceFormDialog({
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
 
-            <Tabs defaultValue="basic" className="mt-4">
+            <Tabs defaultValue={defaultTab} className="mt-4">
                  <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="basic">Basic Info</TabsTrigger>
                     <TabsTrigger value="recipe" disabled={!showRecipeTab}>Recipe</TabsTrigger>

@@ -62,15 +62,18 @@ export function ServicesList() {
   const [editingService, setEditingService] = React.useState<
     Service | undefined
   >(undefined);
+  const [defaultTab, setDefaultTab] = React.useState<"basic" | "recipe">("basic");
   
   const [globalFilter, setGlobalFilter] = React.useState("");
 
   const handleOpenDialog = (
     mode: "add" | "edit",
-    service?: Service
+    service?: Service,
+    tab: "basic" | "recipe" = "basic"
   ) => {
     setDialogMode(mode);
     setEditingService(service);
+    setDefaultTab(tab);
     setDialogOpen(true);
   };
 
@@ -121,18 +124,21 @@ export function ServicesList() {
         );
       },
       cell: ({ row }) => {
-          const hasRecipe = row.original.recipe && row.original.recipe.length > 0;
+          const service = row.original;
+          const hasRecipe = service.recipe && service.recipe.length > 0;
           return (
             <div className="flex items-center gap-2">
                  <div className="capitalize">{row.getValue("name")}</div>
                  {hasRecipe && (
                     <TooltipProvider>
                         <Tooltip>
-                            <TooltipTrigger>
-                                <BookText className="h-4 w-4 text-muted-foreground"/>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenDialog("edit", service, "recipe")}>
+                                    <BookText className="h-4 w-4 text-muted-foreground"/>
+                                </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>This service has a recipe.</p>
+                                <p>View/Edit Recipe</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -295,6 +301,7 @@ export function ServicesList() {
         onSave={handleSave}
         individualServices={[]}
         inventoryItems={inventoryItems}
+        defaultTab={defaultTab}
       />
     </>
   );
