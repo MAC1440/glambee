@@ -447,7 +447,7 @@ export const appointments = [
     time: "09:00 AM",
     price: 250.0,
     rating: 5,
-    review: "Jessica is a true artist! My balayage has never looked better.",
+    review: "Jessica is a true artist! My balayage has never looked better. She really took the time to understand what I wanted.",
   },
   {
     id: "apt_02",
@@ -459,7 +459,7 @@ export const appointments = [
     time: "10:00 AM",
     price: 85.0,
     rating: 5,
-    review: "Michael gave me the best haircut I've had in years. Highly recommend.",
+    review: "Michael gave me the best haircut I've had in years. He's professional, skilled, and gives great advice. Highly recommend.",
   },
   {
     id: "apt_03",
@@ -471,7 +471,7 @@ export const appointments = [
     time: "11:00 AM",
     price: 45.0,
     rating: 4,
-    review: "Very relaxing and my nails look great. A bit of a wait, though.",
+    review: "Very relaxing and my nails look great. The hand massage was a highlight. A bit of a wait before my appointment, though.",
   },
   {
     id: "apt_04",
@@ -483,7 +483,7 @@ export const appointments = [
     time: "12:00 PM",
     price: 150.0,
     rating: 5,
-    review: null,
+    review: "Perfect color, exactly what I asked for. Jessica is amazing with color.",
   },
   {
     id: "apt_05",
@@ -495,7 +495,7 @@ export const appointments = [
     time: "01:00 PM",
     price: 65.0,
     rating: 4,
-    review: "Good service, but the salon was a bit noisy.",
+    review: "Good service and my feet feel refreshed, but the salon was a bit noisy and it was hard to relax.",
   },
   {
     id: "apt_06",
@@ -507,7 +507,7 @@ export const appointments = [
     time: "02:00 PM",
     price: 85.0,
     rating: 5,
-    review: "Another fantastic cut from Michael. He's the best!",
+    review: "Another fantastic cut from Michael. He's so consistent and always does a wonderful job.",
   },
   {
     id: "apt_07",
@@ -519,7 +519,7 @@ export const appointments = [
     time: "09:00 AM",
     price: 55.0,
     rating: 5,
-    review: "My hair feels so soft and healthy. Thank you Emily!",
+    review: "My hair feels so soft and healthy. Emily was very gentle and explained the benefits of the treatment. Thank you!",
   },
   {
     id: "apt_08",
@@ -531,7 +531,7 @@ export const appointments = [
     time: "10:00 AM",
     price: 250.0,
     rating: 4,
-    review: null,
+    review: "The color is beautiful, but it took much longer than I expected. Be prepared to spend a few hours here.",
   },
   {
     id: "apt_09",
@@ -543,7 +543,7 @@ export const appointments = [
     time: "11:00 AM",
     price: 45.0,
     rating: 5,
-    review: "David is meticulous and so friendly. Perfect manicure.",
+    review: "David is meticulous and so friendly. My manicure looks perfect and lasted for two weeks without chipping.",
   },
   {
     id: "apt_10",
@@ -555,7 +555,7 @@ export const appointments = [
     time: "01:00 PM",
     price: 85.0,
     rating: 5,
-    review: "Consistent and high-quality service every time.",
+    review: "Consistent and high-quality service every time. Michael is a true professional.",
   },
   {
     id: "apt_11",
@@ -567,7 +567,7 @@ export const appointments = [
     time: "02:00 PM",
     price: 65.0,
     rating: 3,
-    review: "It was okay, but I've had better pedicures elsewhere.",
+    review: "It was okay, but I've had better pedicures elsewhere. The massage was very short and the polish was a bit messy.",
   },
   {
     id: "apt_12",
@@ -579,7 +579,7 @@ export const appointments = [
     time: "03:00 PM",
     price: 150.0,
     rating: 5,
-    review: "Love the color!",
+    review: "Love the color! Jessica always gets it right.",
   },
   {
     id: "apt_13",
@@ -591,7 +591,7 @@ export const appointments = [
     time: "04:00 PM",
     price: 85.0,
     rating: 4,
-    review: null,
+    review: "Good haircut, but I had to wait 20 minutes past my appointment time.",
   },
   {
     id: "apt_14",
@@ -603,7 +603,7 @@ export const appointments = [
     time: "09:00 AM",
     price: 250.0,
     rating: 5,
-    review: "Emily is a magician with color. Worth every penny.",
+    review: "Emily is a magician with color. Worth every penny. The result is so natural and beautiful.",
   },
   {
     id: "apt_15",
@@ -615,7 +615,7 @@ export const appointments = [
     time: "10:00 AM",
     price: 45.0,
     rating: 5,
-    review: null,
+    review: "A wonderful experience! David was lovely and my nails are perfect.",
   },
 ];
 
