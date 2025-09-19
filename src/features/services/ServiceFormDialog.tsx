@@ -31,6 +31,7 @@ import { Select as ShadSelect, SelectContent, SelectItem, SelectTrigger, SelectV
 import { Separator } from "@/components/ui/separator";
 import { Trash2 } from "lucide-react";
 import type { ServiceRecipeItem } from "./ServicesList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type InventoryItem = typeof allInventoryItems[0];
 
@@ -188,258 +189,271 @@ export function ServiceFormDialog({
 
   const priceLabel = category === 'Promotion' ? 'Discount Value (e.g., "20% Off")' : "Price ($)";
   const priceType = category === 'Promotion' ? 'text' : 'number';
+  
+  const showRecipeTab = category === 'Service';
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
 
-            {category === 'Deal' ? (
-              <FormField
-                control={form.control}
-                name="includedServices"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Included Services</FormLabel>
-                    <Select
-                      isMulti
-                      options={serviceOptions}
-                      value={field.value}
-                      onChange={field.onChange}
-                      className="text-sm"
-                      classNamePrefix="select"
+            <Tabs defaultValue="basic" className="mt-4">
+                 <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                    <TabsTrigger value="recipe" disabled={!showRecipeTab}>Recipe</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="basic" className="space-y-4 py-4">
+                    {category === 'Deal' ? (
+                    <FormField
+                        control={form.control}
+                        name="includedServices"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Included Services</FormLabel>
+                            <Select
+                            isMulti
+                            options={serviceOptions}
+                            value={field.value}
+                            onChange={field.onChange}
+                            className="text-sm"
+                            classNamePrefix="select"
+                            />
+                            <FormMessage />
+                        </FormItem>
+                        )}
                     />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Name</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., Signature Haircut" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            {category === 'Service' && (
+                                <FormField
+                                    control={form.control}
+                                    name="serviceCategory"
+                                    render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Category</FormLabel>
+                                        <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                            <SelectValue placeholder="Select a category" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {serviceCategories.map((cat) => (
+                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                        </ShadSelect>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                            )}
+                        </div>
+                    )}
+
                     <FormField
                     control={form.control}
-                    name="name"
+                    name="description"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Name</FormLabel>
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                            <Input placeholder="e.g., Signature Haircut" {...field} />
+                            <Textarea
+                            placeholder="Describe the service..."
+                            {...field}
+                            disabled={category === 'Deal'}
+                            />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
                     )}
                     />
-                     {category === 'Service' && (
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="price"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>{priceLabel}</FormLabel>
+                            <FormControl>
+                            <Input 
+                                type={priceType} 
+                                step="0.01" 
+                                {...field}
+                                onChange={e => field.onChange(priceType === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
+                            />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+
+                    {category === 'Deal' ? (
                         <FormField
+                        control={form.control}
+                        name="originalPrice"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Original Price ($)</FormLabel>
+                            <FormControl>
+                            <Input 
+                                type="number" 
+                                step="0.01" 
+                                {...field}
+                                value={field.value ?? ""}
+                                onChange={e => field.onChange(parseFloat(e.target.value) || null)}
+                                disabled
+                            />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    ) : category === 'Service' ? (
+                        <FormField
+                        control={form.control}
+                        name="duration"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Duration (minutes)</FormLabel>
+                            <FormControl>
+                            <Input 
+                                type="number"
+                                {...field}
+                                value={field.value ?? ""}
+                                onChange={e => field.onChange(parseInt(e.target.value) || null)}
+                            />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    ) : null}
+                    </div>
+
+                    <FormField
+                    control={form.control}
+                    name="artists"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Assigned Artists</FormLabel>
+                        <Select
+                            isMulti
+                            options={artistOptions}
+                            value={field.value}
+                            onChange={field.onChange}
+                            className="text-sm"
+                            classNamePrefix="select"
+                        />
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="image"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Image URL</FormLabel>
+                        <FormControl>
+                            <Input placeholder="https://picsum.photos/..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </TabsContent>
+
+                <TabsContent value="recipe" className="space-y-4 py-4">
+                     <div className="space-y-4 rounded-md border p-4">
+                        <h4 className="font-medium">Service Recipe</h4>
+                        <p className="text-sm text-muted-foreground">
+                            Define which inventory products are consumed when this service is performed.
+                        </p>
+                        <Separator />
+                        {fields.map((field, index) => (
+                        <div key={field.id} className="grid grid-cols-[1fr_100px_auto] items-end gap-2">
+                            <FormField
                             control={form.control}
-                            name="serviceCategory"
+                            name={`recipe.${index}.itemId`}
                             render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Category</FormLabel>
+                                <FormItem>
+                                <FormLabel className={index !== 0 ? 'sr-only' : ''}>Product</FormLabel>
                                 <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
+                                    <FormControl>
                                     <SelectTrigger>
-                                    <SelectValue placeholder="Select a category" />
+                                        <SelectValue placeholder="Select a product" />
                                     </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {serviceCategories.map((cat) => (
-                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {inventoryOptions.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                        </SelectItem>
                                     ))}
-                                </SelectContent>
+                                    </SelectContent>
                                 </ShadSelect>
                                 <FormMessage />
-                            </FormItem>
+                                </FormItem>
                             )}
-                        />
-                    )}
-                </div>
-            )}
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe the service..."
-                      {...field}
-                      disabled={category === 'Deal'}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{priceLabel}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type={priceType} 
-                        step="0.01" 
-                        {...field}
-                        onChange={e => field.onChange(priceType === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {category === 'Deal' ? (
-                 <FormField
-                 control={form.control}
-                 name="originalPrice"
-                 render={({ field }) => (
-                   <FormItem>
-                     <FormLabel>Original Price ($)</FormLabel>
-                     <FormControl>
-                       <Input 
-                        type="number" 
-                        step="0.01" 
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={e => field.onChange(parseFloat(e.target.value) || null)}
-                        disabled
-                       />
-                     </FormControl>
-                     <FormMessage />
-                   </FormItem>
-                 )}
-               />
-              ) : category === 'Service' ? (
-                 <FormField
-                 control={form.control}
-                 name="duration"
-                 render={({ field }) => (
-                   <FormItem>
-                     <FormLabel>Duration (minutes)</FormLabel>
-                     <FormControl>
-                       <Input 
-                        type="number"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={e => field.onChange(parseInt(e.target.value) || null)}
-                       />
-                     </FormControl>
-                     <FormMessage />
-                   </FormItem>
-                 )}
-               />
-              ) : null}
-            </div>
-
-            <FormField
-              control={form.control}
-              name="artists"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assigned Artists</FormLabel>
-                  <Select
-                    isMulti
-                    options={artistOptions}
-                    value={field.value}
-                    onChange={field.onChange}
-                    className="text-sm"
-                    classNamePrefix="select"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {category === 'Service' && (
-              <div className="space-y-4 rounded-md border p-4">
-                <h4 className="font-medium">Service Recipe</h4>
-                <Separator />
-                 {fields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-[1fr_100px_auto] items-end gap-2">
-                    <FormField
-                      control={form.control}
-                      name={`recipe.${index}.itemId`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={index !== 0 ? 'sr-only' : ''}>Product</FormLabel>
-                          <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a product" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {inventoryOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </ShadSelect>
-                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name={`recipe.${index}.quantity`}
-                      render={({ field }) => (
-                        <FormItem>
-                           <FormLabel className={index !== 0 ? 'sr-only' : ''}>Quantity</FormLabel>
-                           <FormControl>
-                             <Input type="number" placeholder="e.g., 0.5" {...field} />
-                           </FormControl>
-                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => remove(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                 <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => append({ itemId: "", quantity: 1 })}
-                >
-                  Add Product to Recipe
-                </Button>
-              </div>
-            )}
+                            />
+                            <FormField
+                            control={form.control}
+                            name={`recipe.${index}.quantity`}
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel className={index !== 0 ? 'sr-only' : ''}>Quantity</FormLabel>
+                                <FormControl>
+                                    <Input type="number" placeholder="e.g., 0.5" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                            <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => remove(index)}
+                            >
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        ))}
+                        <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => append({ itemId: "", quantity: 1 })}
+                        >
+                        Add Product to Recipe
+                        </Button>
+                    </div>
+                </TabsContent>
+            </Tabs>
 
 
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://picsum.photos/..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
