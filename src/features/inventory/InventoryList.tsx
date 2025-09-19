@@ -17,9 +17,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Truck } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Truck, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { inventoryItems, suppliers, inventoryCategories } from "@/lib/placeholder-data";
+import { inventoryItems as initialInventoryItems, suppliers, inventoryCategories } from "@/lib/placeholder-data";
 import { DataTable } from "@/components/ui/data-table";
 import { DebouncedInput } from "@/components/ui/debounced-input";
 import { Badge } from "@/components/ui/badge";
@@ -27,9 +27,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { isBefore, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { ProductFormDialog } from "./ProductFormDialog";
+import { IssueStockDialog } from "./IssueStockDialog";
+import { WastageDialog } from "./WastageDialog";
+import { addAuditLog } from "@/lib/inventory-audit-data";
 
-
-type InventoryItem = {
+export type InventoryItem = {
   id: string;
   name: string;
   sku: string;
@@ -42,14 +45,91 @@ type InventoryItem = {
 
 export function InventoryList() {
   const { toast } = useToast();
-  const [items, setItems] = React.useState<InventoryItem[]>(inventoryItems);
+  const [items, setItems] = React.useState<InventoryItem[]>(initialInventoryItems);
   const [globalFilter, setGlobalFilter] = React.useState("");
+
+  // Dialog states
+  const [productDialogOpen, setProductDialogOpen] = React.useState(false);
+  const [productDialogMode, setProductDialogMode] = React.useState<"add" | "edit">("add");
+  const [editingProduct, setEditingProduct] = React.useState<InventoryItem | undefined>(undefined);
+
+  const [issueDialogOpen, setIssueDialogOpen] = React.useState(false);
+  const [wastageDialogOpen, setWastageDialogOpen] = React.useState(false);
+  const [selectedItemForAction, setSelectedItemForAction] = React.useState<InventoryItem | null>(null);
+
+
+  const handleOpenProductDialog = (mode: "add" | "edit", item?: InventoryItem) => {
+    setProductDialogMode(mode);
+    setEditingProduct(item);
+    setProductDialogOpen(true);
+  };
+
+  const handleSaveProduct = (productData: Omit<InventoryItem, 'id'>) => {
+    if (productDialogMode === "add") {
+      const newItem = { ...productData, id: `inv_${Date.now()}` };
+      setItems(prev => [newItem, ...prev]);
+       addAuditLog({
+        itemId: newItem.id,
+        itemName: newItem.name,
+        action: "Created",
+        quantity: newItem.quantity,
+        user: "Super Admin",
+        notes: "New product added to inventory."
+      });
+      toast({ title: "Product Added", description: `${newItem.name} has been added.` });
+    } else if (editingProduct) {
+      const updatedItem = { ...editingProduct, ...productData };
+      setItems(prev => prev.map(item => item.id === editingProduct.id ? updatedItem : item));
+      addAuditLog({
+        itemId: updatedItem.id,
+        itemName: updatedItem.name,
+        action: "Updated",
+        quantity: 0,
+        user: "Super Admin",
+        notes: "Product details were updated."
+      });
+      toast({ title: "Product Updated", description: `${updatedItem.name} has been updated.` });
+    }
+  };
+
+  const handleIssueStock = ({ staffId, quantity, notes }: { staffId: string; quantity: number, notes?: string }) => {
+    if (!selectedItemForAction) return;
+    const item = selectedItemForAction;
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity - quantity } : i));
+    addAuditLog({
+        itemId: item.id,
+        itemName: item.name,
+        action: "Dispatched",
+        quantity: quantity,
+        user: "Super Admin",
+        notes: `Issued to staff ID: ${staffId}. ${notes || ""}`
+    });
+    toast({ title: "Stock Issued", description: `${quantity} of ${item.name} issued.` });
+    setIssueDialogOpen(false);
+  };
+
+  const handleRecordWastage = ({ quantity, reason }: { quantity: number, reason: string }) => {
+      if (!selectedItemForAction) return;
+      const item = selectedItemForAction;
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity - quantity } : i));
+      addAuditLog({
+          itemId: item.id,
+          itemName: item.name,
+          action: "Wasted",
+          quantity: quantity,
+          user: "Super Admin",
+          notes: `Reason: ${reason}`
+      });
+      toast({ title: "Wastage Recorded", description: `${quantity} of ${item.name} recorded as waste.`});
+      setWastageDialogOpen(false);
+  };
+
 
   const getStatus = (item: InventoryItem) => {
     if (item.expiryDate && isBefore(parseISO(item.expiryDate), new Date())) {
         return "Expired";
     }
-    if (item.quantity === 0) {
+    if (item.quantity <= 0) {
         return "Out of Stock";
     }
     if (item.quantity <= item.lowStockThreshold) {
@@ -148,8 +228,13 @@ export function InventoryList() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem>View History</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleOpenProductDialog("edit", item)}>Edit</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSelectedItemForAction(item); setIssueDialogOpen(true); }}>Issue to Staff</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setSelectedItemForAction(item); setWastageDialogOpen(true); }}>Record Wastage</DropdownMenuItem>
+              <DropdownMenuSeparator />
+               <DropdownMenuItem asChild>
+                <Link href={`/inventory/audit?itemId=${item.id}`}>View History</Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-600">
                 Delete
@@ -173,12 +258,18 @@ export function InventoryList() {
         </div>
         <div className="flex items-center gap-2">
             <Button variant="outline" asChild>
+                <Link href="/inventory/audit">
+                    <History className="mr-2 h-4 w-4" />
+                    Audit History
+                </Link>
+            </Button>
+            <Button variant="outline" asChild>
                 <Link href="/inventory/grn">
                     <Truck className="mr-2 h-4 w-4" />
                     Receive Goods
                 </Link>
             </Button>
-            <Button>
+            <Button onClick={() => handleOpenProductDialog('add')}>
               <PlusCircle className="mr-2" /> Add Product
             </Button>
         </div>
@@ -247,6 +338,25 @@ export function InventoryList() {
         onGlobalFilterChange={setGlobalFilter}
        />
     </div>
+    <ProductFormDialog
+        isOpen={productDialogOpen}
+        onOpenChange={setProductDialogOpen}
+        mode={productDialogMode}
+        product={editingProduct}
+        onSave={handleSaveProduct}
+    />
+    <IssueStockDialog
+        isOpen={issueDialogOpen}
+        onOpenChange={setIssueDialogOpen}
+        productName={selectedItemForAction?.name || ''}
+        onConfirm={handleIssueStock}
+    />
+    <WastageDialog
+        isOpen={wastageDialogOpen}
+        onOpenChange={setWastageDialogOpen}
+        productName={selectedItemForAction?.name || ''}
+        onConfirm={handleRecordWastage}
+    />
     </>
   );
 }
