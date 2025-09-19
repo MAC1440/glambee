@@ -446,6 +446,8 @@ export const appointments = [
     date: "2024-07-30",
     time: "09:00 AM",
     price: 250.0,
+    rating: 5,
+    review: "Jessica is a true artist! My balayage has never looked better.",
   },
   {
     id: "apt_02",
@@ -456,6 +458,8 @@ export const appointments = [
     date: "2024-07-30",
     time: "10:00 AM",
     price: 85.0,
+    rating: 5,
+    review: "Michael gave me the best haircut I've had in years. Highly recommend.",
   },
   {
     id: "apt_03",
@@ -466,6 +470,8 @@ export const appointments = [
     date: "2024-07-30",
     time: "11:00 AM",
     price: 45.0,
+    rating: 4,
+    review: "Very relaxing and my nails look great. A bit of a wait, though.",
   },
   {
     id: "apt_04",
@@ -476,6 +482,8 @@ export const appointments = [
     date: "2024-07-30",
     time: "12:00 PM",
     price: 150.0,
+    rating: 5,
+    review: null,
   },
   {
     id: "apt_05",
@@ -486,6 +494,8 @@ export const appointments = [
     date: "2024-07-30",
     time: "01:00 PM",
     price: 65.0,
+    rating: 4,
+    review: "Good service, but the salon was a bit noisy.",
   },
   {
     id: "apt_06",
@@ -496,6 +506,8 @@ export const appointments = [
     date: "2024-08-01",
     time: "02:00 PM",
     price: 85.0,
+    rating: 5,
+    review: "Another fantastic cut from Michael. He's the best!",
   },
   {
     id: "apt_07",
@@ -506,6 +518,8 @@ export const appointments = [
     date: "2024-08-02",
     time: "09:00 AM",
     price: 55.0,
+    rating: 5,
+    review: "My hair feels so soft and healthy. Thank you Emily!",
   },
   {
     id: "apt_08",
@@ -516,6 +530,8 @@ export const appointments = [
     date: "2024-08-05",
     time: "10:00 AM",
     price: 250.0,
+    rating: 4,
+    review: null,
   },
   {
     id: "apt_09",
@@ -526,6 +542,8 @@ export const appointments = [
     date: "2024-08-10",
     time: "11:00 AM",
     price: 45.0,
+    rating: 5,
+    review: "David is meticulous and so friendly. Perfect manicure.",
   },
   {
     id: "apt_10",
@@ -536,6 +554,8 @@ export const appointments = [
     date: "2024-08-15",
     time: "01:00 PM",
     price: 85.0,
+    rating: 5,
+    review: "Consistent and high-quality service every time.",
   },
   {
     id: "apt_11",
@@ -546,6 +566,8 @@ export const appointments = [
     date: "2024-07-30",
     time: "02:00 PM",
     price: 65.0,
+    rating: 3,
+    review: "It was okay, but I've had better pedicures elsewhere.",
   },
   {
     id: "apt_12",
@@ -556,6 +578,8 @@ export const appointments = [
     date: "2024-07-20",
     time: "03:00 PM",
     price: 150.0,
+    rating: 5,
+    review: "Love the color!",
   },
   {
     id: "apt_13",
@@ -566,6 +590,8 @@ export const appointments = [
     date: "2024-07-30",
     time: "04:00 PM",
     price: 85.0,
+    rating: 4,
+    review: null,
   },
   {
     id: "apt_14",
@@ -576,6 +602,8 @@ export const appointments = [
     date: "2024-08-01",
     time: "09:00 AM",
     price: 250.0,
+    rating: 5,
+    review: "Emily is a magician with color. Worth every penny.",
   },
   {
     id: "apt_15",
@@ -586,6 +614,8 @@ export const appointments = [
     date: "2024-8-01",
     time: "10:00 AM",
     price: 45.0,
+    rating: 5,
+    review: null,
   },
 ];
 
@@ -616,4 +646,3 @@ export const inventoryItems = [
     { id: 'inv_07', name: 'Dermalogica Special Cleansing Gel', sku: 'DER-SCG-250', category: 'Skincare', supplier: 'Salon Essentials Inc.', quantity: 0, lowStockThreshold: 4, expiryDate: '2025-10-31' },
     { id: 'inv_08', name: 'Expired Hair Gel', sku: 'OLD-GEL-01', category: 'Styling Products', supplier: 'Pro Beauty Supply', quantity: 10, lowStockThreshold: 5, expiryDate: '2024-01-01' },
 ];
-

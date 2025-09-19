@@ -32,6 +32,7 @@ import {
   Percent,
   Timer,
   Wrench,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -44,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { StaffFormDialog } from "./StaffFormDialog";
 import { LeaveRequestDialog } from "./LeaveRequestDialog";
 import { SalarySlipDialog } from "./SalarySlipDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 export function StaffDetail({ staffMember: initialStaffMember }: { staffMember: StaffMember | undefined }) {
@@ -215,7 +217,8 @@ export function StaffDetail({ staffMember: initialStaffMember }: { staffMember: 
                         <TableHead>Date</TableHead>
                         <TableHead>Service</TableHead>
                         <TableHead>Client</TableHead>
-                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead>Rating</TableHead>
+                        <TableHead>Review</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -227,14 +230,39 @@ export function StaffDetail({ staffMember: initialStaffMember }: { staffMember: 
                               {apt.service}
                             </TableCell>
                             <TableCell>{apt.customer.name}</TableCell>
-                            <TableCell className="text-right">
-                              ${apt.price.toFixed(2)}
+                            <TableCell>
+                              <div className="flex items-center">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-4 w-4 ${i < apt.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                                  />
+                                ))}
+                              </div>
+                            </TableCell>
+                             <TableCell>
+                                {apt.review ? (
+                                     <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p className="max-w-xs">{apt.review}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                ) : (
+                                    <span className="text-muted-foreground text-xs">No review</span>
+                                )}
                             </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center h-24">
+                          <TableCell colSpan={5} className="text-center h-24">
                             No appointment history for this staff member.
                           </TableCell>
                         </TableRow>
