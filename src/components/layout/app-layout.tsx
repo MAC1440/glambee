@@ -1,3 +1,4 @@
+
 "use client";
 import * as React from "react";
 import Link from "next/link";
@@ -131,7 +132,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
         <SidebarHeader>
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
             <SalonFlowLogo className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden">SalonFlow</span>
+            <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden text-black dark:text-white">SalonFlow</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
