@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { inventoryItems, suppliers, inventoryCategories } from "@/lib/placeholder-data";
 import { DataTable } from "@/components/ui/data-table";
@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { isBefore, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 
 type InventoryItem = {
@@ -170,9 +171,17 @@ export function InventoryList() {
             Manage your product stock and suppliers.
           </p>
         </div>
-        <Button>
-          <PlusCircle className="mr-2" /> Add Product
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+                <Link href="/inventory/grn">
+                    <Truck className="mr-2 h-4 w-4" />
+                    Receive Goods
+                </Link>
+            </Button>
+            <Button>
+              <PlusCircle className="mr-2" /> Add Product
+            </Button>
+        </div>
       </div>
       
        <div className="flex items-center justify-between">
