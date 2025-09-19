@@ -1,4 +1,3 @@
-
 import { format, subDays, addDays } from 'date-fns';
 
 export const branches = [
@@ -585,6 +584,21 @@ export const salarySlips = [
   { slipId: "slip_06", staffId: "staff_05", month: 7, year: 2024, baseSalary: 2000, commission: 0, deductions: 150, totalEarnings: 1850.00 },
   { slipId: "slip_07", staffId: "staff_06", month: 7, year: 2024, baseSalary: 1800, commission: 0, deductions: 120, totalEarnings: 1680.00 },
 ];
-    
 
-    
+export const inventoryCategories = ["Hair Color", "Shampoo & Conditioner", "Styling Products", "Nail Polish", "Skincare", "Disposables"];
+export const suppliers = [
+    { id: 'sup_01', name: 'Pro Beauty Supply' },
+    { id: 'sup_02', name: 'Salon Essentials Inc.' },
+    { id: 'sup_03', name: 'Nail Fashions' },
+];
+
+export const inventoryItems = [
+    { id: 'inv_01', name: 'L\'Oréal Majirel 6.0', sku: 'LO-MAJ-60', category: 'Hair Color', supplier: 'Pro Beauty Supply', quantity: 15, lowStockThreshold: 5, expiryDate: '2025-12-31' },
+    { id: 'inv_02', name: 'Wella Blondor Multi-Blonde Powder', sku: 'WE-BLO-P', category: 'Hair Color', supplier: 'Pro Beauty Supply', quantity: 8, lowStockThreshold: 3, expiryDate: '2025-08-31' },
+    { id: 'inv_03', name: 'Kerastase Resistance Bain Force Architecte Shampoo', sku: 'KE-RES-SH', category: 'Shampoo & Conditioner', supplier: 'Salon Essentials Inc.', quantity: 2, lowStockThreshold: 5, expiryDate: '2026-01-31' },
+    { id: 'inv_04', name: 'OPI Nail Lacquer - Bubble Bath', sku: 'OPI-NL-BUB', category: 'Nail Polish', supplier: 'Nail Fashions', quantity: 25, lowStockThreshold: 10, expiryDate: '2024-09-30' },
+    { id: 'inv_05', name: 'CND Shellac Top Coat', sku: 'CND-SH-TOP', category: 'Nail Polish', supplier: 'Nail Fashions', quantity: 12, lowStockThreshold: 5, expiryDate: '2025-06-30' },
+    { id: 'inv_06', name: 'Disposable Towels (Pack of 100)', sku: 'DIS-TOW-100', category: 'Disposables', supplier: 'Salon Essentials Inc.', quantity: 50, lowStockThreshold: 20, expiryDate: null },
+    { id: 'inv_07', name: 'Dermalogica Special Cleansing Gel', sku: 'DER-SCG-250', category: 'Skincare', supplier: 'Salon Essentials Inc.', quantity: 0, lowStockThreshold: 4, expiryDate: '2025-10-31' },
+    { id: 'inv_08', name: 'Expired Hair Gel', sku: 'OLD-GEL-01', category: 'Styling Products', supplier: 'Pro Beauty Supply', quantity: 10, lowStockThreshold: 5, expiryDate: '2024-01-01' },
+];
