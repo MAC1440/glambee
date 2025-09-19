@@ -127,7 +127,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
 
   return (
     <SidebarProvider>
-      <Sidebar collapsible="icon" variant="sidebar" side="left" className="group-data-[variant=sidebar]:bg-sidebar">
+      <Sidebar collapsible="icon" variant="sidebar" side="left" className="group-data-[variant=sidebar]:bg-sidebar text-sidebar-foreground">
         <SidebarHeader>
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
             <SalonFlowLogo className="h-6 w-6 text-primary" />
