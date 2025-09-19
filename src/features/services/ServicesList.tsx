@@ -20,16 +20,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, BookText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { services as allServices, serviceCategories } from "@/lib/placeholder-data";
+import { services as allServices, serviceCategories, inventoryItems } from "@/lib/placeholder-data";
 import { ServiceFormDialog } from "../services/ServiceFormDialog";
 import { DataTable } from "@/components/ui/data-table";
 import { DebouncedInput } from "@/components/ui/debounced-input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-type Service = {
+
+export type ServiceRecipeItem = {
+    itemId: string;
+    quantity: number;
+};
+
+export type Service = {
   id: string;
   name:string;
   description: string;
@@ -41,6 +48,7 @@ type Service = {
   serviceCategory?: string;
   includedServices?: { value: string; label: string }[];
   artists?: { value: string; label: string }[];
+  recipe?: ServiceRecipeItem[];
 };
 
 export function ServicesList() {
@@ -112,7 +120,26 @@ export function ServicesList() {
           </Button>
         );
       },
-      cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
+      cell: ({ row }) => {
+          const hasRecipe = row.original.recipe && row.original.recipe.length > 0;
+          return (
+            <div className="flex items-center gap-2">
+                 <div className="capitalize">{row.getValue("name")}</div>
+                 {hasRecipe && (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <BookText className="h-4 w-4 text-muted-foreground"/>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>This service has a recipe.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                 )}
+            </div>
+          )
+      },
     },
     {
       accessorKey: "serviceCategory",
@@ -230,8 +257,8 @@ export function ServicesList() {
             <Select
               onValueChange={(value) => {
                 const table = document.querySelector('table'); // A bit of a hack to get table instance
-                if (table) {
-                    const column = table. TANSTACK_TABLE_INSTANCE.getColumn('serviceCategory');
+                if (table && (table as any).TANSTACK_TABLE_INSTANCE) {
+                    const column = (table as any).TANSTACK_TABLE_INSTANCE.getColumn('serviceCategory');
                     if (column) {
                         column.setFilterValue(value === 'all' ? '' : value);
                     }
@@ -267,6 +294,7 @@ export function ServicesList() {
         service={editingService}
         onSave={handleSave}
         individualServices={[]}
+        inventoryItems={inventoryItems}
       />
     </>
   );

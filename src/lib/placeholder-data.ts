@@ -150,6 +150,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Hair",
     artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
+    recipe: [],
   },
   {
     id: "svc_02",
@@ -162,6 +163,10 @@ export const services = [
     category: "Service",
     serviceCategory: "Hair",
     artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
+    recipe: [
+        { itemId: 'inv_01', quantity: 1 },
+        { itemId: 'inv_02', quantity: 0.5 },
+    ]
   },
   {
     id: "svc_03",
@@ -174,6 +179,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Hair",
     artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
+    recipe: [],
   },
   {
     id: "svc_04",
@@ -186,6 +192,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Nails",
     artists: staff.filter(s => s.department === 'Nail Artist').map(s => ({ value: s.id, label: s.name })),
+    recipe: [],
   },
   {
     id: "svc_05",
@@ -198,6 +205,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Nails",
     artists: staff.filter(s => s.department === 'Nail Artist').map(s => ({ value: s.id, label: s.name })),
+    recipe: [],
   },
   {
     id: "svc_06",
@@ -210,6 +218,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Hair",
     artists: staff.filter(s => s.department === 'Stylist' || s.department === 'Assistant').map(s => ({ value: s.id, label: s.name })),
+    recipe: [],
   },
   {
     id: "svc_07",
@@ -222,6 +231,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Makeup",
     artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
+    recipe: [],
   },
   {
     id: "svc_08",
@@ -234,6 +244,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Skin",
     artists: [], // Assume an esthetician would do this. None in staff list yet.
+    recipe: [],
   },
   {
     id: "svc_09",
@@ -246,6 +257,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Spa",
     artists: [], // Assume a massage therapist would do this.
+    recipe: [],
   },
   {
     id: "svc_10",
@@ -258,6 +270,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Aesthetics",
     artists: [], // Specialized service
+    recipe: [],
   },
   {
     id: "svc_11",
@@ -270,6 +283,7 @@ export const services = [
     category: "Service",
     serviceCategory: "Others",
     artists: staff.filter(s => s.department === 'Stylist').map(s => ({ value: s.id, label: s.name })),
+    recipe: [],
   },
 ];
 
@@ -602,3 +616,4 @@ export const inventoryItems = [
     { id: 'inv_07', name: 'Dermalogica Special Cleansing Gel', sku: 'DER-SCG-250', category: 'Skincare', supplier: 'Salon Essentials Inc.', quantity: 0, lowStockThreshold: 4, expiryDate: '2025-10-31' },
     { id: 'inv_08', name: 'Expired Hair Gel', sku: 'OLD-GEL-01', category: 'Styling Products', supplier: 'Pro Beauty Supply', quantity: 10, lowStockThreshold: 5, expiryDate: '2024-01-01' },
 ];
+

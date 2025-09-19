@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
 import {
   Form,
@@ -26,9 +26,13 @@ import {
 } from "@/components/ui/form";
 import { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
-import { staff, serviceCategories } from "@/lib/placeholder-data";
+import { staff, serviceCategories, inventoryItems as allInventoryItems } from "@/lib/placeholder-data";
 import { Select as ShadSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Trash2 } from "lucide-react";
+import type { ServiceRecipeItem } from "./ServicesList";
 
+type InventoryItem = typeof allInventoryItems[0];
 
 type Service = {
   id: string;
@@ -42,6 +46,7 @@ type Service = {
   serviceCategory?: string;
   includedServices?: { value: string; label: string }[];
   artists?: { value: string; label: string }[];
+  recipe?: ServiceRecipeItem[];
 };
 
 type ServiceFormDialogProps = {
@@ -52,6 +57,7 @@ type ServiceFormDialogProps = {
   service?: Service;
   onSave: (service: Service) => void;
   individualServices: Service[];
+  inventoryItems: InventoryItem[];
 };
 
 const formSchema = z.object({
@@ -72,6 +78,10 @@ const formSchema = z.object({
     value: z.string(),
     label: z.string(),
   })).optional(),
+  recipe: z.array(z.object({
+    itemId: z.string(),
+    quantity: z.coerce.number().min(0.01, "Quantity must be positive."),
+  })).optional(),
 }).refine(data => {
     if (data.category === 'Deal' && data.originalPrice !== null) {
         return Number(data.price) <= data.originalPrice;
@@ -91,6 +101,7 @@ export function ServiceFormDialog({
   service,
   onSave,
   individualServices = [],
+  inventoryItems = [],
 }: ServiceFormDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -106,7 +117,13 @@ export function ServiceFormDialog({
       duration: service?.duration || null,
       includedServices: service?.includedServices || [],
       artists: service?.artists || [],
+      recipe: service?.recipe || [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "recipe",
   });
 
   const includedServices = form.watch("includedServices");
@@ -118,6 +135,10 @@ export function ServiceFormDialog({
   const artistOptions = useMemo(() => {
     return staff.map(s => ({ value: s.id, label: s.name }));
   }, []);
+
+  const inventoryOptions = useMemo(() => {
+      return inventoryItems.map(item => ({ value: item.id, label: item.name }));
+  }, [inventoryItems]);
 
   useEffect(() => {
     if (category === 'Deal' && includedServices && includedServices.length > 0) {
@@ -149,6 +170,7 @@ export function ServiceFormDialog({
         duration: service?.duration || null,
         includedServices: service?.includedServices || [],
         artists: service?.artists || [],
+        recipe: service?.recipe || [],
       });
     }
   }, [isOpen, service, category, form]);
@@ -169,7 +191,7 @@ export function ServiceFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
@@ -337,6 +359,71 @@ export function ServiceFormDialog({
                 </FormItem>
               )}
             />
+
+            {category === 'Service' && (
+              <div className="space-y-4 rounded-md border p-4">
+                <h4 className="font-medium">Service Recipe</h4>
+                <Separator />
+                 {fields.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-[1fr_100px_auto] items-end gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`recipe.${index}.itemId`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className={index !== 0 ? 'sr-only' : ''}>Product</FormLabel>
+                          <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a product" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {inventoryOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </ShadSelect>
+                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name={`recipe.${index}.quantity`}
+                      render={({ field }) => (
+                        <FormItem>
+                           <FormLabel className={index !== 0 ? 'sr-only' : ''}>Quantity</FormLabel>
+                           <FormControl>
+                             <Input type="number" placeholder="e.g., 0.5" {...field} />
+                           </FormControl>
+                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                 <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ itemId: "", quantity: 1 })}
+                >
+                  Add Product to Recipe
+                </Button>
+              </div>
+            )}
+
 
             <FormField
               control={form.control}
