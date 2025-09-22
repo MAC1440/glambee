@@ -1,3 +1,4 @@
+
 import { format, subDays, addDays } from 'date-fns';
 
 export const branches = [
@@ -674,6 +675,15 @@ export const campaigns = [
     { id: 'camp_02', name: 'We Miss You!', date: '2024-07-01', segment: 'Inactive Clients (90 days)', status: 'Sent' },
     { id: 'camp_03', name: 'VIP Exclusive Offer', date: '2024-07-10', segment: 'VIP Clients', status: 'Sent' },
     { id: 'camp_04', name: 'New Service: Chemical Peel', date: '2024-07-20', segment: 'Clients with Skin Services', status: 'Draft' },
+];
+
+export const campaignSegments = [
+    'All Clients',
+    'VIP Clients',
+    'New Clients (Last 30 Days)',
+    'Inactive Clients (90 days)',
+    'Clients with Hair Services',
+    'Clients with Nail Services',
 ];
 
 export const messageTemplates = [
