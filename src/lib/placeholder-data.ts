@@ -660,3 +660,30 @@ export const requisitions = [
   { reqNumber: "REQ-003", requestedBy: "Michael Chen", date: "2024-07-24", status: "Rejected", items: [{ name: "New Experimental Hair Wax", quantity: 12 }] },
   { reqNumber: "REQ-004", requestedBy: "Jessica Miller", date: "2024-07-26", status: "Approved", items: [{ name: "Wella Blondor Multi-Blonde Powder", quantity: 2 }] },
 ];
+
+export const automations = [
+    { id: 'auto_01', name: 'Appointment Confirmation', description: 'Send confirmation upon booking.', event: 'Appointment Booked', channels: ['SMS', 'Email'], active: true },
+    { id: 'auto_02', name: 'Appointment Reminder - 24hr', description: 'Remind clients 24 hours before.', event: '24 Hours Before Appointment', channels: ['SMS'], active: true },
+    { id: 'auto_03', name: 'Appointment Reminder - 1hr', description: 'A final reminder 1 hour before.', event: '1 Hour Before Appointment', channels: ['Push Notification'], active: false },
+    { id: 'auto_04', name: 'No-Show Follow-up', description: 'Suggest rebooking after 3 days.', event: 'Missed Appointment', channels: ['SMS', 'Email'], active: true },
+    { id: 'auto_05', name: 'Happy Birthday', description: 'Send a birthday wish with an offer.', event: 'Customer\'s Birthday', channels: ['SMS'], active: true },
+];
+
+export const campaigns = [
+    { id: 'camp_01', name: 'Summer Special', date: '2024-06-15', segment: 'All Clients', status: 'Sent' },
+    { id: 'camp_02', name: 'We Miss You!', date: '2024-07-01', segment: 'Inactive Clients (90 days)', status: 'Sent' },
+    { id: 'camp_03', name: 'VIP Exclusive Offer', date: '2024-07-10', segment: 'VIP Clients', status: 'Sent' },
+    { id: 'camp_04', name: 'New Service: Chemical Peel', date: '2024-07-20', segment: 'Clients with Skin Services', status: 'Draft' },
+];
+
+export const messageTemplates = [
+    { id: 'tpl_01', name: 'Appointment Confirmation', contentEn: 'Hi {CustomerName}, your appointment for {ServiceName} is confirmed for {AppointmentTime}.', contentUr: 'ہیلو {CustomerName}، آپ کی اپائنٹمینٹ {ServiceName} کے لئے {AppointmentTime} پر کنفرم ہوگئی ہے۔', attachments: [] },
+    { id: 'tpl_02', name: 'Birthday Offer', contentEn: 'Happy Birthday, {CustomerName}! Enjoy 15% off your next visit as our gift to you.', contentUr: 'سالگرہ مبارک، {CustomerName}! ہماری طرف سے اپنی اگلی وزٹ پر 15% رعایت کا لطف اٹھائیں۔', attachments: [{ name: 'voucher.pdf', url: '#'}] },
+];
+
+export const messageLogs = [
+    { id: 'log_01', customerName: 'Sophia Davis', channel: 'SMS', type: 'Appointment Reminder', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), status: 'Delivered' },
+    { id: 'log_02', customerName: 'Liam Garcia', channel: 'Email', type: 'Appointment Confirmation', timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), status: 'Sent' },
+    { id: 'log_03', customerName: 'Ava Johnson', channel: 'SMS', type: 'Promotional', timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), status: 'Failed' },
+    { id: 'log_04', customerName: 'Noah Brown', channel: 'Push', type: 'Appointment Reminder', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered' },
+];

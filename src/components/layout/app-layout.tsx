@@ -35,6 +35,7 @@ import {
   Package,
   Boxes,
   ShoppingCart,
+  MessageSquare,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
@@ -82,6 +83,7 @@ const navItems = [
   { href: "/promotions", icon: Tag, label: "Promotions" },
   { href: "/inventory", icon: Boxes, label: "Inventory" },
   { href: "/procurement", icon: ShoppingCart, label: "Procurement" },
+  { href: "/engage", icon: MessageSquare, label: "Engage" },
   { 
     label: "Human Resources", 
     icon: Briefcase,
