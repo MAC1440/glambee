@@ -687,8 +687,8 @@ export const campaignSegments = [
 ];
 
 export const messageTemplates = [
-    { id: 'tpl_01', name: 'Appointment Confirmation', contentEn: 'Hi {CustomerName}, your appointment for {ServiceName} is confirmed for {AppointmentTime}.', contentUr: 'ہیلو {CustomerName}، آپ کی اپائنٹمینٹ {ServiceName} کے لئے {AppointmentTime} پر کنفرم ہوگئی ہے۔', attachments: [] },
-    { id: 'tpl_02', name: 'Birthday Offer', contentEn: 'Happy Birthday, {CustomerName}! Enjoy 15% off your next visit as our gift to you.', contentUr: 'سالگرہ مبارک، {CustomerName}! ہماری طرف سے اپنی اگلی وزٹ پر 15% رعایت کا لطف اٹھائیں۔', attachments: [{ name: 'voucher.pdf', url: '#'}] },
+    { id: 'tpl_01', name: 'Appointment Confirmation', contentEn: 'Hi {CustomerName}, your appointment for {ServiceName} is confirmed for {AppointmentTime}.', attachments: [] },
+    { id: 'tpl_02', name: 'Birthday Offer', contentEn: 'Happy Birthday, {CustomerName}! Enjoy 15% off your next visit as our gift to you.', attachments: [{ name: 'voucher.pdf', url: '#'}] },
 ];
 
 export const messageLogs = [

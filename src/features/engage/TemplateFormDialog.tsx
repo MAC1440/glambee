@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/form";
 import { useEffect } from "react";
 import type { Template } from "./MessageTemplates";
-import { Separator } from "@/components/ui/separator";
 import { PlusCircle, Trash2 } from "lucide-react";
 
 type TemplateFormDialogProps = {
@@ -38,8 +37,7 @@ type TemplateFormDialogProps = {
 
 const formSchema = z.object({
   name: z.string().min(3, "Template name is too short."),
-  contentEn: z.string().min(10, "English content is too short."),
-  contentUr: z.string().optional(),
+  contentEn: z.string().min(10, "Content is too short."),
   attachments: z.array(z.object({
       name: z.string().min(1, "Attachment name is required."),
       url: z.string().url("Must be a valid URL."),
@@ -58,7 +56,6 @@ export function TemplateFormDialog({
     defaultValues: {
         name: "",
         contentEn: "",
-        contentUr: "",
         attachments: [],
     }
   });
@@ -71,10 +68,9 @@ export function TemplateFormDialog({
   useEffect(() => {
     if (isOpen) {
       form.reset(
-        mode === 'edit' && template ? template : {
+        mode === 'edit' && template ? { ...template, contentEn: template.content } : {
             name: "",
             contentEn: "",
-            contentUr: "",
             attachments: [],
         }
       );
@@ -82,7 +78,12 @@ export function TemplateFormDialog({
   }, [isOpen, mode, template, form]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    onSave(values);
+    const submissionData = {
+        name: values.name,
+        content: values.contentEn,
+        attachments: values.attachments || [],
+    };
+    onSave(submissionData);
     onOpenChange(false);
   };
 
@@ -113,34 +114,19 @@ export function TemplateFormDialog({
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <FormField
-                    control={form.control}
-                    name="contentEn"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>English Content</FormLabel>
-                        <FormControl>
-                            <Textarea className="min-h-[120px]" placeholder="Hi {CustomerName}, this is a reminder..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                 <FormField
-                    control={form.control}
-                    name="contentUr"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Urdu Content (Optional)</FormLabel>
-                        <FormControl>
-                            <Textarea className="min-h-[120px] text-right" dir="rtl" placeholder="ہیلو {CustomerName}، یہ ایک یاد دہانی ہے..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-            </div>
+            <FormField
+                control={form.control}
+                name="contentEn"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Content</FormLabel>
+                    <FormControl>
+                        <Textarea className="min-h-[120px]" placeholder="Hi {CustomerName}, this is a reminder..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
             
             <div>
                 <FormLabel>Attachments (Optional)</FormLabel>

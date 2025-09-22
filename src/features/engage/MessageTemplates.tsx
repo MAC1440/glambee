@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   MoreHorizontal,
   PlusCircle,
-  Languages,
   Paperclip,
   Trash2,
   Edit,
@@ -30,11 +29,16 @@ import { messageTemplates as initialMessageTemplates } from "@/lib/placeholder-d
 import { TemplateFormDialog } from "./TemplateFormDialog";
 import { useToast } from "@/hooks/use-toast";
 
-export type Template = typeof initialMessageTemplates[0];
+export type Template = {
+    id: string;
+    name: string;
+    content: string;
+    attachments: { name: string; url: string; }[];
+}
 
 export function MessageTemplates() {
   const { toast } = useToast();
-  const [templates, setTemplates] = React.useState<Template[]>(initialMessageTemplates);
+  const [templates, setTemplates] = React.useState<Template[]>(initialMessageTemplates.map(t => ({ id: t.id, name: t.name, content: t.contentEn, attachments: t.attachments })));
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
   const [editingTemplate, setEditingTemplate] = React.useState<Template | undefined>(undefined);
@@ -78,8 +82,7 @@ export function MessageTemplates() {
           <TableHeader>
             <TableRow>
               <TableHead>Template Name</TableHead>
-              <TableHead>Content (English)</TableHead>
-              <TableHead>Languages</TableHead>
+              <TableHead>Content</TableHead>
               <TableHead>Attachments</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -89,13 +92,7 @@ export function MessageTemplates() {
               <TableRow key={template.id}>
                 <TableCell className="font-medium">{template.name}</TableCell>
                 <TableCell className="max-w-xs truncate">
-                  {template.contentEn}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">
-                    <Languages className="mr-1 h-3 w-3" />
-                    {template.contentUr ? "2" : "1"}
-                  </Badge>
+                  {template.content}
                 </TableCell>
                 <TableCell>
                   {template.attachments.length > 0 ? (
