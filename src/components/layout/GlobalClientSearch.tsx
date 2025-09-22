@@ -53,7 +53,7 @@ export function GlobalClientSearch() {
               ref={inputRef}
               type="tel"
               placeholder="Search client by phone..."
-              className="w-full rounded-lg bg-background pl-10 pr-10"
+              className="w-full rounded-lg bg-background pl-10 pr-10 border-2 border-primary ring-2 ring-primary/20"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
