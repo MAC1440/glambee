@@ -646,3 +646,17 @@ export const inventoryItems = [
     { id: 'inv_07', name: 'Dermalogica Special Cleansing Gel', sku: 'DER-SCG-250', category: 'Skincare', supplier: 'Salon Essentials Inc.', quantity: 0, lowStockThreshold: 4, expiryDate: '2025-10-31' },
     { id: 'inv_08', name: 'Expired Hair Gel', sku: 'OLD-GEL-01', category: 'Styling Products', supplier: 'Pro Beauty Supply', quantity: 10, lowStockThreshold: 5, expiryDate: '2024-01-01' },
 ];
+
+export const purchaseOrders = [
+  { poNumber: "PO2024-001", supplier: "Pro Beauty Supply", date: "2024-07-15", total: 450.00, status: "Fulfilled" },
+  { poNumber: "PO2024-002", supplier: "Nail Fashions", date: "2024-07-20", total: 280.50, status: "Fulfilled" },
+  { poNumber: "PO2024-003", supplier: "Salon Essentials Inc.", date: "2024-07-25", total: 720.00, status: "Sent" },
+  { poNumber: "PO2024-004", supplier: "Pro Beauty Supply", date: "2024-07-28", total: 150.00, status: "Draft" },
+];
+
+export const requisitions = [
+  { reqNumber: "REQ-001", requestedBy: "Jessica Miller", date: "2024-07-22", status: "Approved", items: [{ name: "L'Oréal Majirel 6.0", quantity: 5 }] },
+  { reqNumber: "REQ-002", requestedBy: "David Wilson", date: "2024-07-23", status: "Pending", items: [{ name: "OPI Nail Lacquer - Bubble Bath", quantity: 10 }, { name: "CND Shellac Top Coat", quantity: 5 }] },
+  { reqNumber: "REQ-003", requestedBy: "Michael Chen", date: "2024-07-24", status: "Rejected", items: [{ name: "New Experimental Hair Wax", quantity: 12 }] },
+  { reqNumber: "REQ-004", requestedBy: "Jessica Miller", date: "2024-07-26", status: "Approved", items: [{ name: "Wella Blondor Multi-Blonde Powder", quantity: 2 }] },
+];
