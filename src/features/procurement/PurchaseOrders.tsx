@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 type PurchaseOrder = { poNumber: string; supplier: string; date: string; total: number; status: string };
 
@@ -81,7 +82,11 @@ export function PurchaseOrders() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button><PlusCircle className="mr-2 h-4 w-4" /> Create Purchase Order</Button>
+        <Button asChild>
+            <Link href="/procurement/po/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Create Purchase Order
+            </Link>
+        </Button>
       </div>
       <DataTable columns={columns} data={purchaseOrders} />
     </div>
