@@ -50,6 +50,7 @@ const grnItemSchema = z.object({
   productId: z.string().min(1, "Product is required."),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
   cost: z.coerce.number().min(0, "Cost cannot be negative."),
+  imageUrl: z.string().url().optional().or(z.literal('')),
 });
 
 const grnSchema = z.object({
@@ -67,7 +68,7 @@ export function GoodsReceivedNote() {
     defaultValues: {
       supplierId: "",
       notes: "",
-      items: [{ productId: "", quantity: 1, cost: 0 }],
+      items: [{ productId: "", quantity: 1, cost: 0, imageUrl: "" }],
     },
   });
 
@@ -176,7 +177,8 @@ export function GoodsReceivedNote() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50%]">Product</TableHead>
+                    <TableHead className="w-[40%]">Product</TableHead>
+                    <TableHead>Image URL</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Unit Cost</TableHead>
                     <TableHead>Total</TableHead>
@@ -200,6 +202,20 @@ export function GoodsReceivedNote() {
                                 value={productOptions.find(p => p.value === controllerField.value)}
                                 onChange={(option) => controllerField.onChange(option?.value)}
                                 placeholder="Select a product..."
+                              />
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.imageUrl`}
+                            render={({ field: imageUrlField }) => (
+                              <Input
+                                type="text"
+                                placeholder="https://..."
+                                {...imageUrlField}
+                                className="w-32"
                               />
                             )}
                           />
@@ -256,7 +272,7 @@ export function GoodsReceivedNote() {
                 variant="outline"
                 size="sm"
                 className="mt-4"
-                onClick={() => append({ productId: "", quantity: 1, cost: 0 })}
+                onClick={() => append({ productId: "", quantity: 1, cost: 0, imageUrl: "" })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Item
