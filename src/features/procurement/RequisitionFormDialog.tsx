@@ -131,7 +131,7 @@ export function RequisitionFormDialog({
             />
             
             <div className="space-y-2">
-                <Label>Items</Label>
+                <label>Items</label>
                 {fields.map((field, index) => (
                     <div key={field.id} className="flex items-start gap-2">
                          <FormField
