@@ -22,31 +22,40 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
 
   const calendarEvents = useMemo(() => {
-    // Get unique artist IDs from the services-to-book list
-    const selectedArtistIds = new Set(
-      servicesToBook.map(item => item.artist?.value).filter(Boolean)
-    );
-
-    // If no artists are selected in the list, show all appointments
-    if (selectedArtistIds.size === 0) {
-      return newAppointments.map((apt) => ({
-        title: `${apt.service} - ${apt.customerName}`,
-        start: apt.start,
-        end: apt.end,
-        resource: apt,
-      }));
-    }
-
-    // Filter appointments to show only those for the selected artists
-    const filteredAppointments = newAppointments.filter(apt => selectedArtistIds.has(apt.staffId));
-
-    return filteredAppointments.map((apt) => ({
+    const confirmedEvents = newAppointments.map((apt) => ({
       title: `${apt.service} - ${apt.customerName}`,
       start: apt.start,
       end: apt.end,
-      resource: apt,
+      resource: { ...apt, isTemporary: false },
     }));
-  }, [newAppointments, servicesToBook]);
+
+    if (selectedSlot && servicesToBook.length > 0) {
+      let cumulativeEndTime = new Date(selectedSlot.start);
+      const temporaryEvents = servicesToBook.map((item, index) => {
+        const serviceDuration = item.service.duration || 30;
+        const appointmentStart = new Date(cumulativeEndTime);
+        const appointmentEnd = new Date(appointmentStart.getTime() + serviceDuration * 60000);
+        cumulativeEndTime = appointmentEnd;
+
+        return {
+          title: `(PENDING) ${item.service.name}`,
+          start: appointmentStart,
+          end: appointmentEnd,
+          resource: {
+            id: `temp_${index}`,
+            customerName: 'New Client',
+            service: item.service.name,
+            staffId: item.artist?.value || '',
+            isTemporary: true,
+          },
+        };
+      });
+      return [...confirmedEvents, ...temporaryEvents];
+    }
+    
+    // Artist filtering logic can be added back here if needed, for now showing all.
+    return confirmedEvents;
+  }, [newAppointments, servicesToBook, selectedSlot]);
 
   const handleAddServiceToList = (item: CartItem) => {
     setServicesToBook(prev => [...prev, item]);
@@ -240,7 +249,3 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
     </div>
   );
 }
-
-    
-
-    

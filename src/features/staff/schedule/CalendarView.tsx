@@ -56,6 +56,20 @@ export function CalendarView({
   }, []);
 
   const eventStyleGetter = (event: any, start: Date, end: Date, isSelected: boolean) => {
+    const isTemporary = event?.resource?.isTemporary;
+
+    if (isTemporary) {
+      const temporaryStyle = {
+        backgroundColor: 'transparent',
+        color: 'hsl(var(--foreground))',
+        border: '2px dashed hsl(var(--primary))',
+        borderRadius: '5px',
+        display: 'block',
+        opacity: 0.7,
+      };
+      return { style: temporaryStyle };
+    }
+    
     const staffId = event?.resource?.staffId;
     if (!staffId) return {};
 
