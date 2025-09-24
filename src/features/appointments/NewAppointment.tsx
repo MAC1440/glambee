@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarView } from "@/features/staff/schedule/CalendarView";
 import { ServiceSelection, type CartItem } from "@/features/checkout/ServiceSelection";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
-import { X, Clock } from "lucide-react";
+import { X, Clock, Calendar } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeSelection } from "./TimeSelection";
@@ -190,10 +190,16 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
                             <div>
                                 <p className="font-medium">{item.service.name}</p>
                                 <p className="text-xs text-muted-foreground">{item.artist?.label || 'No artist selected'}</p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                    <Clock className="h-3 w-3" />
-                                    {item.time ? `${format(item.time.start, 'p')} - ${format(item.time.end, 'p')}` : 'Select a start time'}
-                                </p>
+                                <div className="text-xs text-muted-foreground flex items-center gap-4 mt-1">
+                                    <p className="flex items-center gap-1">
+                                        <Calendar className="h-3 w-3" />
+                                        {item.time ? format(item.time.start, 'MMM d, yyyy') : 'Select a date'}
+                                    </p>
+                                    <p className="flex items-center gap-1">
+                                        <Clock className="h-3 w-3" />
+                                        {item.time ? `${format(item.time.start, 'p')} - ${format(item.time.end, 'p')}` : 'Select a start time'}
+                                    </p>
+                                </div>
                             </div>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFromList(index)}>
                                 <X className="h-4 w-4" />
@@ -234,5 +240,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
     </div>
   );
 }
+
+    
 
     
