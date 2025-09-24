@@ -85,18 +85,19 @@ const navItems = [
   { href: "/inventory", icon: Boxes, label: "Inventory" },
   { href: "/procurement", icon: ShoppingCart, label: "Procurement" },
   { href: "/engage", icon: MessageSquare, label: "Engage" },
-  { 
-    label: "Human Resources", 
-    icon: Briefcase,
-    subItems: [
-      { href: "/staff", label: "Staff" },
-      { href: "/roles", label: "Roles" },
-      { href: "/hr/attendance", label: "Attendance" },
-      { href: "/hr/payroll", label: "Payroll" },
-      { href: "/hr/performance", label: "Performance" },
-    ],
-    roles: ["SUPER_ADMIN", "SALON_ADMIN"]
-  },
+  { href: "/hrm", icon: Briefcase, label: "Human Resources" },
+  // { 
+  //   label: "Human Resources", 
+  //   icon: Briefcase,
+  //   subItems: [
+  //     { href: "/staff", label: "Staff" },
+  //     { href: "/roles", label: "Roles" },
+  //     { href: "/hr/attendance", label: "Attendance" },
+  //     { href: "/hr/payroll", label: "Payroll" },
+  //     { href: "/hr/performance", label: "Performance" },
+  //   ],
+  //   roles: ["SUPER_ADMIN", "SALON_ADMIN"]
+  // },
   { href: "/branches", icon: Building, label: "Branches", roles: ["SUPER_ADMIN"]},
 ];
 

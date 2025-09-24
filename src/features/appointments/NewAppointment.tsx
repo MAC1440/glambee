@@ -66,11 +66,13 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
     });
   }
 
-  const handleSlotSelect = (slotInfo: SlotInfo) => {
-    setSelectedSlot({ start: slotInfo.start, end: slotInfo.end });
+  const handleSlotSelect = (slotInfo: SlotInfo | Date) => {
+    const startDate = slotInfo instanceof Date ? slotInfo : slotInfo.start;
+    const endDate = slotInfo instanceof Date ? slotInfo : slotInfo.end;
+    setSelectedSlot({ start: startDate, end: endDate });
     toast({
       title: "Time Slot Selected",
-      description: `Selected start time: ${format(slotInfo.start, "p")}`,
+      description: `Selected start time: ${format(startDate, "p")}`,
     });
   };
 
@@ -166,7 +168,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
             <h1 className="text-4xl font-headline font-bold">Book Appointment</h1>
             <p className="text-muted-foreground mt-2">
             {selectedSlot 
-                ? `Selected slot starts at: ${format(selectedSlot.start, 'p')}` 
+                ? `Selected slot starts at: ${format(selectedSlot.start, 'Pp')}` 
                 : "Select a time on the calendar to book."
             }
             </p>
@@ -209,13 +211,13 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
 
       {/* Right Column: Calendar and Time Selection */}
       <div className="lg:col-span-2">
-        <Tabs defaultValue="schedule">
+        <Tabs defaultValue="time">
             <TabsList>
                 <TabsTrigger value="time">Select Time</TabsTrigger>
                 <TabsTrigger value="schedule">Full Schedule</TabsTrigger>
             </TabsList>
             <TabsContent value="time" className="mt-4">
-                 <TimeSelection onSelectTime={(date) => setSelectedSlot({start: date, end: date})} />
+                 <TimeSelection onSelectTime={handleSlotSelect} />
             </TabsContent>
             <TabsContent value="schedule" className="mt-4">
                 <Card className="h-full">
