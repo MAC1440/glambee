@@ -22,7 +22,16 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
 
   const calendarEvents = useMemo(() => {
-    const confirmedEvents = newAppointments.map((apt) => ({
+    const selectedArtistIds = new Set(
+      servicesToBook.map(item => item.artist?.value).filter(Boolean) as string[]
+    );
+
+    let confirmedAppointments = newAppointments;
+    if (selectedArtistIds.size > 0) {
+      confirmedAppointments = newAppointments.filter(apt => selectedArtistIds.has(apt.staffId));
+    }
+    
+    const confirmedEvents = confirmedAppointments.map((apt) => ({
       title: `${apt.service} - ${apt.customerName}`,
       start: apt.start,
       end: apt.end,
@@ -53,7 +62,6 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
       return [...confirmedEvents, ...temporaryEvents];
     }
     
-    // Artist filtering logic can be added back here if needed, for now showing all.
     return confirmedEvents;
   }, [newAppointments, servicesToBook, selectedSlot]);
 
