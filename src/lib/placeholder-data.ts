@@ -80,7 +80,7 @@ export const staff = [
 ];
 
 export const serviceCategories = ["Hair", "Nails", "Makeup", "Skin", "Spa", "Aesthetics", "Others"];
-export const staffRoles = ["Manager", "Senior Stylist", "Stylist", "Lead Nail Tech", "Nail Technician", "Esthetician", "Front Desk Coordinator", "Salon Assistant"];
+export const staffRoles = ["Super Admin", "Salon Admin", "Manager", "Senior Stylist", "Stylist", "Lead Nail Tech", "Nail Technician", "Esthetician", "Front Desk Coordinator", "Salon Assistant"];
 export const staffSkills = ["Coloring", "Balayage", "Updos", "Men's Cuts", "Fades", "Styling", "Gel-X", "Nail Art", "Acrylics", "Manicures", "Pedicures", "Booking", "Client Relations", "Shampooing", "Cleaning"];
 
 export const services = [
@@ -696,4 +696,78 @@ export const messageLogs = [
     { id: 'log_02', customerName: 'Liam Garcia', channel: 'Email', type: 'Appointment Confirmation', timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), status: 'Sent' },
     { id: 'log_03', customerName: 'Ava Johnson', channel: 'SMS', type: 'Promotional', timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), status: 'Failed' },
     { id: 'log_04', customerName: 'Noah Brown', channel: 'Push', type: 'Appointment Reminder', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), status: 'Delivered' },
+];
+
+export type PermissionSet = {
+  read: boolean;
+  write: boolean;
+};
+
+export type Role = {
+  name: string;
+  description: string;
+  permissions: {
+    [key: string]: PermissionSet;
+  };
+};
+
+export const allPermissions = {
+  dashboard: [{ key: 'viewDashboard', label: 'View Dashboard' }],
+  schedule: [{ key: 'manageSchedule', label: 'Manage Schedule' }],
+  clients: [{ key: 'manageClients', label: 'Manage Clients' }],
+  services: [{ key: 'manageServices', label: 'Manage Services' }],
+  inventory: [{ key: 'manageInventory', label: 'Manage Inventory' }],
+  billing: [{ key: 'manageBilling', label: 'Manage Billing' }],
+  hr: [
+    { key: 'manageStaff', label: 'Manage Staff' },
+    { key: 'viewPayroll', label: 'View Payroll' },
+  ],
+  settings: [{ key: 'manageSettings', label: 'Manage Settings' }],
+  reports: [{ key: 'viewReports', label: 'View Reports' }],
+};
+
+export const rolesAndPermissions: Role[] = [
+  {
+    name: "Super Admin",
+    description: "Has unrestricted access to all features and settings.",
+    permissions: Object.values(allPermissions).flat().reduce((acc, p) => {
+        acc[p.key] = { read: true, write: true };
+        return acc;
+    }, {} as { [key: string]: PermissionSet })
+  },
+  {
+    name: "Salon Admin",
+    description: "Full access to a specific salon's data and operations.",
+    permissions: {
+      viewDashboard: { read: true, write: false },
+      manageSchedule: { read: true, write: true },
+      manageClients: { read: true, write: true },
+      manageServices: { read: true, write: true },
+      manageInventory: { read: true, write: true },
+      manageBilling: { read: true, write: true },
+      manageStaff: { read: true, write: true },
+      viewPayroll: { read: true, write: false },
+      manageSettings: { read: false, write: false },
+      viewReports: { read: true, write: false },
+    }
+  },
+  {
+    name: "Stylist",
+    description: "Can manage their own appointments and view client history.",
+    permissions: {
+      viewDashboard: { read: true, write: false },
+      manageSchedule: { read: true, write: true },
+      manageClients: { read: true, write: false },
+      manageServices: { read: true, write: false },
+    }
+  },
+  {
+    name: "Receptionist",
+    description: "Manages appointments, client check-ins, and billing.",
+    permissions: {
+      manageSchedule: { read: true, write: true },
+      manageClients: { read: true, write: true },
+      manageBilling: { read: true, write: true },
+    }
+  }
 ];

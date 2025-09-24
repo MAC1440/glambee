@@ -36,6 +36,7 @@ import {
   Boxes,
   ShoppingCart,
   MessageSquare,
+  Shield,
 } from "lucide-react";
 import { SalonFlowLogo } from "../icons";
 import { GlobalClientSearch } from "./GlobalClientSearch";
@@ -89,6 +90,7 @@ const navItems = [
     icon: Briefcase,
     subItems: [
       { href: "/staff", label: "Staff" },
+      { href: "/roles", label: "Roles" },
       { href: "/hr/attendance", label: "Attendance" },
       { href: "/hr/payroll", label: "Payroll" },
       { href: "/hr/performance", label: "Performance" },
@@ -124,7 +126,13 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   
   const userIdentifier = user?.email;
   const userInitial = userIdentifier ? userIdentifier.charAt(0).toUpperCase() : '?';
-  const visibleNavItems = navItems.filter(item => !item.roles || item.roles.includes(user.role));
+  const visibleNavItems = navItems.map(item => {
+    if (item.label === 'Human Resources' && item.subItems) {
+      const visibleSubItems = item.subItems.filter(subItem => !subItem.roles || subItem.roles.includes(user.role));
+      return { ...item, subItems: visibleSubItems };
+    }
+    return item;
+  }).filter(item => !item.roles || item.roles.includes(user.role));
   
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
