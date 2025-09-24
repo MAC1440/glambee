@@ -18,14 +18,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, PlusCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { NewRoleDialog } from "./NewRoleDialog";
 
 export function RolePermissions() {
   const { toast } = useToast();
   const [rolesData, setRolesData] =
     useState<Role[]>(rolesAndPermissions);
   const [selectedRole, setSelectedRole] = useState<Role>(rolesData[0]);
+  const [isNewRoleDialogOpen, setIsNewRoleDialogOpen] = useState(false);
 
   const handlePermissionChange = (
     permissionKey: string,
@@ -69,12 +71,33 @@ export function RolePermissions() {
       description: `Permissions for the ${selectedRole.name} role have been updated.`,
     });
   };
+  
+  const handleSaveNewRole = (newRoleData: { name: string; description: string; }) => {
+    const newRole: Role = {
+        ...newRoleData,
+        permissions: {}
+    };
+    setRolesData(prev => [...prev, newRole]);
+    setSelectedRole(newRole);
+    toast({
+        title: "Role Created",
+        description: `The "${newRole.name}" role has been created.`
+    })
+  };
+
 
   return (
+    <>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-1">
-        <h3 className="font-semibold text-lg mb-2">Select a Role</h3>
-        <Select onValueChange={handleSelectRole} defaultValue={selectedRole.name}>
+      <div className="md:col-span-1 space-y-4">
+        <div className="flex items-center justify-between">
+             <h3 className="font-semibold text-lg">Select a Role</h3>
+             <Button variant="outline" size="sm" onClick={() => setIsNewRoleDialogOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Role
+             </Button>
+        </div>
+       
+        <Select onValueChange={handleSelectRole} value={selectedRole.name}>
           <SelectTrigger>
             <SelectValue placeholder="Select a role to manage" />
           </SelectTrigger>
@@ -86,7 +109,7 @@ export function RolePermissions() {
             ))}
           </SelectContent>
         </Select>
-        <p className="text-sm text-muted-foreground mt-4">
+        <p className="text-sm text-muted-foreground">
             {selectedRole.description}
         </p>
       </div>
@@ -154,5 +177,11 @@ export function RolePermissions() {
         </ScrollArea>
       </div>
     </div>
+    <NewRoleDialog
+        isOpen={isNewRoleDialogOpen}
+        onOpenChange={setIsNewRoleDialogOpen}
+        onSave={handleSaveNewRole}
+    />
+    </>
   );
 }
