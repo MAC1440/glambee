@@ -87,7 +87,7 @@
 }
 
 .rbc-toolbar button {
-  @apply text-foreground bg-background border border-border rounded-md px-3 py-1 text-sm transition-colors hover:bg-accent;
+  @apply bg-background border border-border rounded-md px-3 py-1 text-sm transition-colors hover:bg-accent;
 }
 
 .rbc-toolbar button:disabled {
@@ -120,6 +120,10 @@
 .rbc-day-bg.rbc-off-range-bg {
   @apply bg-muted/30;
 }
+.rbc-day-bg.rbc-today {
+  background-color: transparent;
+}
+
 
 .rbc-selected-cell {
   background-color: hsl(var(--accent));
