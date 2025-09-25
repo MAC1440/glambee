@@ -69,17 +69,15 @@ const formSchema = z.object({
   price: z.union([
     z.string().min(1, "Price/Value is required.").refine(val => {
         const num = parseFloat(val);
-        // if it's not a number, it's valid (e.g. "20% off").
-        // if it is a number, it must be non-negative.
-        return isNaN(num) || num >= 0;
-    }, { message: "Value cannot be a negative number." }), 
-    z.coerce.number().nonnegative("Price cannot be negative.")
+        return isNaN(num) || num > 0;
+    }, { message: "Value cannot be zero or negative." }), 
+    z.coerce.number().positive("Price must be greater than zero.")
   ]),
-  originalPrice: z.coerce.number().nonnegative("Price cannot be negative.").nullable(),
+  originalPrice: z.coerce.number().positive("Original price must be greater than zero.").nullable(),
   image: z.string().url({ message: "Please enter a valid image URL." }),
   category: z.enum(["Service", "Deal", "Promotion"]),
   serviceCategory: z.string().optional(),
-  duration: z.coerce.number().int("Duration must be a whole number.").nonnegative("Duration cannot be negative.").nullable(),
+  duration: z.coerce.number().int("Duration must be a whole number.").positive("Duration must be greater than zero.").nullable(),
   includedServices: z.array(z.object({
     value: z.string(),
     label: z.string(),
