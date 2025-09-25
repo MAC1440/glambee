@@ -101,17 +101,6 @@ export function Dashboard({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>
            <CardHeader>
-            <CardTitle>Revenue Overview</CardTitle>
-            <CardDescription>
-              Your revenue summary for the last 6 months.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RevenueChart />
-          </CardContent>
-        </Card>
-        <Card>
-           <CardHeader>
             <CardTitle>Schedule</CardTitle>
             <CardDescription>
               A monthly overview of your appointments. Click a date to see details.
@@ -121,14 +110,28 @@ export function Dashboard({
              <DashboardCalendar allAppointments={allAppointments} />
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-        <Card>
-          <AppointmentsTable todayAppointments={todayAppointments} />
-        </Card>
-        <Card>
-          <QuickActions />
+        <div className="flex flex-col gap-8">
+            <Card>
+                <AppointmentsTable todayAppointments={todayAppointments} />
+            </Card>
+            <Card>
+                <QuickActions />
+            </Card>
+        </div>
+      </div>
+      
+       <div className="grid grid-cols-1 gap-8">
+         <Card>
+           <CardHeader>
+            <CardTitle>Revenue Overview</CardTitle>
+            <CardDescription>
+              Your revenue summary for the last 6 months.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RevenueChart />
+          </CardContent>
         </Card>
       </div>
     </div>
