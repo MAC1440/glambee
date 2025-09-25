@@ -58,7 +58,7 @@ type ServiceFormDialogProps = {
   service?: Service;
   onSave: (service: Service) => void;
   individualServices: Service[];
-  inventoryItems: InventoryItem[];
+  inventoryItems?: InventoryItem[];
   defaultTab?: "basic" | "recipe";
 };
 
@@ -68,9 +68,10 @@ const formSchema = z.object({
   description: z.string().min(10, { message: "Description is too short." }),
   price: z.union([
     z.string().min(1, "Price/Value is required.").refine(val => {
-        const num = parseFloat(val);
-        // Allow text (like "20% off") but if it's a number, it can't be negative.
-        return isNaN(num) || num >= 0;
+        if (!isNaN(parseFloat(val))) {
+            return parseFloat(val) >= 0;
+        }
+        return true;
     }, { message: "Value cannot be negative." }), 
     z.coerce.number().positive("Price must be greater than zero.")
   ]),
@@ -89,7 +90,7 @@ const formSchema = z.object({
   })).optional(),
   recipe: z.array(z.object({
     itemId: z.string(),
-    quantity: z.coerce.number().min(0.01, "Quantity must be positive."),
+    quantity: z.coerce.number().positive("Quantity must be positive."),
   })).optional(),
 }).refine(data => {
     if (data.category === 'Deal' && data.originalPrice !== null && typeof data.price === 'number') {
@@ -199,8 +200,7 @@ export function ServiceFormDialog({
   const priceLabel = category === 'Promotion' ? 'Discount Value (e.g., "20% Off")' : "Price ($)";
   const priceType = category === 'Promotion' ? 'text' : 'number';
   
-  const showRecipeTab = category === 'Service';
-  const showTabs = showRecipeTab;
+  const showTabs = category === 'Service';
 
   const basicInfoFields = (
     <div className="space-y-4 py-4">
@@ -479,3 +479,5 @@ export function ServiceFormDialog({
     </Dialog>
   );
 }
+
+    
