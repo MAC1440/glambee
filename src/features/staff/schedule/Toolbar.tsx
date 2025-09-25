@@ -1,4 +1,6 @@
 
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ToolbarProps, View } from "react-big-calendar";
@@ -29,9 +31,9 @@ export function CustomToolbar(toolbar: ToolbarProps) {
   return (
     <div className="rbc-toolbar flex flex-col md:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={goToBack}><ChevronLeft className="h-4 w-4" /></Button>
-        <Button variant="outline" onClick={goToCurrent}>Today</Button>
-        <Button variant="outline" size="icon" onClick={goToNext}><ChevronRight className="h-4 w-4" /></Button>
+        <Button variant="outline" size="icon" onClick={goToBack} className="text-foreground"><ChevronLeft className="h-4 w-4" /></Button>
+        <Button variant="outline" onClick={goToCurrent} className="text-foreground">Today</Button>
+        <Button variant="outline" size="icon" onClick={goToNext} className="text-foreground"><ChevronRight className="h-4 w-4" /></Button>
       </div>
       <span className="rbc-toolbar-label order-first md:order-none">{toolbar.label}</span>
       <div className="rbc-btn-group">
@@ -40,6 +42,7 @@ export function CustomToolbar(toolbar: ToolbarProps) {
             key={v.view}
             variant={toolbar.view === v.view ? 'default' : 'outline'}
             onClick={() => view(v.view)}
+            className={toolbar.view !== v.view ? 'text-foreground' : ''}
           >
             {v.name}
           </Button>
