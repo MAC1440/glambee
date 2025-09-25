@@ -57,7 +57,9 @@ export function Schedule({ appointments }: { appointments: ScheduleAppointment[]
     isThisMonth(apt.start)
   );
 
-  const calendarEvents = filteredAppointments.map((apt) => {
+  const calendarEvents = filteredAppointments
+    .filter(apt => apt.service && apt.customerName)
+    .map((apt) => {
     return {
       title: `${apt.service} - ${apt.customerName}`,
       start: apt.start,
