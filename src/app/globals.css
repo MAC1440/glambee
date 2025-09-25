@@ -117,9 +117,6 @@
 .rbc-day-bg {
   @apply border-r border-b border-border;
 }
-.rbc-day-bg.rbc-today {
-  background-color: hsl(var(--accent) / 0.5);
-}
 .rbc-day-bg.rbc-off-range-bg {
   @apply bg-muted/30;
 }
