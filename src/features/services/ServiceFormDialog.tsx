@@ -66,12 +66,12 @@ const formSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   description: z.string().min(10, { message: "Description is too short." }),
-  price: z.union([z.string(), z.number()]),
-  originalPrice: z.union([z.number(), z.null()]),
+  price: z.union([z.string().min(1, "Price/Value is required."), z.coerce.number().nonnegative("Price cannot be negative.")]),
+  originalPrice: z.coerce.number().nonnegative("Price cannot be negative.").nullable(),
   image: z.string().url({ message: "Please enter a valid image URL." }),
   category: z.enum(["Service", "Deal", "Promotion"]),
   serviceCategory: z.string().optional(),
-  duration: z.union([z.number(), z.null()]),
+  duration: z.coerce.number().int("Duration must be a whole number.").nonnegative("Duration cannot be negative.").nullable(),
   includedServices: z.array(z.object({
     value: z.string(),
     label: z.string(),
@@ -85,8 +85,8 @@ const formSchema = z.object({
     quantity: z.coerce.number().min(0.01, "Quantity must be positive."),
   })).optional(),
 }).refine(data => {
-    if (data.category === 'Deal' && data.originalPrice !== null) {
-        return Number(data.price) <= data.originalPrice;
+    if (data.category === 'Deal' && data.originalPrice !== null && typeof data.price === 'number') {
+        return data.price <= data.originalPrice;
     }
     return true;
 }, {
@@ -300,9 +300,9 @@ export function ServiceFormDialog({
                             <FormControl>
                             <Input 
                                 type={priceType} 
-                                step="0.01" 
+                                step={priceType === 'number' ? "0.01" : undefined} 
                                 {...field}
-                                onChange={e => field.onChange(priceType === 'number' ? parseFloat(e.target.value) || 0 : e.target.value)}
+                                onChange={e => field.onChange(priceType === 'number' ? e.target.valueAsNumber : e.target.value)}
                             />
                             </FormControl>
                             <FormMessage />
@@ -323,7 +323,7 @@ export function ServiceFormDialog({
                                 step="0.01" 
                                 {...field}
                                 value={field.value ?? ""}
-                                onChange={e => field.onChange(parseFloat(e.target.value) || null)}
+                                onChange={e => field.onChange(e.target.valueAsNumber)}
                                 disabled
                             />
                             </FormControl>
@@ -343,7 +343,7 @@ export function ServiceFormDialog({
                                 type="number"
                                 {...field}
                                 value={field.value ?? ""}
-                                onChange={e => field.onChange(parseInt(e.target.value) || null)}
+                                onChange={e => field.onChange(e.target.valueAsNumber)}
                             />
                             </FormControl>
                             <FormMessage />

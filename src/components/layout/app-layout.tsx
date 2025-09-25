@@ -86,6 +86,7 @@ const navItems = [
   { href: "/procurement", icon: ShoppingCart, label: "Procurement" },
   { href: "/engage", icon: MessageSquare, label: "Engage" },
   { href: "/hrm", icon: Briefcase, label: "Human Resources" },
+  { href: "/roles", icon: Shield, label: "Roles and Permissions" },
   // { 
   //   label: "Human Resources", 
   //   icon: Briefcase,
