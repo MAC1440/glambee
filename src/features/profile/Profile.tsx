@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/table";
 import { appointments } from "@/lib/placeholder-data";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { ProfileFormDialog } from "./ProfileFormDialog";
+import type { ProfileFormData } from "./ProfileForm";
 
 type User = {
   id: string;
@@ -34,6 +37,8 @@ type User = {
 export function Profile() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const sessionData = localStorage.getItem("session");
@@ -42,6 +47,18 @@ export function Profile() {
     }
     setLoading(false);
   }, []);
+
+  const handleSaveProfile = (data: ProfileFormData) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...data };
+    setUser(updatedUser);
+    localStorage.setItem("session", JSON.stringify(updatedUser));
+    toast({
+      title: "Profile Updated",
+      description: "Your profile information has been successfully saved.",
+    });
+    setIsFormOpen(false);
+  };
 
   if (loading) {
     return (
@@ -95,64 +112,72 @@ export function Profile() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="text-left">
-        <h1 className="text-4xl font-headline font-bold">My Profile</h1>
-        <p className="text-muted-foreground mt-2">
-          View your account details and booking history.
-        </p>
-      </div>
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <CardTitle className="text-2xl">{user.name}</CardTitle>
-                <CardDescription>{user.email}</CardDescription>
+    <>
+      <div className="flex flex-col gap-8">
+        <div className="text-left">
+          <h1 className="text-4xl font-headline font-bold">My Profile</h1>
+          <p className="text-muted-foreground mt-2">
+            View your account details and booking history.
+          </p>
+        </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <CardTitle className="text-2xl">{user.name}</CardTitle>
+                  <CardDescription>{user.email}</CardDescription>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full">Edit Profile</Button>
-          </CardContent>
-        </Card>
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Booking History</CardTitle>
-            <CardDescription>
-              A record of your past appointments.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Staff</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {appointments.slice(0, 4).map((apt) => (
-                  <TableRow key={apt.id}>
-                    <TableCell className="font-medium">{apt.service}</TableCell>
-                    <TableCell>{apt.staff}</TableCell>
-                    <TableCell>{apt.date}</TableCell>
-                    <TableCell className="text-right">
-                      ${apt.price.toFixed(2)}
-                    </TableCell>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={() => setIsFormOpen(true)}>Edit Profile</Button>
+            </CardContent>
+          </Card>
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Booking History</CardTitle>
+              <CardDescription>
+                A record of your past appointments.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Staff</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {appointments.slice(0, 4).map((apt) => (
+                    <TableRow key={apt.id}>
+                      <TableCell className="font-medium">{apt.service}</TableCell>
+                      <TableCell>{apt.staff}</TableCell>
+                      <TableCell>{apt.date}</TableCell>
+                      <TableCell className="text-right">
+                        ${apt.price.toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+      <ProfileFormDialog
+        isOpen={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        user={user}
+        onSave={handleSaveProfile}
+      />
+    </>
   );
 }
