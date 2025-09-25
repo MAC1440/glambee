@@ -6,7 +6,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CustomToolbar } from './Toolbar';
-import { useState, useMemo } from 'react';
+import { useState, useMemo }from 'react';
 import type { SlotInfo } from 'react-big-calendar';
 import { staff } from '@/lib/placeholder-data';
 
