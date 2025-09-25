@@ -66,7 +66,15 @@ const formSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   description: z.string().min(10, { message: "Description is too short." }),
-  price: z.union([z.string().min(1, "Price/Value is required."), z.coerce.number().nonnegative("Price cannot be negative.")]),
+  price: z.union([
+    z.string().min(1, "Price/Value is required.").refine(val => {
+        const num = parseFloat(val);
+        // if it's not a number, it's valid (e.g. "20% off").
+        // if it is a number, it must be non-negative.
+        return isNaN(num) || num >= 0;
+    }, { message: "Value cannot be a negative number." }), 
+    z.coerce.number().nonnegative("Price cannot be negative.")
+  ]),
   originalPrice: z.coerce.number().nonnegative("Price cannot be negative.").nullable(),
   image: z.string().url({ message: "Please enter a valid image URL." }),
   category: z.enum(["Service", "Deal", "Promotion"]),
