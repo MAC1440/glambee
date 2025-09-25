@@ -202,6 +202,184 @@ export function ServiceFormDialog({
   
   const showRecipeTab = category === 'Service';
 
+  const basicInfoFields = (
+    <div className="space-y-4 py-4">
+        {category === 'Deal' ? (
+        <FormField
+            control={form.control}
+            name="includedServices"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Included Services</FormLabel>
+                <Select
+                isMulti
+                options={serviceOptions}
+                value={field.value}
+                onChange={field.onChange}
+                className="text-sm"
+                classNamePrefix="select"
+                />
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., Signature Haircut" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                {category === 'Service' && (
+                    <FormField
+                        control={form.control}
+                        name="serviceCategory"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {serviceCategories.map((cat) => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                ))}
+                            </SelectContent>
+                            </ShadSelect>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                )}
+            </div>
+        )}
+
+        <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+            <FormItem>
+            <FormLabel>Description</FormLabel>
+            <FormControl>
+                <Textarea
+                placeholder="Describe the service..."
+                {...field}
+                disabled={category === 'Deal'}
+                />
+            </FormControl>
+            <FormMessage />
+            </FormItem>
+        )}
+        />
+        
+        <div className="grid grid-cols-2 gap-4">
+        <FormField
+            control={form.control}
+            name="price"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>{priceLabel}</FormLabel>
+                <FormControl>
+                <Input 
+                    type={priceType} 
+                    step={priceType === 'number' ? "0.01" : undefined} 
+                    {...field}
+                    onChange={e => field.onChange(priceType === 'number' ? e.target.valueAsNumber : e.target.value)}
+                />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+
+        {category === 'Deal' ? (
+            <FormField
+            control={form.control}
+            name="originalPrice"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Original Price ($)</FormLabel>
+                <FormControl>
+                <Input 
+                    type="number" 
+                    step="0.01" 
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={e => field.onChange(e.target.valueAsNumber)}
+                    disabled
+                />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        ) : category === 'Service' ? (
+            <FormField
+            control={form.control}
+            name="duration"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Duration (minutes)</FormLabel>
+                <FormControl>
+                <Input 
+                    type="number"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={e => field.onChange(e.target.valueAsNumber)}
+                />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        ) : null}
+        </div>
+
+        <FormField
+        control={form.control}
+        name="artists"
+        render={({ field }) => (
+            <FormItem>
+            <FormLabel>Assigned Artists</FormLabel>
+            <Select
+                isMulti
+                options={artistOptions}
+                value={field.value}
+                onChange={field.onChange}
+                className="text-sm"
+                classNamePrefix="select"
+            />
+            <FormMessage />
+            </FormItem>
+        )}
+        />
+        <FormField
+        control={form.control}
+        name="image"
+        render={({ field }) => (
+            <FormItem>
+            <FormLabel>Image URL</FormLabel>
+            <FormControl>
+                <Input placeholder="https://picsum.photos/..." {...field} />
+            </FormControl>
+            <FormMessage />
+            </FormItem>
+        )}
+        />
+    </div>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
@@ -212,188 +390,15 @@ export function ServiceFormDialog({
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
 
-            <Tabs defaultValue={defaultTab} className="mt-4">
-                 <TabsList className="grid w-full grid-cols-2">
+            {showRecipeTab ? (
+              <Tabs defaultValue={defaultTab} className="mt-4">
+                <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                    <TabsTrigger value="recipe" disabled={!showRecipeTab}>Recipe</TabsTrigger>
+                    <TabsTrigger value="recipe">Recipe</TabsTrigger>
                 </TabsList>
-
-                <TabsContent value="basic" className="space-y-4 py-4">
-                    {category === 'Deal' ? (
-                    <FormField
-                        control={form.control}
-                        name="includedServices"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Included Services</FormLabel>
-                            <Select
-                            isMulti
-                            options={serviceOptions}
-                            value={field.value}
-                            onChange={field.onChange}
-                            className="text-sm"
-                            classNamePrefix="select"
-                            />
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel>Name</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="e.g., Signature Haircut" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                            {category === 'Service' && (
-                                <FormField
-                                    control={form.control}
-                                    name="serviceCategory"
-                                    render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Category</FormLabel>
-                                        <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                            <SelectValue placeholder="Select a category" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {serviceCategories.map((cat) => (
-                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                        </ShadSelect>
-                                        <FormMessage />
-                                    </FormItem>
-                                    )}
-                                />
-                            )}
-                        </div>
-                    )}
-
-                    <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                            <Textarea
-                            placeholder="Describe the service..."
-                            {...field}
-                            disabled={category === 'Deal'}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="price"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{priceLabel}</FormLabel>
-                            <FormControl>
-                            <Input 
-                                type={priceType} 
-                                step={priceType === 'number' ? "0.01" : undefined} 
-                                {...field}
-                                onChange={e => field.onChange(priceType === 'number' ? e.target.valueAsNumber : e.target.value)}
-                            />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-
-                    {category === 'Deal' ? (
-                        <FormField
-                        control={form.control}
-                        name="originalPrice"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Original Price ($)</FormLabel>
-                            <FormControl>
-                            <Input 
-                                type="number" 
-                                step="0.01" 
-                                {...field}
-                                value={field.value ?? ""}
-                                onChange={e => field.onChange(e.target.valueAsNumber)}
-                                disabled
-                            />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    ) : category === 'Service' ? (
-                        <FormField
-                        control={form.control}
-                        name="duration"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Duration (minutes)</FormLabel>
-                            <FormControl>
-                            <Input 
-                                type="number"
-                                {...field}
-                                value={field.value ?? ""}
-                                onChange={e => field.onChange(e.target.valueAsNumber)}
-                            />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    ) : null}
-                    </div>
-
-                    <FormField
-                    control={form.control}
-                    name="artists"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Assigned Artists</FormLabel>
-                        <Select
-                            isMulti
-                            options={artistOptions}
-                            value={field.value}
-                            onChange={field.onChange}
-                            className="text-sm"
-                            classNamePrefix="select"
-                        />
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="image"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Image URL</FormLabel>
-                        <FormControl>
-                            <Input placeholder="https://picsum.photos/..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+                <TabsContent value="basic">
+                    {basicInfoFields}
                 </TabsContent>
-
                 <TabsContent value="recipe" className="space-y-4 py-4">
                      <div className="space-y-4 rounded-md border p-4">
                         <h4 className="font-medium">Service Recipe</h4>
@@ -460,7 +465,10 @@ export function ServiceFormDialog({
                         </Button>
                     </div>
                 </TabsContent>
-            </Tabs>
+              </Tabs>
+            ) : (
+                <div className="mt-4">{basicInfoFields}</div>
+            )}
 
 
             <DialogFooter className="pt-4">
@@ -475,5 +483,3 @@ export function ServiceFormDialog({
     </Dialog>
   );
 }
-
-    
