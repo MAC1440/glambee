@@ -1,3 +1,7 @@
+
+"use client";
+
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,9 +19,81 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { appointments, user } from "@/lib/placeholder-data";
+import { appointments } from "@/lib/placeholder-data";
+import { Skeleton } from "@/components/ui/skeleton";
+
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  role: 'SUPER_ADMIN' | 'SALON_ADMIN';
+  salonId: string | null;
+};
 
 export function Profile() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const sessionData = localStorage.getItem("session");
+    if (sessionData) {
+      setUser(JSON.parse(sessionData));
+    }
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="text-left">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-4 w-64 mt-2" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="md:col-span-1">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-20 w-20 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>Booking History</CardTitle>
+              <CardDescription>
+                A record of your past appointments.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-48 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>User not found</CardTitle>
+          <CardDescription>
+            Please log in to view your profile.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="text-left">
