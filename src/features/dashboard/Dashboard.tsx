@@ -99,31 +99,34 @@ export function Dashboard({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
-           <CardHeader>
-            <CardTitle>Schedule</CardTitle>
-            <CardDescription>
-              A monthly overview of your appointments. Click a date to see details.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-             <DashboardCalendar allAppointments={allAppointments} />
-          </CardContent>
-        </Card>
-
-        <div className="flex flex-col gap-8">
-            <Card>
-                <AppointmentsTable todayAppointments={todayAppointments} />
-            </Card>
-            <Card>
-                <QuickActions />
-            </Card>
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Schedule</CardTitle>
+              <CardDescription>
+                A monthly overview of your appointments. Click a date to see
+                details.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DashboardCalendar allAppointments={allAppointments} />
+            </CardContent>
+          </Card>
         </div>
       </div>
       
-       <div className="grid grid-cols-1 gap-8">
-         <Card>
-           <CardHeader>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <AppointmentsTable todayAppointments={todayAppointments} />
+        </Card>
+        <Card>
+          <QuickActions />
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8">
+        <Card>
+          <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
             <CardDescription>
               Your revenue summary for the last 6 months.
