@@ -34,7 +34,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { PlusCircle, Trash2 } from "lucide-react";
-import ReactSelect from "react-select";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 type RequisitionFormDialogProps = {
   isOpen: boolean;
@@ -140,10 +140,19 @@ export function RequisitionFormDialog({
                             render={({ field }) => (
                                 <FormItem className="flex-1">
                                     <FormControl>
-                                        <ReactSelect
-                                            options={productOptions}
-                                            {...field}
-                                        />
+                                        <Select
+                                            onValueChange={(value) => field.onChange({ value, label: productOptions.find(p => p.value === value)?.label || '' })}
+                                            defaultValue={field.value.value}
+                                            >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a product" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {productOptions.map(p => (
+                                                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

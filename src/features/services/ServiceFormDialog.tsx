@@ -24,14 +24,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useEffect, useMemo, useState } from "react";
-import Select from "react-select";
+import { useEffect, useMemo } from "react";
 import { staff, serviceCategories, inventoryItems as allInventoryItems } from "@/lib/placeholder-data";
 import { Select as ShadSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Trash2 } from "lucide-react";
 import type { ServiceRecipeItem } from "./ServicesList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 type InventoryItem = typeof allInventoryItems[0];
 
@@ -69,8 +69,9 @@ const formSchema = z.object({
   price: z.union([
     z.string().min(1, "Price/Value is required.").refine(val => {
         const num = parseFloat(val);
-        return isNaN(num) || num > 0;
-    }, { message: "Value cannot be zero or negative." }), 
+        // Allow text (like "20% off") but if it's a number, it can't be negative.
+        return isNaN(num) || num >= 0;
+    }, { message: "Value cannot be negative." }), 
     z.coerce.number().positive("Price must be greater than zero.")
   ]),
   originalPrice: z.coerce.number().positive("Original price must be greater than zero.").nullable(),
@@ -199,6 +200,7 @@ export function ServiceFormDialog({
   const priceType = category === 'Promotion' ? 'text' : 'number';
   
   const showRecipeTab = category === 'Service';
+  const showTabs = showRecipeTab;
 
   const basicInfoFields = (
     <div className="space-y-4 py-4">
@@ -209,13 +211,11 @@ export function ServiceFormDialog({
             render={({ field }) => (
             <FormItem>
                 <FormLabel>Included Services</FormLabel>
-                <Select
-                isMulti
-                options={serviceOptions}
-                value={field.value}
-                onChange={field.onChange}
-                className="text-sm"
-                classNamePrefix="select"
+                <MultiSelect
+                    options={serviceOptions}
+                    value={field.value || []}
+                    onChange={field.onChange}
+                    placeholder="Select services..."
                 />
                 <FormMessage />
             </FormItem>
@@ -349,16 +349,14 @@ export function ServiceFormDialog({
         name="artists"
         render={({ field }) => (
             <FormItem>
-            <FormLabel>Assigned Artists</FormLabel>
-            <Select
-                isMulti
-                options={artistOptions}
-                value={field.value}
-                onChange={field.onChange}
-                className="text-sm"
-                classNamePrefix="select"
-            />
-            <FormMessage />
+                <FormLabel>Assigned Artists</FormLabel>
+                 <MultiSelect
+                    options={artistOptions}
+                    value={field.value || []}
+                    onChange={field.onChange}
+                    placeholder="Select artists..."
+                />
+                <FormMessage />
             </FormItem>
         )}
         />
@@ -388,7 +386,7 @@ export function ServiceFormDialog({
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
 
-            {showRecipeTab ? (
+            {showTabs ? (
               <Tabs defaultValue={defaultTab} className="mt-4">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="basic">Basic Info</TabsTrigger>

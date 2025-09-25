@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useFieldArray, useForm, Controller } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -44,30 +44,30 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { MultiSelect } from "@/components/ui/multi-select";
 
-const poItemSchema = z.object({
+const grnItemSchema = z.object({
   productId: z.string().min(1, "Product is required."),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
   cost: z.coerce.number().min(0, "Cost cannot be negative."),
+  imageUrl: z.string().url().optional().or(z.literal('')),
 });
 
-const poSchema = z.object({
+const grnSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required."),
   notes: z.string().optional(),
-  items: z.array(poItemSchema).min(1, "At least one item is required."),
+  items: z.array(grnItemSchema).min(1, "At least one item is required."),
 });
 
-export function NewPurchaseOrder() {
+export function GoodsReceivedNote() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof poSchema>>({
-    resolver: zodResolver(poSchema),
+  const form = useForm<z.infer<typeof grnSchema>>({
+    resolver: zodResolver(grnSchema),
     defaultValues: {
       supplierId: "",
       notes: "",
-      items: [{ productId: "", quantity: 1, cost: 0 }],
+      items: [{ productId: "", quantity: 1, cost: 0, imageUrl: "" }],
     },
   });
 
@@ -83,13 +83,13 @@ export function NewPurchaseOrder() {
     }));
   }, []);
 
-  const onSubmit = (values: z.infer<typeof poSchema>) => {
-    console.log("PO Submitted:", values);
+  const onSubmit = (values: z.infer<typeof grnSchema>) => {
+    console.log("GRN Submitted:", values);
     toast({
-      title: "Purchase Order Created",
-      description: "Your new PO has been saved as a draft.",
+      title: "GRN Created",
+      description: "Stock levels have been updated successfully.",
     });
-    router.push("/procurement");
+    router.push("/inventory");
   };
 
   const totalCost = useMemo(() => {
@@ -103,26 +103,26 @@ export function NewPurchaseOrder() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="outline" size="icon" asChild>
-              <Link href="/procurement">
+              <Link href="/inventory">
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
             <div>
               <h1 className="text-3xl font-bold font-headline">
-                New Purchase Order
+                Goods Received Note (GRN)
               </h1>
               <p className="text-muted-foreground">
-                Create a new order for your suppliers.
+                Record incoming stock from your suppliers.
               </p>
             </div>
           </div>
-          <Button type="submit">Save Purchase Order</Button>
+          <Button type="submit">Receive Stock</Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <Card className="lg:col-span-1">
             <CardHeader>
-              <CardTitle>PO Details</CardTitle>
+              <CardTitle>GRN Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
@@ -157,7 +157,7 @@ export function NewPurchaseOrder() {
                     <Label>Notes (Optional)</Label>
                     <FormControl>
                       <Textarea
-                        placeholder="e.g., Special delivery instructions"
+                        placeholder="e.g., Reference PO #12345"
                         {...field}
                       />
                     </FormControl>
@@ -170,13 +170,14 @@ export function NewPurchaseOrder() {
 
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Order Items</CardTitle>
+              <CardTitle>Received Items</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50%]">Product</TableHead>
+                    <TableHead className="w-[40%]">Product</TableHead>
+                    <TableHead>Image URL</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Unit Cost</TableHead>
                     <TableHead>Total</TableHead>
@@ -214,6 +215,20 @@ export function NewPurchaseOrder() {
                                 </FormItem>
                               )}
                             />
+                        </TableCell>
+                        <TableCell>
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.imageUrl`}
+                            render={({ field: imageUrlField }) => (
+                              <Input
+                                type="text"
+                                placeholder="https://..."
+                                {...imageUrlField}
+                                className="w-32"
+                              />
+                            )}
+                          />
                         </TableCell>
                         <TableCell>
                           <FormField
@@ -267,7 +282,7 @@ export function NewPurchaseOrder() {
                 variant="outline"
                 size="sm"
                 className="mt-4"
-                onClick={() => append({ productId: "", quantity: 1, cost: 0 })}
+                onClick={() => append({ productId: "", quantity: 1, cost: 0, imageUrl: "" })}
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Item

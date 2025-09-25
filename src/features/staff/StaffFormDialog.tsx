@@ -32,7 +32,7 @@ import {
 import { useEffect, useMemo } from "react";
 import { departments, staffRoles, staffSkills } from "@/lib/placeholder-data";
 import type { StaffMember } from "./Staff";
-import Select from "react-select";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 type StaffFormDialogProps = {
   isOpen: boolean;
@@ -193,13 +193,11 @@ export function StaffFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Skills</FormLabel>
-                    <Select
-                      isMulti
-                      options={skillOptions}
-                      value={field.value}
-                      onChange={field.onChange}
-                      className="text-sm"
-                      classNamePrefix="select"
+                    <MultiSelect
+                        options={skillOptions}
+                        value={field.value || []}
+                        onChange={field.onChange}
+                        placeholder="Select skills..."
                     />
                     <FormMessage />
                   </FormItem>
