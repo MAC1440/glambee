@@ -33,6 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { GlobalClientSearch } from "@/components/layout/GlobalClientSearch";
 
 
 export function Schedule({ appointments }: { appointments: ScheduleAppointment[] }) {
@@ -175,12 +176,7 @@ export function Schedule({ appointments }: { appointments: ScheduleAppointment[]
                 </DropdownMenuContent>
               </DropdownMenu>
 
-               <Button asChild>
-                  <Link href="/appointments">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Appointment
-                  </Link>
-                </Button>
+               <GlobalClientSearch />
             </div>
         </div>
 
