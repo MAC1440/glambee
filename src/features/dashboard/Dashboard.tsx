@@ -24,6 +24,7 @@ import { DashboardCalendar } from "./DashboardCalendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isThisMonth, isThisWeek, isToday, format, parseISO } from "date-fns";
 import type { Appointment } from "@/lib/api/servicesApi";
+import { appointments as mockAppointments } from "@/lib/placeholder-data";
 
 export function Dashboard({
   todayAppointments,
@@ -43,8 +44,8 @@ export function Dashboard({
   
   // Convert ScheduleAppointment to Appointment for consistency and to add price
   const convertedFilteredAppointments: Appointment[] = filteredAppointments.map(apt => {
-    // Find the original service from placeholder data to get the price
-    const originalService = todayAppointments.find(a => a.service === apt.service);
+    // Find the original service from the complete mock data to get the price
+    const originalService = mockAppointments.find(a => a.service === apt.service);
     const price = originalService ? originalService.price : 0;
 
     return {
@@ -84,7 +85,7 @@ export function Dashboard({
       case "today": return "Your revenue summary for today.";
       case "week": return "Your revenue summary for this week.";
       case "month": return "Your revenue summary for this month.";
-      default: return "Your revenue summary for the selected period.";
+      default: return "Your revenue summary.";
     }
   }
 
