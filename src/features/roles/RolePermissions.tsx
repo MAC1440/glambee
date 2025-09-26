@@ -6,6 +6,7 @@ import {
   rolesAndPermissions,
   allPermissions,
   type Role,
+  type PermissionSet,
 } from "@/lib/placeholder-data";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,6 +22,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShieldCheck, PlusCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { NewRoleDialog } from "./NewRoleDialog";
+import { Label } from "@/components/ui/label";
+
+type PermissionType = keyof PermissionSet;
+const permissionTypes: { key: PermissionType; label: string }[] = [
+    { key: 'create', label: 'Create' },
+    { key: 'read', label: 'Read' },
+    { key: 'update', label: 'Update' },
+    { key: 'delete', label: 'Delete' },
+];
 
 export function RolePermissions() {
   const { toast } = useToast();
@@ -30,23 +40,33 @@ export function RolePermissions() {
   const [isNewRoleDialogOpen, setIsNewRoleDialogOpen] = useState(false);
 
   const handlePermissionChange = (
-    permissionKey: string,
-    permissionType: "read" | "write"
+    moduleKey: string,
+    permissionType: PermissionType
   ) => {
     setSelectedRole((prevRole) => {
       const newPermissions = { ...prevRole.permissions };
-      if (!newPermissions[permissionKey]) {
-        newPermissions[permissionKey] = { read: false, write: false };
+      if (!newPermissions[moduleKey]) {
+        newPermissions[moduleKey] = { create: false, read: false, update: false, delete: false };
       }
-      newPermissions[permissionKey][permissionType] =
-        !newPermissions[permissionKey][permissionType];
+      
+      const currentPermissions = newPermissions[moduleKey];
+      const isChecked = !currentPermissions[permissionType];
+      currentPermissions[permissionType] = isChecked;
 
-      // If 'write' is enabled, 'read' must also be enabled
-      if (
-        permissionType === "write" &&
-        newPermissions[permissionKey].write === true
-      ) {
-        newPermissions[permissionKey].read = true;
+      // Auto-check 'read' if 'update' or 'delete' is checked
+      if ((permissionType === 'update' || permissionType === 'delete') && isChecked) {
+        currentPermissions.read = true;
+      }
+
+      // Auto-check 'read' if 'create' is checked (optional, but often desired)
+      if (permissionType === 'create' && isChecked) {
+        currentPermissions.read = true;
+      }
+      
+      // Auto-uncheck higher permissions if 'read' is unchecked
+      if (permissionType === 'read' && !isChecked) {
+        currentPermissions.update = false;
+        currentPermissions.delete = false;
       }
 
       return { ...prevRole, permissions: newPermissions };
@@ -70,6 +90,8 @@ export function RolePermissions() {
       title: "Permissions Saved",
       description: `Permissions for the ${selectedRole.name} role have been updated.`,
     });
+    console.log("Saving new permissions for role:", selectedRole.name);
+    console.log(JSON.stringify(selectedRole, null, 2));
   };
   
   const handleSaveNewRole = (newRoleData: { name: string; description: string; }) => {
@@ -122,55 +144,39 @@ export function RolePermissions() {
              <Button onClick={handleSaveChanges}>Save Changes</Button>
         </div>
        
-        <ScrollArea className="h-96 border rounded-md p-4">
-          <div className="space-y-4">
-            {Object.entries(allPermissions).map(([module, permissions]) => (
-              <div key={module}>
-                <h4 className="font-medium text-base mb-2 capitalize">{module.replace(/([A-Z])/g, ' $1')}</h4>
-                <div className="space-y-2 pl-4">
-                  {permissions.map((permission) => {
-                    const hasRead =
-                      selectedRole.permissions[permission.key]?.read || false;
-                    const hasWrite =
-                      selectedRole.permissions[permission.key]?.write || false;
+        <ScrollArea className="h-96 border rounded-md">
+          <div className="space-y-1 p-4">
+            {Object.entries(allPermissions).map(([moduleKey, moduleName]) => (
+              <div key={moduleKey} className="rounded-md border p-4">
+                <h4 className="font-medium text-base mb-3 flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  {moduleName}
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pl-7">
+                  {permissionTypes.map(pt => {
+                     const isChecked = selectedRole.permissions[moduleKey]?.[pt.key] || false;
+                     let isDisabled = false;
+                      if (pt.key === 'read') {
+                        const hasUpdate = selectedRole.permissions[moduleKey]?.update || false;
+                        const hasDelete = selectedRole.permissions[moduleKey]?.delete || false;
+                        if (hasUpdate || hasDelete) isDisabled = true;
+                      }
 
                     return (
-                      <div
-                        key={permission.key}
-                        className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50"
-                      >
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                          <span>{permission.label}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2">
+                        <div key={pt.key} className="flex items-center gap-2">
                             <Checkbox
-                              id={`${permission.key}-read`}
-                              checked={hasRead}
-                              onCheckedChange={() =>
-                                handlePermissionChange(permission.key, "read")
-                              }
-                              disabled={hasWrite}
+                                id={`${moduleKey}-${pt.key}`}
+                                checked={isChecked}
+                                disabled={isDisabled}
+                                onCheckedChange={() => handlePermissionChange(moduleKey, pt.key)}
                             />
-                            <label htmlFor={`${permission.key}-read`} className="text-sm">Read</label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id={`${permission.key}-write`}
-                              checked={hasWrite}
-                              onCheckedChange={() =>
-                                handlePermissionChange(permission.key, "write")
-                              }
-                            />
-                             <label htmlFor={`${permission.key}-write`} className="text-sm">Write</label>
-                          </div>
+                            <Label htmlFor={`${moduleKey}-${pt.key}`} className="text-sm font-normal">
+                                {pt.label}
+                            </Label>
                         </div>
-                      </div>
                     );
                   })}
                 </div>
-                 <Separator className="mt-4" />
               </div>
             ))}
           </div>

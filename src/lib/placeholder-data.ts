@@ -699,39 +699,38 @@ export const messageLogs = [
 ];
 
 export type PermissionSet = {
+  create: boolean;
   read: boolean;
-  write: boolean;
+  update: boolean;
+  delete: boolean;
 };
 
 export type Role = {
   name: string;
   description: string;
   permissions: {
-    [key: string]: PermissionSet;
+    [key: string]: Partial<PermissionSet>;
   };
 };
 
 export const allPermissions = {
-  dashboard: [{ key: 'viewDashboard', label: 'View Dashboard' }],
-  schedule: [{ key: 'manageSchedule', label: 'Manage Schedule' }],
-  clients: [{ key: 'manageClients', label: 'Manage Clients' }],
-  services: [{ key: 'manageServices', label: 'Manage Services' }],
-  inventory: [{ key: 'manageInventory', label: 'Manage Inventory' }],
-  billing: [{ key: 'manageBilling', label: 'Manage Billing' }],
-  hr: [
-    { key: 'manageStaff', label: 'Manage Staff' },
-    { key: 'viewPayroll', label: 'View Payroll' },
-  ],
-  settings: [{ key: 'manageSettings', label: 'Manage Settings' }],
-  reports: [{ key: 'viewReports', label: 'View Reports' }],
+  dashboard: 'Dashboard',
+  schedule: 'Schedule',
+  clients: 'Clients',
+  services: 'Services',
+  inventory: 'Inventory',
+  billing: 'Billing',
+  hr: 'Human Resources',
+  settings: 'Settings',
+  reports: 'Reports',
 };
 
 export const rolesAndPermissions: Role[] = [
   {
     name: "Super Admin",
     description: "Has unrestricted access to all features and settings.",
-    permissions: Object.values(allPermissions).flat().reduce((acc, p) => {
-        acc[p.key] = { read: true, write: true };
+    permissions: Object.keys(allPermissions).reduce((acc, key) => {
+        acc[key] = { create: true, read: true, update: true, delete: true };
         return acc;
     }, {} as { [key: string]: PermissionSet })
   },
@@ -739,35 +738,32 @@ export const rolesAndPermissions: Role[] = [
     name: "Salon Admin",
     description: "Full access to a specific salon's data and operations.",
     permissions: {
-      viewDashboard: { read: true, write: false },
-      manageSchedule: { read: true, write: true },
-      manageClients: { read: true, write: true },
-      manageServices: { read: true, write: true },
-      manageInventory: { read: true, write: true },
-      manageBilling: { read: true, write: true },
-      manageStaff: { read: true, write: true },
-      viewPayroll: { read: true, write: false },
-      manageSettings: { read: false, write: false },
-      viewReports: { read: true, write: false },
+      dashboard: { read: true },
+      schedule: { create: true, read: true, update: true, delete: true },
+      clients: { create: true, read: true, update: true, delete: true },
+      services: { create: true, read: true, update: true, delete: true },
+      inventory: { create: true, read: true, update: true, delete: true },
+      billing: { create: true, read: true, update: true, delete: false },
+      hr: { create: true, read: true, update: true, delete: false },
+      reports: { read: true },
     }
   },
   {
     name: "Stylist",
     description: "Can manage their own appointments and view client history.",
     permissions: {
-      viewDashboard: { read: true, write: false },
-      manageSchedule: { read: true, write: true },
-      manageClients: { read: true, write: false },
-      manageServices: { read: true, write: false },
+      dashboard: { read: true },
+      schedule: { read: true, update: true }, // Can update their own schedule
+      clients: { read: true },
     }
   },
   {
     name: "Receptionist",
     description: "Manages appointments, client check-ins, and billing.",
     permissions: {
-      manageSchedule: { read: true, write: true },
-      manageClients: { read: true, write: true },
-      manageBilling: { read: true, write: true },
+      schedule: { create: true, read: true, update: true, delete: true },
+      clients: { create: true, read: true, update: true },
+      billing: { create: true, read: true },
     }
   }
 ];
