@@ -197,7 +197,7 @@ export function NewAppointment({
       {/* Left Column: Booking Form */}
       <div className="lg:col-span-1 flex flex-col gap-8">
         <div>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h1 className="text-4xl font-headline font-bold">Book Appointment</h1>
                     <p className="text-muted-foreground mt-2 flex items-center gap-2">
