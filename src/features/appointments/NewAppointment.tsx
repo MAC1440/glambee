@@ -259,7 +259,7 @@ export function NewAppointment({
 
       {/* Right Column: Calendar and Time Selection */}
       <div className="lg:col-span-2">
-        <Tabs defaultValue="time">
+        <Tabs defaultValue="schedule">
             <TabsList>
                 <TabsTrigger value="time">Select Time</TabsTrigger>
                 <TabsTrigger value="schedule">Full Schedule</TabsTrigger>
