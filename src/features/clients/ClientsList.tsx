@@ -155,7 +155,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
           <DebouncedInput
             value={globalFilter ?? ""}
             onValueChange={(value) => setGlobalFilter(String(value))}
-            className="max-w-sm"
+            className="max-w-md"
             placeholder="Search by name, email, or phone..."
           />
       </div>
