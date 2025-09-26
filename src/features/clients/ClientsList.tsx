@@ -26,6 +26,7 @@ import Link from "next/link";
 import { ClientFormDialog } from "./ClientFormDialog";
 import { useToast } from "@/hooks/use-toast";
 import type { Client, ClientFormData } from "./ClientForm";
+import { DebouncedInput } from "@/components/ui/debounced-input";
 
 const getTagColor = (tag: string) => {
   switch (tag.toLowerCase()) {
@@ -50,6 +51,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
     const [mockCustomers, setMockCustomers] = useState(initialMockCustomers);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const { toast } = useToast();
+    const [globalFilter, setGlobalFilter] = useState('');
 
     // Process appointments to build detailed client data
     const clientsMap = new Map<
@@ -103,6 +105,15 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
         };
     }).sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime());
 
+    const filteredClients = clients.filter(client => {
+        const filter = globalFilter.toLowerCase();
+        return (
+            client.name.toLowerCase().includes(filter) ||
+            client.email.toLowerCase().includes(filter) ||
+            client.phone.includes(filter)
+        )
+    })
+
 
   const handleSaveClient = (clientData: ClientFormData) => {
     const newClient: Client = {
@@ -140,6 +151,15 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
         )}
       </div>
 
+       <div className="flex items-center justify-between">
+          <DebouncedInput
+            value={globalFilter ?? ""}
+            onValueChange={(value) => setGlobalFilter(String(value))}
+            className="max-w-sm"
+            placeholder="Search by name, email, or phone..."
+          />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>All Clients</CardTitle>
@@ -157,7 +177,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clients.map((client) => (
+              {filteredClients.map((client) => (
                 <TableRow
                   key={client.email}
                   className="hover:bg-muted/50"
