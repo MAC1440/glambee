@@ -3,51 +3,52 @@
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useMemo } from 'react';
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parse, parseISO, getHours } from 'date-fns';
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parse, getHours, getWeekOfMonth, parseISO } from 'date-fns';
 import type { Appointment } from "@/lib/api/servicesApi";
 
-const groupDataByDay = (appointments: Appointment[], period: "today" | "week" | "month") => {
-    if (!appointments.length) return [];
-    
-    let interval;
+const groupDataByDay = (appointments: Appointment[]) => {
     const today = new Date();
-    if (period === 'week') {
-        interval = { start: startOfWeek(today, { weekStartsOn: 1 }), end: endOfWeek(today, { weekStartsOn: 1 }) };
-    } else { // month
-        interval = { start: startOfMonth(today), end: endOfMonth(today) };
-    }
-
-    const days = eachDayOfInterval(interval);
-    const dailyData: { [key: string]: number } = {};
-
-    days.forEach(day => {
-        dailyData[format(day, 'yyyy-MM-dd')] = 0;
-    });
+    const interval = { start: startOfWeek(today, { weekStartsOn: 1 }), end: endOfWeek(today, { weekStartsOn: 1 }) };
+    const weekDays = eachDayOfInterval(interval);
+    
+    const dailyData = weekDays.map(day => ({
+        name: format(day, 'EEE'),
+        revenue: 0,
+    }));
 
     appointments.forEach(apt => {
-        const day = format(parseISO(apt.date), 'yyyy-MM-dd');
-        if (dailyData[day] !== undefined) {
-            dailyData[day] += apt.price;
+        const appointmentDate = parseISO(apt.date);
+        const dayIndex = weekDays.findIndex(day => format(day, 'yyyy-MM-dd') === format(appointmentDate, 'yyyy-MM-dd'));
+        if (dayIndex !== -1) {
+            dailyData[dayIndex].revenue += apt.price;
         }
     });
 
-    return Object.keys(dailyData).map(date => ({
-        name: format(parseISO(date), period === 'week' ? 'EEE' : 'd'),
-        revenue: dailyData[date]
-    }));
+    return dailyData;
 };
 
 const groupDataByWeek = (appointments: Appointment[]) => {
-    if (!appointments.length) return [];
+    const today = new Date();
+    const start = startOfMonth(today);
+    const end = endOfMonth(today);
     
-    const weeklyData: { [key: string]: number } = {};
+    const weeklyData: { [key: string]: number } = {
+        "Week 1": 0,
+        "Week 2": 0,
+        "Week 3": 0,
+        "Week 4": 0,
+        "Week 5": 0,
+    };
 
     appointments.forEach(apt => {
-        const week = format(startOfWeek(parseISO(apt.date), { weekStartsOn: 1 }), 'MMM d');
-        if (!weeklyData[week]) {
-            weeklyData[week] = 0;
+        const appointmentDate = parseISO(apt.date);
+        if (appointmentDate >= start && appointmentDate <= end) {
+            const weekOfMonth = getWeekOfMonth(appointmentDate, { weekStartsOn: 1 });
+            const weekKey = `Week ${weekOfMonth}`;
+            if (weeklyData[weekKey] !== undefined) {
+                weeklyData[weekKey] += apt.price;
+            }
         }
-        weeklyData[week] += apt.price;
     });
 
     return Object.keys(weeklyData).map(week => ({
@@ -57,8 +58,6 @@ const groupDataByWeek = (appointments: Appointment[]) => {
 };
 
 const groupDataByHour = (appointments: Appointment[]) => {
-    if (!appointments.length) return [];
-
     const hourlyData: { [key: number]: number } = {};
     for (let i = 8; i <= 20; i++) { // From 8 AM to 8 PM
         hourlyData[i] = 0;
@@ -66,13 +65,14 @@ const groupDataByHour = (appointments: Appointment[]) => {
 
     appointments.forEach(apt => {
         try {
+            // The time is in "h:mm a" format e.g. "9:00 AM"
             const appointmentDate = parse(apt.time, 'h:mm a', new Date());
             const hour = getHours(appointmentDate);
             if (hourlyData[hour] !== undefined) {
                 hourlyData[hour] += apt.price;
             }
         } catch (error) {
-            console.error("Error parsing time:", apt.time, error);
+            console.error("Error parsing time for revenue chart:", apt.time, error);
         }
     });
 
@@ -82,7 +82,7 @@ const groupDataByHour = (appointments: Appointment[]) => {
             name: format(new Date(2000, 0, 1, hour), 'ha'), // 'ha' for '9am', '12pm' etc.
             revenue: hourlyData[hour]
         };
-    });
+    }).filter(item => item.revenue > 0); // Only show hours with revenue
 }
 
 
@@ -93,7 +93,7 @@ export function RevenueChart({ appointments, period }: { appointments: Appointme
         return groupDataByHour(appointments);
     }
     if (period === 'week') {
-        return groupDataByDay(appointments, 'week');
+        return groupDataByDay(appointments);
     }
     if (period === 'month') {
         return groupDataByWeek(appointments);
