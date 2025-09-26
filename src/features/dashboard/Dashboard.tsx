@@ -41,9 +41,12 @@ export function Dashboard({
     return false;
   });
   
-  // Convert ScheduleAppointment to Appointment for consistency
+  // Convert ScheduleAppointment to Appointment for consistency and to add price
   const convertedFilteredAppointments: Appointment[] = filteredAppointments.map(apt => {
-    const service = todayAppointments.find(a => a.service === apt.service);
+    // Find the original service from placeholder data to get the price
+    const originalService = todayAppointments.find(a => a.service === apt.service);
+    const price = originalService ? originalService.price : 0;
+
     return {
         id: apt.id,
         salonId: 'salon_01', // Mock
@@ -54,10 +57,10 @@ export function Dashboard({
             email: `${apt.customerName.toLowerCase().replace(' ', '.')}@example.com` // Mock
         },
         service: apt.service,
-        staff: service?.staff || 'Unknown', // Mock
+        staff: originalService?.staff || 'Unknown', // Mock
         date: format(apt.start, 'yyyy-MM-dd'),
         time: format(apt.start, 'p'),
-        price: service?.price || 0,
+        price: price,
     }
   });
 
@@ -81,7 +84,7 @@ export function Dashboard({
       case "today": return "Your revenue summary for today.";
       case "week": return "Your revenue summary for this week.";
       case "month": return "Your revenue summary for this month.";
-      default: return "Your revenue summary.";
+      default: return "Your revenue summary for the selected period.";
     }
   }
 
