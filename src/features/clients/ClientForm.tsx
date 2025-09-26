@@ -69,8 +69,8 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
   const onSubmit = (values: ClientFormData) => {
     // Convert date object back to string for consistency
     const submissionData = {
-        ...values,
-        dob: values.dob.toISOString().split('T')[0]
+      ...values,
+      dob: values.dob.toISOString().split('T')[0]
     }
     onSave(submissionData);
   };
@@ -147,7 +147,7 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
             control={form.control}
             name="dob"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col md:mt-2.5">
                 <FormLabel>Date of Birth</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -155,7 +155,7 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
                       <Button
                         variant={"outline"}
                         className={cn(
-                          "w-full pl-3 text-left font-normal",
+                          "w-full pl-3 text-left font-normal ",
                           !field.value && "text-muted-foreground"
                         )}
                       >
@@ -164,12 +164,15 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
                         ) : (
                           <span>Pick a date</span>
                         )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50 " />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
+                      captionLayout="dropdown-buttons"
+                      fromYear={2000}
+                      toYear={2035}
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
