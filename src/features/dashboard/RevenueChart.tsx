@@ -3,7 +3,7 @@
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useMemo } from 'react';
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parse, getHours, getWeekOfMonth, parseISO } from 'date-fns';
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parse, getHours, getWeekOfMonth, parseISO, isSameDay } from 'date-fns';
 import type { Appointment } from "@/lib/api/servicesApi";
 
 const groupDataByDay = (appointments: Appointment[]) => {
@@ -18,7 +18,9 @@ const groupDataByDay = (appointments: Appointment[]) => {
 
     appointments.forEach(apt => {
         const appointmentDate = parseISO(apt.date);
-        const dayIndex = weekDays.findIndex(day => format(day, 'yyyy-MM-dd') === format(appointmentDate, 'yyyy-MM-dd'));
+        const dayOfWeek = appointmentDate.getDay();
+        const dayIndex = weekDays.findIndex(day => isSameDay(day, appointmentDate));
+
         if (dayIndex !== -1) {
             dailyData[dayIndex].revenue += apt.price;
         }
@@ -66,8 +68,8 @@ const groupDataByHour = (appointments: Appointment[]) => {
     appointments.forEach(apt => {
         try {
             // The time is in "h:mm a" format e.g. "9:00 AM"
-            const appointmentDate = parse(apt.time, 'h:mm a', new Date());
-            const hour = getHours(appointmentDate);
+            const appointmentTime = parse(apt.time, 'h:mm a', new Date());
+            const hour = getHours(appointmentTime);
             if (hourlyData[hour] !== undefined) {
                 hourlyData[hour] += apt.price;
             }
