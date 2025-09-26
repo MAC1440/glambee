@@ -44,7 +44,7 @@ export function GlobalClientSearch() {
   };
 
   return (
-    <div className="relative w-full max-w-xs items-center">
+    <div className="relative w-full  items-center">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <div className="relative">
