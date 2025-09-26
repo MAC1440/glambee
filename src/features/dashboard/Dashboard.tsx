@@ -76,6 +76,15 @@ export function Dashboard({
     }
   };
 
+  const getRevenueDescription = () => {
+    switch (period) {
+      case "today": return "Your revenue summary for today.";
+      case "week": return "Your revenue summary for this week.";
+      case "month": return "Your revenue summary for this month.";
+      default: return "Your revenue summary.";
+    }
+  }
+
 
   return (
     <div className="flex flex-col gap-8">
@@ -161,7 +170,7 @@ export function Dashboard({
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
             <CardDescription>
-              Your revenue summary for the selected period.
+             {getRevenueDescription()}
             </CardDescription>
           </CardHeader>
           <CardContent>
