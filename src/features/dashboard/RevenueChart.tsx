@@ -3,7 +3,7 @@
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useMemo } from 'react';
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from 'date-fns';
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parse, parseISO } from 'date-fns';
 import type { Appointment } from "@/lib/api/servicesApi";
 
 const groupDataByDay = (appointments: Appointment[], period: "today" | "week" | "month") => {
@@ -71,7 +71,7 @@ export function RevenueChart({ appointments, period }: { appointments: Appointme
     // For simplicity, let's show totals for today if that's the only data.
     if (period === 'today' && appointments.length > 0) {
         return appointments.map(apt => ({
-            name: format(parseISO(apt.date + 'T' + apt.time.replace(' ', ':00 ')), 'ha'),
+            name: format(parse(apt.time, 'h:mm a', new Date()), 'ha'),
             revenue: apt.price
         })).sort((a,b) => a.name.localeCompare(b.name));
     }
