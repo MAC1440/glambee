@@ -82,7 +82,7 @@ const groupDataByHour = (appointments: Appointment[]) => {
             name: format(new Date(2000, 0, 1, hour), 'ha'), // 'ha' for '9am', '12pm' etc.
             revenue: hourlyData[hour]
         };
-    }).filter(item => item.revenue > 0); // Only show hours with revenue
+    });
 }
 
 
