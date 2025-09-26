@@ -3,7 +3,7 @@
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useMemo } from 'react';
-import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parse, parseISO } from 'date-fns';
+import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parse, parseISO, getHours } from 'date-fns';
 import type { Appointment } from "@/lib/api/servicesApi";
 
 const groupDataByDay = (appointments: Appointment[], period: "today" | "week" | "month") => {
@@ -56,24 +56,47 @@ const groupDataByWeek = (appointments: Appointment[]) => {
     }));
 };
 
+const groupDataByHour = (appointments: Appointment[]) => {
+    if (!appointments.length) return [];
+
+    const hourlyData: { [key: number]: number } = {};
+    for (let i = 8; i <= 20; i++) { // From 8 AM to 8 PM
+        hourlyData[i] = 0;
+    }
+
+    appointments.forEach(apt => {
+        try {
+            const appointmentDate = parse(apt.time, 'h:mm a', new Date());
+            const hour = getHours(appointmentDate);
+            if (hourlyData[hour] !== undefined) {
+                hourlyData[hour] += apt.price;
+            }
+        } catch (error) {
+            console.error("Error parsing time:", apt.time, error);
+        }
+    });
+
+    return Object.keys(hourlyData).map(hourStr => {
+        const hour = parseInt(hourStr);
+        return {
+            name: format(new Date(2000, 0, 1, hour), 'ha'), // 'ha' for '9am', '12pm' etc.
+            revenue: hourlyData[hour]
+        };
+    });
+}
+
 
 export function RevenueChart({ appointments, period }: { appointments: Appointment[]; period: "today" | "week" | "month" }) {
 
   const chartData = useMemo(() => {
+    if (period === 'today') {
+        return groupDataByHour(appointments);
+    }
     if (period === 'week') {
         return groupDataByDay(appointments, 'week');
     }
     if (period === 'month') {
         return groupDataByWeek(appointments);
-    }
-
-    // For "today", we can show hourly breakdown if desired, or just the total.
-    // For simplicity, let's show totals for today if that's the only data.
-    if (period === 'today' && appointments.length > 0) {
-        return appointments.map(apt => ({
-            name: format(parse(apt.time, 'h:mm a', new Date()), 'ha'),
-            revenue: apt.price
-        })).sort((a,b) => a.name.localeCompare(b.name));
     }
     return [];
 

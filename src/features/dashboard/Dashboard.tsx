@@ -181,7 +181,7 @@ export function Dashboard({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <DashboardCalendar allAppointments={allAppointments} />
+              <DashboardCalendar allAppointments={allAppointments} period={period} />
             </CardContent>
           </Card>
         </div>

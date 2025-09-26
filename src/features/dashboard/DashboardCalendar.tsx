@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, isSameDay } from 'date-fns';
 import type { ScheduleAppointment } from '@/lib/schedule-data';
-import type { SlotInfo } from 'react-big-calendar';
+import type { SlotInfo, View } from 'react-big-calendar';
+import { Views } from 'react-big-calendar';
 
-export function DashboardCalendar({ allAppointments }: { allAppointments: ScheduleAppointment[] }) {
+export function DashboardCalendar({ allAppointments, period }: { allAppointments: ScheduleAppointment[], period: 'today' | 'week' | 'month' }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedAppointments, setSelectedAppointments] = useState<ScheduleAppointment[]>([]);
@@ -33,13 +34,21 @@ export function DashboardCalendar({ allAppointments }: { allAppointments: Schedu
       setIsModalOpen(true);
     }
   };
+  
+  const calendarView = useMemo(() => {
+      switch(period) {
+          case 'today': return Views.DAY;
+          case 'week': return Views.WEEK;
+          case 'month': return Views.MONTH;
+          default: return Views.MONTH;
+      }
+  }, [period]);
 
   return (
     <>
       <CalendarView 
         events={calendarEvents} 
-        view="month" 
-        showToolbar={false} 
+        view={calendarView}
         onSelectSlot={handleDateClick}
         onDrillDown={handleDateClick}
       />
