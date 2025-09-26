@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { appointments, mockCustomers as initialMockCustomers } from "@/lib/placeholder-data";
-import { PlusCircle, CalendarPlus, UserCheck } from "lucide-react";
+import { PlusCircle, CalendarPlus, UserCheck, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ClientFormDialog } from "./ClientFormDialog";
@@ -183,7 +183,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                   className="hover:bg-muted/50"
                 >
                   <TableCell>
-                    <div className="flex items-center gap-3">
+                    <Link href={`/clients/${encodeURIComponent(client.email)}`} className="flex items-center gap-3 group">
                       <Avatar className="h-9 w-9">
                         <AvatarImage
                           src={`https://picsum.photos/seed/${client.name}/100`}
@@ -194,12 +194,12 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{client.name}</div>
+                        <div className="font-medium group-hover:underline">{client.name}</div>
                         <div className="text-sm text-muted-foreground">
                           {client.email}
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -227,9 +227,10 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                     ) : (
                         <div className="flex gap-2 justify-end">
                             <Button asChild variant="outline" size="sm">
-                                <Link href={`/clients/${encodeURIComponent(client.email)}`}>
-                                    View
-                                </Link>
+                               <Link href={`/checkout/${encodeURIComponent(client.email)}`}>
+                                <DollarSign className="mr-2 h-4 w-4" />
+                                Payment
+                              </Link>
                             </Button>
                             <Button asChild variant="default" size="sm">
                                 <Link href="/appointments">
