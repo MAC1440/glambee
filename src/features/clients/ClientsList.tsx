@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { appointments, mockCustomers as initialMockCustomers } from "@/lib/placeholder-data";
-import { PlusCircle, CalendarPlus } from "lucide-react";
+import { PlusCircle, CalendarPlus, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ClientFormDialog } from "./ClientFormDialog";
@@ -40,8 +40,13 @@ const getTagColor = (tag: string) => {
   }
 };
 
+type ClientsListProps = {
+  isSelectMode?: boolean;
+  onClientSelect?: (client: Client) => void;
+};
 
-export function ClientsList() {
+
+export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsListProps) {
     const [mockCustomers, setMockCustomers] = useState(initialMockCustomers);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const { toast } = useToast();
@@ -122,15 +127,17 @@ export function ClientsList() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div className="text-left">
-          <h1 className="text-4xl font-headline font-bold">Clients</h1>
+          <h1 className="text-4xl font-headline font-bold">{isSelectMode ? 'Select a Client' : 'Clients'}</h1>
           <p className="text-muted-foreground mt-2">
-            View and manage your clients.
+            {isSelectMode ? 'Choose a client to start a new booking.' : 'View and manage your clients.'}
           </p>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <PlusCircle className="mr-2" />
-          Add Client
-        </Button>
+        {!isSelectMode && (
+             <Button onClick={() => setIsFormOpen(true)}>
+                <PlusCircle className="mr-2" />
+                Add Client
+            </Button>
+        )}
       </div>
 
       <Card>
@@ -156,10 +163,7 @@ export function ClientsList() {
                   className="hover:bg-muted/50"
                 >
                   <TableCell>
-                    <Link
-                      href={`/clients/${encodeURIComponent(client.email)}`}
-                      className="flex items-center gap-3 w-full"
-                    >
+                    <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarImage
                           src={`https://picsum.photos/seed/${client.name}/100`}
@@ -175,7 +179,7 @@ export function ClientsList() {
                           {client.email}
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -196,12 +200,25 @@ export function ClientsList() {
                     ${client.totalSpent.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button asChild variant="outline">
-                      <Link href="/appointments">
-                        <CalendarPlus className="mr-2 h-4 w-4" />
-                        Book
-                      </Link>
-                    </Button>
+                    {isSelectMode ? (
+                       <Button variant="default" onClick={() => onClientSelect?.(client)}>
+                            <UserCheck className="mr-2 h-4 w-4" /> Select
+                        </Button>
+                    ) : (
+                        <div className="flex gap-2 justify-end">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/clients/${encodeURIComponent(client.email)}`}>
+                                    View
+                                </Link>
+                            </Button>
+                            <Button asChild variant="default" size="sm">
+                                <Link href="/appointments">
+                                    <CalendarPlus className="mr-2 h-4 w-4" />
+                                    Book
+                                </Link>
+                            </Button>
+                        </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

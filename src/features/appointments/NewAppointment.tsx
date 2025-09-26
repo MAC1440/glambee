@@ -8,18 +8,24 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarView } from "@/features/staff/schedule/CalendarView";
 import { ServiceSelection, type CartItem } from "@/features/checkout/ServiceSelection";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
-import { X, Clock, Calendar } from "lucide-react";
+import { X, Clock, Calendar as CalendarIcon, User, ArrowLeft } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeSelection } from "./TimeSelection";
 import type { SlotInfo } from 'react-big-calendar';
 import { format } from "date-fns";
+import { ClientsList } from "../clients/ClientsList";
+import { mockCustomers } from "@/lib/placeholder-data";
+
+type Client = typeof mockCustomers[0];
 
 export function NewAppointment({ appointments }: { appointments: ScheduleAppointment[] }) {
   const { toast } = useToast();
   const [newAppointments, setNewAppointments] = useState<ScheduleAppointment[]>(appointments);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
 
   const calendarEvents = useMemo(() => {
     const selectedArtistIds = new Set(
@@ -52,7 +58,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
           end: appointmentEnd,
           resource: {
             id: `temp_${index}`,
-            customerName: 'New Client',
+            customerName: selectedClient?.name || 'New Client',
             service: item.service.name,
             staffId: item.artist?.value || '',
             isTemporary: true,
@@ -63,7 +69,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
     }
     
     return confirmedEvents;
-  }, [newAppointments, servicesToBook, selectedSlot]);
+  }, [newAppointments, servicesToBook, selectedSlot, selectedClient]);
 
   const handleAddServiceToList = (item: CartItem) => {
     setServicesToBook(prev => [...prev, item]);
@@ -126,8 +132,8 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
 
         return {
             id: `sch_apt_${Date.now()}_${Math.random()}`,
-            customerName: 'New Client', // This would be dynamic
-            customerAvatar: `https://picsum.photos/seed/new-client-${Math.random()}/100`,
+            customerName: selectedClient?.name || 'New Client',
+            customerAvatar: `https://picsum.photos/seed/${selectedClient?.name || 'New Client'}/100`,
             service: item.service.name,
             start: appointmentStart,
             end: appointmentEnd,
@@ -149,11 +155,11 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
     
     toast({
       title: "Appointments Booked!",
-      description: `${servicesToBook.length} service(s) have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
+      description: `${servicesToBook.length} service(s) for ${selectedClient?.name} have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
     });
 
-    setServicesToBook([]); // Clear the list
-    setSelectedSlot(null); // Reset slot after booking
+    setServicesToBook([]);
+    setSelectedSlot(null);
   };
   
   const servicesWithTime = useMemo(() => {
@@ -175,15 +181,28 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
       };
     });
   }, [servicesToBook, selectedSlot]);
-
+  
+  if (!selectedClient) {
+    return <ClientsList onClientSelect={setSelectedClient} isSelectMode={true} />;
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
       {/* Left Column: Booking Form */}
       <div className="lg:col-span-1 flex flex-col gap-8">
         <div>
-            <h1 className="text-4xl font-headline font-bold">Book Appointment</h1>
-            <p className="text-muted-foreground mt-2">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-4xl font-headline font-bold">Book Appointment</h1>
+                    <p className="text-muted-foreground mt-2 flex items-center gap-2">
+                        <User className="h-4 w-4" /> Booking for {selectedClient.name}
+                    </p>
+                </div>
+                 <Button variant="outline" onClick={() => setSelectedClient(null)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Change Client
+                </Button>
+            </div>
+             <p className="text-muted-foreground mt-2">
             {selectedSlot 
                 ? `Selected slot starts at: ${format(selectedSlot.start, 'Pp')}` 
                 : "Select a time on the calendar to book."
@@ -209,7 +228,7 @@ export function NewAppointment({ appointments }: { appointments: ScheduleAppoint
                                 <p className="text-xs text-muted-foreground">{item.artist?.label || 'No artist selected'}</p>
                                 <div className="text-xs text-muted-foreground flex items-center gap-4 mt-1">
                                     <p className="flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" />
+                                        <CalendarIcon className="h-3 w-3" />
                                         {item.time ? format(item.time.start, 'MMM d, yyyy') : 'Select a date'}
                                     </p>
                                     <p className="flex items-center gap-1">
