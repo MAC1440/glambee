@@ -33,16 +33,18 @@ type Appointment = {
 
 
 export function AppointmentsTable({
-  todayAppointments,
+  title,
+  appointments,
 }: {
-  todayAppointments: Appointment[];
+  title: string;
+  appointments: Appointment[];
 }) {
 
   return (
     <>
       <CardHeader className="flex flex-row items-center">
         <div className="grid gap-2">
-          <CardTitle>Today's Appointments</CardTitle>
+          <CardTitle>{title}</CardTitle>
         </div>
         <Button asChild size="sm" className="ml-auto gap-1">
           <Link href="/staff/schedule">View All</Link>
@@ -58,8 +60,8 @@ export function AppointmentsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {todayAppointments.length > 0 ? (
-              todayAppointments.slice(0, 3).map((apt) => (
+            {appointments.length > 0 ? (
+              appointments.slice(0, 5).map((apt) => (
                 <TableRow key={apt.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -82,7 +84,7 @@ export function AppointmentsTable({
             ) : (
               <TableRow>
                 <TableCell colSpan={3} className="text-center h-24">
-                  No appointments for today.
+                  No appointments for this period.
                 </TableCell>
               </TableRow>
             )}

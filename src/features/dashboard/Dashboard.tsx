@@ -22,23 +22,8 @@ import { RevenueChart } from "./RevenueChart";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
 import { DashboardCalendar } from "./DashboardCalendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { isThisMonth, isThisWeek, isToday } from "date-fns";
-
-type Appointment = {
-    id: string;
-    salonId: string;
-    customer: {
-        id: string;
-        phone: string;
-        name: string;
-        email: string;
-    };
-    service: string;
-    staff: string;
-    date: string;
-    time: string;
-    price: number;
-};
+import { isThisMonth, isThisWeek, isToday, format, parseISO } from "date-fns";
+import type { Appointment } from "@/lib/api/servicesApi";
 
 export function Dashboard({
   todayAppointments,
@@ -55,14 +40,41 @@ export function Dashboard({
     if (period === "month") return isThisMonth(apt.start);
     return false;
   });
-
-  const totalRevenue = filteredAppointments.reduce((sum, apt) => {
+  
+  // Convert ScheduleAppointment to Appointment for consistency
+  const convertedFilteredAppointments: Appointment[] = filteredAppointments.map(apt => {
     const service = todayAppointments.find(a => a.service === apt.service);
-    return sum + (service?.price || 0);
-  }, 0);
+    return {
+        id: apt.id,
+        salonId: 'salon_01', // Mock
+        customer: {
+            id: `cust_${apt.customerName}`, // Mock
+            phone: '', // Mock
+            name: apt.customerName,
+            email: `${apt.customerName.toLowerCase().replace(' ', '.')}@example.com` // Mock
+        },
+        service: apt.service,
+        staff: service?.staff || 'Unknown', // Mock
+        date: format(apt.start, 'yyyy-MM-dd'),
+        time: format(apt.start, 'p'),
+        price: service?.price || 0,
+    }
+  });
+
+
+  const totalRevenue = convertedFilteredAppointments.reduce((sum, apt) => sum + apt.price, 0);
   
   // Mock data for other stats as we don't have historical data
   const newClients = period === 'today' ? 12 : (period === 'week' ? 45 : 150);
+  
+  const getCardTitle = () => {
+    switch (period) {
+      case "today": return "Today's Appointments";
+      case "week": return "This Week's Appointments";
+      case "month": return "This Month's Appointments";
+      default: return "Appointments";
+    }
+  };
 
 
   return (
@@ -99,7 +111,7 @@ export function Dashboard({
                 <CalendarCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{filteredAppointments.length}</div>
+                <div className="text-2xl font-bold">{convertedFilteredAppointments.length}</div>
                 <p className="text-xs text-muted-foreground">
                 In this period
                 </p>
@@ -134,7 +146,10 @@ export function Dashboard({
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>
-          <AppointmentsTable todayAppointments={todayAppointments} />
+          <AppointmentsTable
+            title={getCardTitle()}
+            appointments={convertedFilteredAppointments}
+          />
         </Card>
         <Card>
           <QuickActions />
@@ -146,11 +161,11 @@ export function Dashboard({
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
             <CardDescription>
-              Your revenue summary for the last 6 months.
+              Your revenue summary for the selected period.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RevenueChart />
+            <RevenueChart appointments={convertedFilteredAppointments} period={period} />
           </CardContent>
         </Card>
       </div>

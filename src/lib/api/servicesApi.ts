@@ -1,6 +1,25 @@
 import { api } from './baseApi';
 import { services } from '../placeholder-data';
 
+export type Appointment = {
+    id: string;
+    salonId: string;
+    customer: {
+        id: string;
+        phone: string;
+        name: string;
+        email: string;
+    };
+    service: string;
+    staff: string;
+    date: string;
+    time: string;
+    price: number;
+    rating?: number;
+    review?: string;
+};
+
+
 // Example of an API slice that injects endpoints into the baseApi
 export const servicesApi = api.injectEndpoints({
   endpoints: (builder) => ({
