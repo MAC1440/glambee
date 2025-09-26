@@ -44,7 +44,7 @@ export function RolePermissions() {
     permissionType: PermissionType
   ) => {
     setSelectedRole((prevRole) => {
-      const newPermissions = { ...prevRole.permissions };
+      const newPermissions = JSON.parse(JSON.stringify(prevRole.permissions));
       if (!newPermissions[moduleKey]) {
         newPermissions[moduleKey] = { create: false, read: false, update: false, delete: false };
       }
@@ -55,11 +55,6 @@ export function RolePermissions() {
 
       // Auto-check 'read' if 'update' or 'delete' is checked
       if ((permissionType === 'update' || permissionType === 'delete') && isChecked) {
-        currentPermissions.read = true;
-      }
-
-      // Auto-check 'read' if 'create' is checked (optional, but often desired)
-      if (permissionType === 'create' && isChecked) {
         currentPermissions.read = true;
       }
       
