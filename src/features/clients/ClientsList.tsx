@@ -155,7 +155,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
           <DebouncedInput
             value={globalFilter ?? ""}
             onValueChange={(value) => setGlobalFilter(String(value))}
-            className="max-w-md"
+            className="w-full max-w-sm"
             placeholder="Search by name, email, or phone..."
           />
       </div>
@@ -233,7 +233,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                               </Link>
                             </Button>
                             <Button asChild variant="default" size="sm">
-                                <Link href="/appointments">
+                                <Link href={`/appointments?clientEmail=${encodeURIComponent(client.email)}`}>
                                     <CalendarPlus className="mr-2 h-4 w-4" />
                                     Book
                                 </Link>

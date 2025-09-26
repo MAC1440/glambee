@@ -19,12 +19,18 @@ import { mockCustomers } from "@/lib/placeholder-data";
 
 type Client = typeof mockCustomers[0];
 
-export function NewAppointment({ appointments }: { appointments: ScheduleAppointment[] }) {
+export function NewAppointment({
+  appointments,
+  preselectedClient,
+}: {
+  appointments: ScheduleAppointment[];
+  preselectedClient?: Client;
+}) {
   const { toast } = useToast();
   const [newAppointments, setNewAppointments] = useState<ScheduleAppointment[]>(appointments);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
 
 
   const calendarEvents = useMemo(() => {
