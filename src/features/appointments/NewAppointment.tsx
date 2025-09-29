@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -8,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarView } from "@/features/staff/schedule/CalendarView";
 import { ServiceSelection, type CartItem } from "@/features/checkout/ServiceSelection";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
-import { X, Clock, Calendar as CalendarIcon, User, ArrowLeft } from "lucide-react";
+import { X, Clock, Calendar as CalendarIcon, User, ArrowLeft, Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeSelection } from "./TimeSelection";
@@ -16,6 +15,7 @@ import type { SlotInfo } from 'react-big-calendar';
 import { format } from "date-fns";
 import { ClientsList } from "../clients/ClientsList";
 import { mockCustomers } from "@/lib/placeholder-data";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type Client = typeof mockCustomers[0];
 
@@ -268,6 +268,13 @@ export function NewAppointment({
                  <TimeSelection onSelectTime={handleSlotSelect} />
             </TabsContent>
             <TabsContent value="schedule" className="mt-4">
+                <Alert className="mb-4">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Pro Tip!</AlertTitle>
+                  <AlertDescription>
+                    You can click and drag on any open time slot in the calendar to select it for a new appointment.
+                  </AlertDescription>
+                </Alert>
                 <Card className="h-full">
                     <CardContent className="p-2 md:p-4 h-full">
                         <CalendarView 
