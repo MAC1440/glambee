@@ -194,7 +194,7 @@ export function NewAppointment({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-      {/* Left Column: Booking Form */}
+      {/* Left Column: Booking Form in appointment */}
       <div className="lg:col-span-1 flex flex-col gap-8">
         <div>
             <div className="flex flex-wrap items-center justify-between gap-4">
