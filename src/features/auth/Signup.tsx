@@ -15,12 +15,11 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { SalonFlowLogo } from "@/components/icons";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { useState } from "react";
 
 export function Signup() {
   const router = useRouter();
-  const supabase = createClient();
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
