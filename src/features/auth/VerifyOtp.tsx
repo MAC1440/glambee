@@ -1,45 +1,50 @@
 
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { SalonFlowLogo } from "@/components/icons";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export function Signup() {
+export function VerifyOtp() {
   const router = useRouter();
-  const supabase = createClient();
+  const searchParams = useSearchParams();
+  const phone = searchParams.get("phone");
   const [error, setError] = useState<string | null>(null);
+  const supabase = createClient();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const phone = formData.get("phone") as string;
+    const token = formData.get("token") as string;
 
-    if (phone) {
-      const { data , error } = await supabase.auth.signInWithOtp({
+    if (phone && token) {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.verifyOtp({
         phone,
+        token,
+        type: "sms",
       });
 
       if (error) {
         setError(error.message);
-      } else {
-        router.push(`/auth/verify?phone=${encodeURIComponent(phone)}`);
+      } else if (session) {
+        router.push("/");
       }
     } else {
-      setError("Phone number is required.");
+      setError("Phone number or token is missing.");
     }
   };
 
@@ -47,40 +52,35 @@ export function Signup() {
     <div className="flex items-center justify-center min-h-screen">
       <Card className="w-full max-w-sm bg-black/30 border-golden-700/50 text-golden-200">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <SalonFlowLogo className="h-12 w-12 text-golden-400" />
-          </div>
-          <CardTitle className="text-2xl font-headline text-golden-300">Create an Account</CardTitle>
+          <CardTitle className="text-2xl font-headline text-golden-300">
+            Verify OTP
+          </CardTitle>
           <CardDescription className="text-golden-400/80">
-            Enter your phone number to get started.
+            Enter the OTP sent to your phone number.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="token">OTP</Label>
               <Input
-                id="phone"
-                type="tel"
-                name="phone"
-                placeholder="+15551234567"
+                id="token"
+                type="text"
+                name="token"
                 required
                 className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950">
-              Sign Up
+          <CardContent>
+            <Button
+              type="submit"
+              className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950"
+            >
+              Verify
             </Button>
-            <div className="text-sm text-center text-golden-400/80">
-              Already have an account?{" "}
-              <Link href="/login" className="underline text-golden-300 hover:text-golden-200">
-                Sign in
-              </Link>
-            </div>
-          </CardFooter>
+          </CardContent>
         </form>
       </Card>
     </div>
