@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export function VerifyOtp() {
@@ -21,7 +21,7 @@ export function VerifyOtp() {
   const searchParams = useSearchParams();
   const phone = searchParams.get("phone");
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
+  // const supabase = createClient();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
