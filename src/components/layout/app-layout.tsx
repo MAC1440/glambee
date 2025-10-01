@@ -115,32 +115,20 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
 
   const handleLogout = async () => {
     try {
-      // Clear local storage first to prevent race condition
+      // Clear local storage first
       localStorage.removeItem("session");
       
       // Dispatch custom event to notify layout provider
       window.dispatchEvent(new CustomEvent("authStateChanged", { detail: null }));
       
-      // Sign out from Supabase
-      const { success, error } = await AuthService.signOut();
-      
-      if (success) {
-        // Show success toast
-        toast({
-          title: "Logged out successfully",
-          description: "You have been logged out of your account.",
-        });
-      } else {
-        // Show error toast
-        toast({
-          title: "Logout failed",
-          description: error || "An error occurred during logout.",
-          variant: "destructive",
-        });
-      }
-      
-      // Force redirect to auth page
+      // Immediately redirect to auth page
       window.location.href = '/auth';
+      
+      // Sign out from Supabase in background
+      AuthService.signOut().catch(error => {
+        console.error('Logout error:', error);
+      });
+      
     } catch (error) {
       console.error('Logout error:', error);
       // Force redirect to auth page

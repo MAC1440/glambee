@@ -69,11 +69,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     const isAuthRoute = authRoutes.includes(pathname);
 
     if (!user && !isAuthRoute) {
-      // If no user and not on an auth route, redirect to auth
-      router.push("/auth");
+      // If no user and not on an auth route, redirect to auth immediately
+      router.replace("/auth");
     } else if (user && isAuthRoute) {
       // If user is logged in and tries to access auth routes, redirect to dashboard
-      router.push("/dashboard");
+      router.replace("/dashboard");
     }
   }, [user, pathname, router, loading]);
 
@@ -89,7 +89,21 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   }
   
   const authRoutes = ["/auth", "/auth/confirm", "/auth/verify"];
-  if (authRoutes.includes(pathname) || !user) {
+  const isAuthRoute = authRoutes.includes(pathname);
+  
+  // If no user and not on auth route, show loading while redirecting
+  if (!user && !isAuthRoute) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center gap-4">
+          <LoadingSpinner size="lg" />
+          <p className="text-muted-foreground">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (isAuthRoute || !user) {
     return <AuthLayout>{children}</AuthLayout>;
   }
 
