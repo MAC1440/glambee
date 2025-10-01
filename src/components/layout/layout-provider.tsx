@@ -25,42 +25,18 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    // Simple and fast auth check
+    const checkAuth = () => {
       try {
-        // First check localStorage for quick loading
         const sessionData = localStorage.getItem("session");
         if (sessionData) {
           const localUser = JSON.parse(sessionData);
           setUser(localUser);
-        }
-
-        // Only verify with Supabase if we have a local session
-        if (sessionData) {
-          const supabaseUser = await AuthService.getCurrentUser();
-          if (supabaseUser) {
-            // Update user with fresh data from Supabase
-            const updatedUser = {
-              id: supabaseUser.id,
-              name: supabaseUser.fullname || "User",
-              email: supabaseUser.email || "",
-              avatar: supabaseUser.avatar || "",
-              role: (supabaseUser.user_type === 'salon' ? "SALON_ADMIN" : "SUPER_ADMIN") as 'SUPER_ADMIN' | 'SALON_ADMIN',
-              salonId: supabaseUser.user_type === 'salon' ? "salon_01" : null,
-            };
-            setUser(updatedUser);
-            localStorage.setItem("session", JSON.stringify(updatedUser));
-          } else {
-            // If no Supabase user but localStorage exists, clear it
-            localStorage.removeItem("session");
-            setUser(null);
-          }
         } else {
-          // No local session, user is not logged in
           setUser(null);
         }
       } catch (error) {
         console.error("Auth check error:", error);
-        // Clear invalid session
         localStorage.removeItem("session");
         setUser(null);
       } finally {
@@ -96,8 +72,8 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       // If no user and not on an auth route, redirect to auth
       router.push("/auth");
     } else if (user && isAuthRoute) {
-      // If user is logged in and tries to access auth routes, redirect to home
-      router.push("/");
+      // If user is logged in and tries to access auth routes, redirect to dashboard
+      router.push("/dashboard");
     }
   }, [user, pathname, router, loading]);
 
