@@ -64,6 +64,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { cn } from "@/lib/utils";
+import { AuthService } from "@/lib/supabase/auth-service";
+import { useToast } from "@/hooks/use-toast";
 
 // Mock user type for prototype
 type User = {
@@ -106,14 +108,44 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { toast } = useToast();
   const [selectedBranch, setSelectedBranch] = React.useState(
     user.salonId ? allBranches.find(b => b.id === user.salonId)?.name : 'All Branches'
   );
 
-  const handleLogout = () => {
-    localStorage.removeItem("session");
-    router.refresh();
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      // Clear local storage first to prevent race condition
+      localStorage.removeItem("session");
+      
+      // Dispatch custom event to notify layout provider
+      window.dispatchEvent(new CustomEvent("authStateChanged", { detail: null }));
+      
+      // Sign out from Supabase
+      const { success, error } = await AuthService.signOut();
+      
+      if (success) {
+        // Show success toast
+        toast({
+          title: "Logged out successfully",
+          description: "You have been logged out of your account.",
+        });
+      } else {
+        // Show error toast
+        toast({
+          title: "Logout failed",
+          description: error || "An error occurred during logout.",
+          variant: "destructive",
+        });
+      }
+      
+      // Force redirect to auth page
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect to auth page
+      window.location.href = '/auth';
+    }
   };
 
   const isNavItemActive = (item: any) => {

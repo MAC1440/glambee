@@ -117,7 +117,7 @@ export function Login() {
         <div className="text-sm text-center text-golden-400/80 pb-6">
           Don't have an account?{" "}
           <Link
-            href="/signup"
+            href="/auth"
             className="underline text-golden-300 hover:text-golden-200"
           >
             Sign up

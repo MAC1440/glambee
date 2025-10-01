@@ -54,7 +54,7 @@ export function Salons() {
         router.push("/");
       }
     } else {
-      router.push("/login");
+      router.push("/auth");
     }
   }, [router]);
 

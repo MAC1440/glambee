@@ -24,7 +24,7 @@ export async function login(formData: FormData) {
 export async function logout() {
   // In a real app, you'd destroy the session here.
   // For prototyping, we'll clear local storage on the client.
-  redirect("/login");
+  redirect("/auth");
 }
 
 export async function signup(formData: FormData) {

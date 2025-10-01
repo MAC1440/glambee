@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -75,27 +74,39 @@ export function VerifyOtp() {
           id: response.data.user.id,
           name: response.data.user.fullname || "New User",
           email: response.data.user.email || phone,
-          avatar: response.data.user.avatar || `https://picsum.photos/seed/${phone}/100`,
-          role: response.data.user.user_type === 'salon' ? "SALON_ADMIN" : "CUSTOMER",
-          salonId: response.data.user.user_type === 'salon' ? "salon_01" : null,
+          avatar:
+            response.data.user.avatar ||
+            `https://picsum.photos/seed/${phone}/100`,
+          role:
+            response.data.user.user_type === "salon"
+              ? "SALON_ADMIN"
+              : "CUSTOMER",
+          salonId: response.data.user.user_type === "salon" ? "salon_01" : null,
           phone: response.data.user.phone_number,
           userType: response.data.user.user_type,
         };
-        
+
         localStorage.setItem("session", JSON.stringify(userSession));
+        
+        // Dispatch custom event to notify layout provider
+        window.dispatchEvent(new CustomEvent("authStateChanged", { detail: userSession }));
         
         setIsSuccess(true);
         toast({
           title: isExistingUser ? "Welcome Back!" : "Account Created!",
-          description: isExistingUser 
-            ? "You have been logged in successfully" 
+          description: isExistingUser
+            ? "You have been logged in successfully"
             : "Your account has been created successfully",
         });
-        
-        // Redirect to dashboard after a short delay
+
+        // Redirect to dashboard - force refresh if already on home page
         setTimeout(() => {
-          router.push("/");
-        }, 1500);
+          if (window.location.pathname === "/") {
+            window.location.reload();
+          } else {
+            router.push("/");
+          }
+        }, 1000);
       }
     } catch (err) {
       const errorMessage = "An unexpected error occurred. Please try again.";
@@ -158,10 +169,9 @@ export function VerifyOtp() {
               {isExistingUser ? "Login Successful!" : "Account Created!"}
             </CardTitle>
             <CardDescription className="text-golden-400/80">
-              {isExistingUser 
+              {isExistingUser
                 ? "Welcome back! Redirecting to dashboard..."
-                : "Your account has been created successfully. Redirecting to dashboard..."
-              }
+                : "Your account has been created successfully. Redirecting to dashboard..."}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
@@ -180,10 +190,9 @@ export function VerifyOtp() {
             {isExistingUser ? "Welcome Back!" : "Verify OTP"}
           </CardTitle>
           <CardDescription className="text-golden-400/80">
-            {isExistingUser 
+            {isExistingUser
               ? `Enter the 6-digit code sent to ${phone} to complete your login`
-              : `Enter the 6-digit code sent to ${phone} to create your account`
-            }
+              : `Enter the 6-digit code sent to ${phone} to create your account`}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -203,7 +212,7 @@ export function VerifyOtp() {
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            
+
             <div className="text-center">
               <Button
                 type="button"
@@ -212,11 +221,7 @@ export function VerifyOtp() {
                 disabled={resendTimer > 0 || isLoading}
                 className="text-golden-400 hover:text-golden-300 text-sm"
               >
-                {resendTimer > 0 ? (
-                  `Resend in ${resendTimer}s`
-                ) : (
-                  "Resend OTP"
-                )}
+                {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
               </Button>
             </div>
           </CardContent>
@@ -231,19 +236,21 @@ export function VerifyOtp() {
                   <LoadingSpinner size="sm" className="mr-2" />
                   {isExistingUser ? "Logging in..." : "Creating account..."}
                 </>
+              ) : isExistingUser ? (
+                "Login"
               ) : (
-                isExistingUser ? "Login" : "Create Account"
+                "Create Account"
               )}
             </Button>
-            
+
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push("/signup")}
+              onClick={() => router.push("/auth")}
               className="w-full border-golden-700/50 text-golden-300 hover:bg-golden-700/20"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Sign Up
+              Back to Auth
             </Button>
           </CardContent>
         </form>

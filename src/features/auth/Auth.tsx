@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -13,14 +12,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import Link from "next/link";
 import { SalonFlowLogo } from "@/components/icons";
 import { useRouter } from "next/navigation";
 import { AuthService } from "@/lib/supabase/auth-service";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-export function Signup() {
+export function Auth() {
   const router = useRouter();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
@@ -50,22 +48,69 @@ export function Signup() {
     }
 
     try {
-      const response = await AuthService.sendOtp(phoneNumber);
-
-      if (!response.success) {
-        setError(response.error || response.message);
-        toast({
-          title: "Error",
-          description: response.error || response.message,
-          variant: "destructive",
-        });
+      // Check if user exists
+      const userExists = await AuthService.checkUserExists(phoneNumber);
+      
+      if (userExists) {
+        // User exists, login directly without OTP
+        const loginResponse = await AuthService.directLogin(phoneNumber);
+        
+        if (loginResponse.success && loginResponse.data) {
+          // Create user session
+          const userSession = {
+            id: loginResponse.data.id,
+            name: loginResponse.data.fullname || "User",
+            email: loginResponse.data.email || phoneNumber,
+            avatar: loginResponse.data.avatar || `https://picsum.photos/seed/${phoneNumber}/100`,
+            role: (loginResponse.data.user_type === 'salon' ? "SALON_ADMIN" : "SUPER_ADMIN") as 'SUPER_ADMIN' | 'SALON_ADMIN',
+            salonId: loginResponse.data.user_type === 'salon' ? "salon_01" : null,
+            phone: loginResponse.data.phone_number,
+            userType: loginResponse.data.user_type,
+          };
+          
+          localStorage.setItem("session", JSON.stringify(userSession));
+          
+          // Dispatch custom event to notify layout provider
+          window.dispatchEvent(new CustomEvent("authStateChanged", { detail: userSession }));
+          
+          toast({
+            title: "Welcome Back!",
+            description: "You have been logged in successfully",
+          });
+          
+          // Redirect to dashboard - force refresh if already on home page
+          if (window.location.pathname === "/") {
+            window.location.reload();
+          } else {
+            router.push("/");
+          }
+        } else {
+          setError(loginResponse.error || "Login failed");
+          toast({
+            title: "Login Failed",
+            description: loginResponse.error || "Unable to login. Please try again.",
+            variant: "destructive",
+          });
+        }
       } else {
-        setPhone(phoneNumber);
-        toast({
-          title: "OTP Sent",
-          description: response.message,
-        });
-        router.push(`/auth/verify?phone=${encodeURIComponent(phoneNumber)}`);
+        // User doesn't exist, send OTP for signup
+        const response = await AuthService.sendOtp(phoneNumber);
+        
+        if (!response.success) {
+          setError(response.error || response.message);
+          toast({
+            title: "Error",
+            description: response.error || response.message,
+            variant: "destructive",
+          });
+        } else {
+          setPhone(phoneNumber);
+          toast({
+            title: "OTP Sent",
+            description: response.message,
+          });
+          router.push(`/auth/verify?phone=${encodeURIComponent(phoneNumber)}&existing=false`);
+        }
       }
     } catch (err) {
       const errorMessage = "An unexpected error occurred. Please try again.";
@@ -87,9 +132,9 @@ export function Signup() {
           <div className="flex justify-center mb-4">
             <SalonFlowLogo className="h-12 w-12 text-golden-400" />
           </div>
-          <CardTitle className="text-2xl font-headline text-golden-300">Create an Account</CardTitle>
+          <CardTitle className="text-2xl font-headline text-golden-300">Welcome to SalonFlow</CardTitle>
           <CardDescription className="text-golden-400/80">
-            Enter your phone number to get started.
+            Enter your phone number to get started or sign in.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -116,17 +161,14 @@ export function Signup() {
               {isLoading ? (
                 <>
                   <LoadingSpinner size="sm" className="mr-2" />
-                  Sending OTP...
+                  Checking...
                 </>
               ) : (
-                "Sign Up"
+                "Continue"
               )}
             </Button>
             <div className="text-sm text-center text-golden-400/80">
-              Already have an account?{" "}
-              <Link href="/auth" className="underline text-golden-300 hover:text-golden-200">
-                Sign in
-              </Link>
+              We'll send you a verification code via SMS
             </div>
           </CardFooter>
         </form>

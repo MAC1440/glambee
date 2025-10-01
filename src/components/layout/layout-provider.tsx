@@ -34,23 +34,28 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
           setUser(localUser);
         }
 
-        // Then verify with Supabase for security
-        const supabaseUser = await AuthService.getCurrentUser();
-        if (supabaseUser) {
-          // Update user with fresh data from Supabase
-          const updatedUser = {
-            id: supabaseUser.id,
-            name: supabaseUser.fullname || "User",
-            email: supabaseUser.email || "",
-            avatar: supabaseUser.avatar || "",
-            role: supabaseUser.user_type === 'salon' ? "SALON_ADMIN" : "CUSTOMER",
-            salonId: supabaseUser.user_type === 'salon' ? "salon_01" : null,
-          };
-          setUser(updatedUser);
-          localStorage.setItem("session", JSON.stringify(updatedUser));
-        } else if (sessionData) {
-          // If no Supabase user but localStorage exists, clear it
-          localStorage.removeItem("session");
+        // Only verify with Supabase if we have a local session
+        if (sessionData) {
+          const supabaseUser = await AuthService.getCurrentUser();
+          if (supabaseUser) {
+            // Update user with fresh data from Supabase
+            const updatedUser = {
+              id: supabaseUser.id,
+              name: supabaseUser.fullname || "User",
+              email: supabaseUser.email || "",
+              avatar: supabaseUser.avatar || "",
+              role: (supabaseUser.user_type === 'salon' ? "SALON_ADMIN" : "SUPER_ADMIN") as 'SUPER_ADMIN' | 'SALON_ADMIN',
+              salonId: supabaseUser.user_type === 'salon' ? "salon_01" : null,
+            };
+            setUser(updatedUser);
+            localStorage.setItem("session", JSON.stringify(updatedUser));
+          } else {
+            // If no Supabase user but localStorage exists, clear it
+            localStorage.removeItem("session");
+            setUser(null);
+          }
+        } else {
+          // No local session, user is not logged in
           setUser(null);
         }
       } catch (error) {
@@ -64,17 +69,32 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
-  }, [pathname]); // Re-check on path change
+
+    // Listen for auth state changes (for login/logout)
+    const handleAuthStateChange = (e: CustomEvent) => {
+      if (e.detail) {
+        setUser(e.detail);
+      } else {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener("authStateChanged", handleAuthStateChange as EventListener);
+
+    return () => {
+      window.removeEventListener("authStateChanged", handleAuthStateChange as EventListener);
+    };
+  }, []); // Only run on mount, not on pathname change
 
   useEffect(() => {
     if (loading) return; // Don't redirect while checking session
 
-    const authRoutes = ["/login", "/signup", "/auth/confirm", "/auth/verify"];
+    const authRoutes = ["/auth", "/auth/confirm", "/auth/verify"];
     const isAuthRoute = authRoutes.includes(pathname);
 
     if (!user && !isAuthRoute) {
-      // If no user and not on an auth route, redirect to signup
-      router.push("/signup");
+      // If no user and not on an auth route, redirect to auth
+      router.push("/auth");
     } else if (user && isAuthRoute) {
       // If user is logged in and tries to access auth routes, redirect to home
       router.push("/");
@@ -92,7 +112,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     );
   }
   
-  const authRoutes = ["/login", "/signup", "/auth/confirm", "/auth/verify"];
+  const authRoutes = ["/auth", "/auth/confirm", "/auth/verify"];
   if (authRoutes.includes(pathname) || !user) {
     return <AuthLayout>{children}</AuthLayout>;
   }

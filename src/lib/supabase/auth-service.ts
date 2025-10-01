@@ -339,10 +339,18 @@ export class AuthService {
     }
   }
 
+
   /**
-   * Direct login for existing users
+   * Resend OTP
    */
-  static async directLogin(phone: string): Promise<{ success: boolean; message: string; error?: string }> {
+  static async resendOtp(phone: string): Promise<SignupResponse> {
+    return this.sendOtp(phone);
+  }
+
+  /**
+   * Direct login for existing users (without OTP)
+   */
+  static async directLogin(phone: string): Promise<{ success: boolean; data?: AuthUser; error?: string }> {
     try {
       // Check if user exists
       const userExists = await this.checkUserExists(phone);
@@ -350,41 +358,34 @@ export class AuthService {
       if (!userExists) {
         return {
           success: false,
-          message: "User not found",
-          error: "Please sign up first"
+          error: "User not found. Please sign up first."
         };
       }
 
-      // For existing users, we'll send OTP for verification
-      // In a real app, you might want to implement passwordless login
-      const otpResponse = await this.sendOtp(phone);
-      
-      if (otpResponse.success) {
-        return {
-          success: true,
-          message: "Please verify your phone number to continue"
-        };
-      } else {
+      // Get user data from database
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone_number', phone)
+        .single();
+
+      if (error || !userData) {
         return {
           success: false,
-          message: "Login failed",
-          error: otpResponse.error
+          error: "Failed to retrieve user data"
         };
       }
+
+      return {
+        success: true,
+        data: userData as AuthUser
+      };
     } catch (error) {
       console.error('Direct Login Error:', error);
       return {
         success: false,
-        message: "Login failed",
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
-  }
-
-  /**
-   * Resend OTP
-   */
-  static async resendOtp(phone: string): Promise<SignupResponse> {
-    return this.sendOtp(phone);
   }
 }

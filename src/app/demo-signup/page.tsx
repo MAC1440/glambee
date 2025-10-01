@@ -116,7 +116,7 @@ export default function DemoSignupPage() {
                 </p>
                 <div className="space-y-2">
                   <Button asChild className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950">
-                    <Link href="/signup">
+                    <Link href="/auth">
                       <ArrowRight className="mr-2 h-4 w-4" />
                       Try Live Signup
                     </Link>

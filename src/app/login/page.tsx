@@ -10,7 +10,7 @@ export default function LoginPage() {
           Please use the signup page for authentication
         </p>
         <a 
-          href="/signup" 
+          href="/auth" 
           className="inline-block bg-golden-600 hover:bg-golden-700 text-purple-950 px-6 py-2 rounded-lg font-medium transition-colors"
         >
           Go to Signup
