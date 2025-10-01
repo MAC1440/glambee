@@ -13,6 +13,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  Table as TanstackTable, // Import the TanStack Table type to avoid conflict with UI Table
 } from "@tanstack/react-table"
 
 import {
@@ -33,12 +34,21 @@ interface DataTableProps<TData, TValue> {
   onGlobalFilterChange?: (value: string) => void
 }
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-  globalFilter,
-  onGlobalFilterChange,
-}: DataTableProps<TData, TValue>) {
+// Use React.forwardRef to expose the TanStack table instance to parent components.
+// This allows parent components to directly interact with the table instance
+// (e.g., to set column filters or visibility) without relying on DOM hacks.
+export const DataTable = React.forwardRef(function DataTable<TData, TValue>(
+  {
+    columns,
+    data,
+    globalFilter,
+    onGlobalFilterChange,
+  }: DataTableProps<TData, TValue>,
+  ref: React.Ref<TanstackTable<TData>> // The ref will hold the TanStack table instance
+) {
+  // Log the data prop for debugging purposes
+  console.log("Data prop received by DataTable:", data);
+
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
@@ -46,7 +56,8 @@ export function DataTable<TData, TValue>({
     []
   )
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const tableRef = React.useRef<HTMLTableElement>(null);
+  // This ref is specifically for the HTML <table> element, not the TanStack table instance.
+  const htmlTableRef = React.useRef<HTMLTableElement>(null);
 
 
   const table = useReactTable({
@@ -71,18 +82,15 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
   })
   
-    React.useEffect(() => {
-    if (tableRef.current) {
-      // Attach the table instance to the DOM element for access
-      (tableRef.current as any).TANSTACK_TABLE_INSTANCE = table;
-    }
-  });
+  // Expose the TanStack table instance via the forwarded ref.
+  // This replaces the previous method of attaching the instance to a DOM element.
+  React.useImperativeHandle(ref, () => table, [table]);
 
 
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
-        <Table ref={tableRef}>
+        <Table ref={htmlTableRef}> {/* Use the internal ref for the HTML table element */}
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -134,4 +142,4 @@ export function DataTable<TData, TValue>({
       <DataTablePagination table={table} />
     </div>
   )
-}
+}); // End of forwardRef
