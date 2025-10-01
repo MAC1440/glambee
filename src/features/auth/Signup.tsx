@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { AuthService } from "@/lib/supabase/auth-service";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { formatPhoneNumber, extractPhoneNumber, validatePhoneNumber, getPhonePlaceholder } from "@/lib/phone-utils";
 
 export function Signup() {
   const router = useRouter();
@@ -26,6 +27,15 @@ export function Signup() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [phone, setPhone] = useState("");
+  const [formattedPhone, setFormattedPhone] = useState("");
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const formatted = formatPhoneNumber(value);
+    setFormattedPhone(formatted);
+    setPhone(formatted);
+    setError(null); // Clear error when user starts typing
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -35,22 +45,19 @@ export function Signup() {
     const formData = new FormData(event.currentTarget);
     const phoneNumber = formData.get("phone") as string;
 
-    if (!phoneNumber) {
-      setError("Phone number is required.");
+    // Enhanced phone number validation
+    const validation = validatePhoneNumber(phoneNumber);
+    if (!validation.isValid) {
+      setError(validation.error || "Please enter a valid phone number.");
       setIsLoading(false);
       return;
     }
 
-    // Basic phone number validation
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ""))) {
-      setError("Please enter a valid phone number.");
-      setIsLoading(false);
-      return;
-    }
+    // Extract clean phone number for API
+    const cleanPhoneNumber = extractPhoneNumber(phoneNumber);
 
     try {
-      const response = await AuthService.sendOtp(phoneNumber);
+      const response = await AuthService.sendOtp(cleanPhoneNumber);
 
       if (!response.success) {
         setError(response.error || response.message);
@@ -60,12 +67,12 @@ export function Signup() {
           variant: "destructive",
         });
       } else {
-        setPhone(phoneNumber);
+        setPhone(cleanPhoneNumber);
         toast({
           title: "OTP Sent",
           description: response.message,
         });
-        router.push(`/auth/verify?phone=${encodeURIComponent(phoneNumber)}`);
+        router.push(`/auth/verify?phone=${encodeURIComponent(cleanPhoneNumber)}`);
       }
     } catch (err) {
       const errorMessage = "An unexpected error occurred. Please try again.";
@@ -100,10 +107,15 @@ export function Signup() {
                 id="phone"
                 type="tel"
                 name="phone"
-                placeholder="+15551234567"
+                value={formattedPhone}
+                onChange={handlePhoneChange}
+                placeholder={getPhonePlaceholder()}
                 required
                 className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
               />
+              <p className="text-xs text-golden-400/60">
+                Enter your phone number with country code (e.g., +1 for US)
+              </p>
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
           </CardContent>

@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { AuthService } from "@/lib/supabase/auth-service";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { formatPhoneNumber, extractPhoneNumber, validatePhoneNumber, getPhonePlaceholder } from "@/lib/phone-utils";
 
 export function Auth() {
   const router = useRouter();
@@ -24,6 +25,15 @@ export function Auth() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [phone, setPhone] = useState("");
+  const [formattedPhone, setFormattedPhone] = useState("");
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const formatted = formatPhoneNumber(value);
+    setFormattedPhone(formatted);
+    setPhone(formatted);
+    setError(null); // Clear error when user starts typing
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -33,27 +43,24 @@ export function Auth() {
     const formData = new FormData(event.currentTarget);
     const phoneNumber = formData.get("phone") as string;
 
-    if (!phoneNumber) {
-      setError("Phone number is required.");
+    // Enhanced phone number validation
+    const validation = validatePhoneNumber(phoneNumber);
+    if (!validation.isValid) {
+      setError(validation.error || "Please enter a valid phone number.");
       setIsLoading(false);
       return;
     }
 
-    // Basic phone number validation
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ""))) {
-      setError("Please enter a valid phone number.");
-      setIsLoading(false);
-      return;
-    }
+    // Extract clean phone number for API
+    const cleanPhoneNumber = extractPhoneNumber(phoneNumber);
 
     try {
       // Check if user exists
-      const userExists = await AuthService.checkUserExists(phoneNumber);
+      const userExists = await AuthService.checkUserExists(cleanPhoneNumber);
       
       if (userExists) {
         // User exists, login directly without OTP
-        const loginResponse = await AuthService.directLogin(phoneNumber);
+        const loginResponse = await AuthService.directLogin(cleanPhoneNumber);
         
         if (loginResponse.success && loginResponse.data) {
           // Create user session
@@ -92,9 +99,9 @@ export function Auth() {
             variant: "destructive",
           });
         }
-      } else {
-        // User doesn't exist, send OTP for signup
-        const response = await AuthService.sendOtp(phoneNumber);
+        } else {
+          // User doesn't exist, send OTP for signup
+          const response = await AuthService.sendOtp(cleanPhoneNumber);
         
         if (!response.success) {
           setError(response.error || response.message);
@@ -104,12 +111,12 @@ export function Auth() {
             variant: "destructive",
           });
         } else {
-          setPhone(phoneNumber);
+          setPhone(cleanPhoneNumber);
           toast({
             title: "OTP Sent",
             description: response.message,
           });
-          router.push(`/auth/verify?phone=${encodeURIComponent(phoneNumber)}&existing=false`);
+          router.push(`/auth/verify?phone=${encodeURIComponent(cleanPhoneNumber)}&existing=false`);
         }
       }
     } catch (err) {
@@ -145,10 +152,14 @@ export function Auth() {
                 id="phone"
                 type="tel"
                 name="phone"
-                placeholder="+15551234567"
-                required
+                value={formattedPhone}
+                onChange={handlePhoneChange}
+                placeholder="+921212121212"
                 className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
               />
+              <p className="text-xs text-golden-400/60">
+                Enter your phone number with country code (e.g., +92 for Pakistan)
+              </p>
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
           </CardContent>
