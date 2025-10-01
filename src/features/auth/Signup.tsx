@@ -12,33 +12,71 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import Link from "next/link";
 import { SalonFlowLogo } from "@/components/icons";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { AuthService } from "@/lib/supabase/auth-service";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export function Signup() {
   const router = useRouter();
+  const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [phone, setPhone] = useState("");
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
     const formData = new FormData(event.currentTarget);
-    const phone = formData.get("phone") as string;
+    const phoneNumber = formData.get("phone") as string;
 
-    if (phone) {
-      const { data , error } = await supabase.auth.signInWithOtp({
-        phone,
-      });
-
-      if (error) {
-        setError(error.message);
-      } else {
-        router.push(`/auth/verify?phone=${encodeURIComponent(phone)}`);
-      }
-    } else {
+    if (!phoneNumber) {
       setError("Phone number is required.");
+      setIsLoading(false);
+      return;
+    }
+
+    // Basic phone number validation
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ""))) {
+      setError("Please enter a valid phone number.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await AuthService.sendOtp(phoneNumber);
+
+      if (!response.success) {
+        setError(response.error || response.message);
+        toast({
+          title: "Error",
+          description: response.error || response.message,
+          variant: "destructive",
+        });
+      } else {
+        setPhone(phoneNumber);
+        toast({
+          title: "OTP Sent",
+          description: response.message,
+        });
+        router.push(`/auth/verify?phone=${encodeURIComponent(phoneNumber)}`);
+      }
+    } catch (err) {
+      const errorMessage = "An unexpected error occurred. Please try again.";
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -70,8 +108,19 @@ export function Signup() {
             {error && <p className="text-red-500 text-sm">{error}</p>}
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950">
-              Sign Up
+            <Button 
+              type="submit" 
+              className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Sending OTP...
+                </>
+              ) : (
+                "Sign Up"
+              )}
             </Button>
             <div className="text-sm text-center text-golden-400/80">
               Already have an account?{" "}

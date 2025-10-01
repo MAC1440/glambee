@@ -1,5 +1,5 @@
-import { Signup } from "@/features/auth/Signup";
+import { WelcomeSignup } from "@/features/auth/WelcomeSignup";
 
 export default function SignupPage() {
-  return <Signup />;
+  return <WelcomeSignup />;
 }
