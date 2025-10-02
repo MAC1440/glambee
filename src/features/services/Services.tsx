@@ -2,7 +2,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,6 +39,7 @@ import {
 import { ServiceFormDialog } from "./ServiceFormDialog";
 import { useToast } from "@/hooks/use-toast";
 import { useGetServicesQuery } from "@/lib/api/servicesApi";
+import { Service } from "@/types/service";
 
 type User = {
   id: string;
@@ -50,17 +50,6 @@ type User = {
   salonId: string | null;
 };
 
-type Service = {
-  id: string;
-  name: string;
-  description: string;
-  price: number | string;
-  originalPrice: number | null;
-  duration: number | null;
-  image: string;
-  category: "Service" | "Deal" | "Promotion";
-  includedServices?: { value: string; label: string }[];
-};
 
 const ServiceCard = ({
   service,
@@ -74,14 +63,11 @@ const ServiceCard = ({
   onDelete: (serviceId: string) => void;
 }) => (
   <Card key={service.id} className="flex flex-col overflow-hidden group">
-    <div className="relative h-56 w-full">
-      <Image
-        src={service.image}
-        alt={service.name}
-        fill
-        className="object-cover"
-        data-ai-hint="hair salon service"
-      />
+    <div className="relative h-56 w-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-6xl mb-2">💇‍♀️</div>
+        <p className="text-muted-foreground text-sm">Service Image</p>
+      </div>
       {service.category === "Promotion" && (
         <Badge className="absolute top-2 right-2 bg-red-500 text-white border-red-500">
           Promotion
@@ -285,10 +271,8 @@ export function Services() {
         isOpen={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}
-        category={dialogCategory}
         service={editingService}
         onSave={handleSaveService}
-        individualServices={individualServices}
       />
     </>
   );

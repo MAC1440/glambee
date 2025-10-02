@@ -25,7 +25,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simple and fast auth check
+    // Immediate auth check - no loading delay
     const checkAuth = () => {
       try {
         const sessionData = localStorage.getItem("session");
@@ -39,9 +39,8 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         console.error("Auth check error:", error);
         localStorage.removeItem("session");
         setUser(null);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false); // Set loading to false immediately
     };
 
     checkAuth();
@@ -72,7 +71,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       // If no user and not on an auth route, redirect to auth immediately
       router.replace("/auth");
     } else if (user && isAuthRoute) {
-      // If user is logged in and tries to access auth routes, redirect to dashboard
+      // If user is logged in and tries to access auth routes, redirect to dashboard immediately
       router.replace("/dashboard");
     }
   }, [user, pathname, router, loading]);

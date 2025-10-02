@@ -24,83 +24,34 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useEffect, useMemo, useState } from "react";
-import { staff, inventoryItems as allInventoryItems } from "@/lib/placeholder-data";
+import { useEffect, useState } from "react";
 import { fetchCategories, type Category } from "@/lib/api/categoriesApi";
 import { Select as ShadSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Trash2 } from "lucide-react";
-import type { ServiceRecipeItem } from "./ServicesList";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MultiSelect } from "@/components/ui/multi-select";
+import { Service } from "@/types/service";
 
-type InventoryItem = typeof allInventoryItems[0];
-
-type Service = {
-  id: string;
-  name: string;
-  description: string;
-  price: number | string;
-  originalPrice: number | null;
-  duration: number | null;
-  image: string;
-  category: "Service" | "Deal" | "Promotion";
-  serviceCategory?: string;
-  includedServices?: { value: string; label: string }[];
-  artists?: { value: string; label: string }[];
-  recipe?: ServiceRecipeItem[];
-};
+// Removed unused InventoryItem type
 
 type ServiceFormDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   mode: "add" | "edit";
-  category: Service["category"];
   service?: Service;
   onSave: (service: Service) => void;
-  individualServices: Service[];
-  inventoryItems?: InventoryItem[];
-  defaultTab?: "basic" | "recipe";
+  saving?: boolean;
 };
 
 const formSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   description: z.string().min(10, { message: "Description is too short." }),
-  price: z.union([
-    z.string().min(1, "Price/Value is required.").refine(val => {
-        if (!isNaN(parseFloat(val))) {
-            return parseFloat(val) >= 0;
-        }
-        return true;
-    }, { message: "Value cannot be negative." }), 
-    z.coerce.number().positive("Price must be greater than zero.")
-  ]),
-  originalPrice: z.coerce.number().positive("Original price must be greater than zero.").nullable(),
-  image: z.string().url({ message: "Please enter a valid image URL." }),
-  category: z.enum(["Service", "Deal", "Promotion"]),
-  serviceCategory: z.string().optional(),
-  duration: z.coerce.number().int("Duration must be a whole number.").positive("Duration must be greater than zero.").nullable(),
+  price: z.coerce.number().positive("Price must be greater than zero."),
+  originalPrice: z.coerce.number().optional().nullable(),
+  category: z.string().min(1, "Category is required."),
+  duration: z.coerce.number().int("Duration must be a whole number.").positive("Duration must be greater than zero."),
   includedServices: z.array(z.object({
     value: z.string(),
     label: z.string(),
   })).optional(),
-  artists: z.array(z.object({
-    value: z.string(),
-    label: z.string(),
-  })).optional(),
-  recipe: z.array(z.object({
-    itemId: z.string(),
-    quantity: z.coerce.number().positive("Quantity must be positive."),
-  })).optional(),
-}).refine(data => {
-    if (data.category === 'Deal' && data.originalPrice !== null && typeof data.price === 'number') {
-        return data.price <= data.originalPrice;
-    }
-    return true;
-}, {
-    message: "Deal price cannot be higher than the original price.",
-    path: ["price"],
 });
 
 
@@ -108,12 +59,9 @@ export function ServiceFormDialog({
   isOpen,
   onOpenChange,
   mode,
-  category,
   service,
   onSave,
-  individualServices = [],
-  inventoryItems = [],
-  defaultTab = "basic",
+  saving = false,
 }: ServiceFormDialogProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -124,36 +72,17 @@ export function ServiceFormDialog({
       id: service?.id || undefined,
       name: service?.name || "",
       description: service?.description || "",
-      price: service?.price || 0,
+      price: typeof service?.price === "number" ? service.price : parseFloat(service?.price || "0"),
       originalPrice: service?.originalPrice || null,
-      image: service?.image || "https://picsum.photos/seed/new-service/600/400",
-      category: service?.category || category,
-      serviceCategory: service?.serviceCategory || undefined,
-      duration: service?.duration || null,
-      includedServices: service?.includedServices || [],
-      artists: service?.artists || [],
-      recipe: service?.recipe || [],
+      category: service?.category || "",
+      duration: service?.duration || 0,
+      includedServices: service?.includedServices || undefined,
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "recipe",
-  });
+  // Recipe functionality removed for now
 
-  const includedServices = form.watch("includedServices");
-
-  const serviceOptions = useMemo(() => {
-    return individualServices.map((s) => ({ value: s.id, label: `${s.name} ($${s.price})` }));
-  }, [individualServices]);
-
-  const artistOptions = useMemo(() => {
-    return staff.map(s => ({ value: s.id, label: s.name }));
-  }, []);
-
-  const inventoryOptions = useMemo(() => {
-      return inventoryItems.map(item => ({ value: item.id, label: item.name }));
-  }, [inventoryItems]);
+  // Removed unused options for now
 
   // Fetch categories from Supabase
   useEffect(() => {
@@ -174,20 +103,7 @@ export function ServiceFormDialog({
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (category === 'Deal' && includedServices && includedServices.length > 0) {
-      const newName = includedServices.map(s => s.label.split(' (')[0]).join(' + ');
-      const newDescription = `A special package including: ${includedServices.map(s => s.label.split(' (')[0]).join(', ')}.`;
-      const total = includedServices.reduce((acc, s) => {
-        const service = individualServices.find(is => is.id === s.value);
-        return acc + (Number(service?.price) || 0);
-      }, 0);
-      
-      form.setValue('name', newName);
-      form.setValue('description', newDescription);
-      form.setValue('originalPrice', total);
-    }
-  }, [includedServices, category, form, individualServices]);
+  // Removed includedServices logic for now
 
 
   useEffect(() => {
@@ -196,95 +112,65 @@ export function ServiceFormDialog({
         id: service?.id || undefined,
         name: service?.name || "",
         description: service?.description || "",
-        price: service?.price || (category === "Promotion" ? "" : 0),
+        price: typeof service?.price === "number" ? service.price : parseFloat(service?.price || "0"),
         originalPrice: service?.originalPrice || null,
-        image: service?.image || `https://picsum.photos/seed/${Math.random()}/600/400`,
-        category: service?.category || category,
-        serviceCategory: service?.serviceCategory || undefined,
-        duration: service?.duration || null,
-        includedServices: service?.includedServices || [],
-        artists: service?.artists || [],
-        recipe: service?.recipe || [],
+        category: service?.category || "",
+        duration: service?.duration || 0,
+        includedServices: service?.includedServices || undefined,
       });
     }
-  }, [isOpen, service, category, form]);
+  }, [isOpen, service, form]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     onSave(values as Service);
     onOpenChange(false);
   };
 
-  const title = mode === "add" ? `Add New ${category}` : `Edit ${service?.name}`;
+  const title = mode === "add" ? "Add New Service" : `Edit ${service?.name}`;
   const description =
     mode === "add"
-      ? `Fill out the details to add a new ${category.toLowerCase()} to your menu.`
-      : "Update the details for this item.";
-
-  const priceLabel = category === 'Promotion' ? 'Discount Value (e.g., "20% Off")' : "Price ($)";
-  const priceType = category === 'Promotion' ? 'text' : 'number';
-  
-  const showTabs = category === 'Service';
+      ? "Fill out the details to add a new service to your menu."
+      : "Update the details for this service.";
 
   const basicInfoFields = (
     <div className="space-y-4 py-4">
-        {category === 'Deal' ? (
-        <FormField
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
             control={form.control}
-            name="includedServices"
+            name="name"
             render={({ field }) => (
-            <FormItem>
-                <FormLabel>Included Services</FormLabel>
-                <MultiSelect
-                    options={serviceOptions}
-                    value={field.value || []}
-                    onChange={field.onChange}
-                    placeholder="Select services..."
-                />
+                <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                    <Input placeholder="e.g., Signature Haircut" {...field} disabled={saving} />
+                </FormControl>
                 <FormMessage />
-            </FormItem>
+                </FormItem>
             )}
-        />
-        ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
+            />
+            <FormField
                 control={form.control}
-                name="name"
+                name="category"
                 render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Name</FormLabel>
+                <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <ShadSelect onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCategories || saving}>
                     <FormControl>
-                        <Input placeholder="e.g., Signature Haircut" {...field} />
+                        <SelectTrigger>
+                        <SelectValue placeholder={loadingCategories ? "Loading categories..." : "Select a category"} />
+                        </SelectTrigger>
                     </FormControl>
+                    <SelectContent>
+                        {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.title}>{cat.title}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </ShadSelect>
                     <FormMessage />
-                    </FormItem>
+                </FormItem>
                 )}
-                />
-                {category === 'Service' && (
-                    <FormField
-                        control={form.control}
-                        name="serviceCategory"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Category</FormLabel>
-                            <ShadSelect onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCategories}>
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder={loadingCategories ? "Loading categories..." : "Select a category"} />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {categories.map((cat) => (
-                                <SelectItem key={cat.id} value={cat.title}>{cat.title}</SelectItem>
-                                ))}
-                            </SelectContent>
-                            </ShadSelect>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                )}
-            </div>
-        )}
+            />
+        </div>
 
         <FormField
         control={form.control}
@@ -296,7 +182,7 @@ export function ServiceFormDialog({
                 <Textarea
                 placeholder="Describe the service..."
                 {...field}
-                disabled={category === 'Deal'}
+                disabled={saving}
                 />
             </FormControl>
             <FormMessage />
@@ -310,43 +196,21 @@ export function ServiceFormDialog({
             name="price"
             render={({ field }) => (
             <FormItem>
-                <FormLabel>{priceLabel}</FormLabel>
-                <FormControl>
-                <Input 
-                    type={priceType} 
-                    step={priceType === 'number' ? "0.01" : undefined} 
-                    {...field}
-                    onChange={e => field.onChange(priceType === 'number' ? e.target.valueAsNumber : e.target.value)}
-                />
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-            )}
-        />
-
-        {category === 'Deal' ? (
-            <FormField
-            control={form.control}
-            name="originalPrice"
-            render={({ field }) => (
-            <FormItem>
-                <FormLabel>Original Price ($)</FormLabel>
+                <FormLabel>Price ($)</FormLabel>
                 <FormControl>
                 <Input 
                     type="number" 
                     step="0.01" 
                     {...field}
-                    value={field.value ?? ""}
                     onChange={e => field.onChange(e.target.valueAsNumber)}
-                    disabled
+                    disabled={saving}
                 />
                 </FormControl>
                 <FormMessage />
             </FormItem>
             )}
         />
-        ) : category === 'Service' ? (
-            <FormField
+        <FormField
             control={form.control}
             name="duration"
             render={({ field }) => (
@@ -356,46 +220,16 @@ export function ServiceFormDialog({
                 <Input 
                     type="number"
                     {...field}
-                    value={field.value ?? ""}
                     onChange={e => field.onChange(e.target.valueAsNumber)}
+                    disabled={saving}
                 />
                 </FormControl>
                 <FormMessage />
             </FormItem>
             )}
         />
-        ) : null}
         </div>
 
-        <FormField
-        control={form.control}
-        name="artists"
-        render={({ field }) => (
-            <FormItem>
-                <FormLabel>Assigned Artists</FormLabel>
-                 <MultiSelect
-                    options={artistOptions}
-                    value={field.value || []}
-                    onChange={field.onChange}
-                    placeholder="Select artists..."
-                />
-                <FormMessage />
-            </FormItem>
-        )}
-        />
-        <FormField
-        control={form.control}
-        name="image"
-        render={({ field }) => (
-            <FormItem>
-            <FormLabel>Image URL</FormLabel>
-            <FormControl>
-                <Input placeholder="https://picsum.photos/..." {...field} />
-            </FormControl>
-            <FormMessage />
-            </FormItem>
-        )}
-        />
     </div>
   );
 
@@ -409,92 +243,28 @@ export function ServiceFormDialog({
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
 
-            {showTabs ? (
-              <Tabs defaultValue={defaultTab} className="mt-4">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                    <TabsTrigger value="recipe">Recipe</TabsTrigger>
-                </TabsList>
-                <TabsContent value="basic">
-                    {basicInfoFields}
-                </TabsContent>
-                <TabsContent value="recipe" className="space-y-4 py-4">
-                     <div className="space-y-4 rounded-md border p-4">
-                        <h4 className="font-medium">Service Recipe</h4>
-                        <p className="text-sm text-muted-foreground">
-                            Define which inventory products are consumed when this service is performed.
-                        </p>
-                        <Separator />
-                        {fields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-[1fr_100px_auto] items-end gap-2">
-                            <FormField
-                            control={form.control}
-                            name={`recipe.${index}.itemId`}
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel className={index !== 0 ? 'sr-only' : ''}>Product</FormLabel>
-                                <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a product" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    {inventoryOptions.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                        </SelectItem>
-                                    ))}
-                                    </SelectContent>
-                                </ShadSelect>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                            <FormField
-                            control={form.control}
-                            name={`recipe.${index}.quantity`}
-                            render={({ field }) => (
-                                <FormItem>
-                                <FormLabel className={index !== 0 ? 'sr-only' : ''}>Quantity</FormLabel>
-                                <FormControl>
-                                    <Input type="number" placeholder="e.g., 0.5" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                                </FormItem>
-                            )}
-                            />
-                            <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => remove(index)}
-                            >
-                            <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        ))}
-                        <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => append({ itemId: "", quantity: 1 })}
-                        >
-                        Add Product to Recipe
-                        </Button>
-                    </div>
-                </TabsContent>
-              </Tabs>
-            ) : (
-                <div className="mt-4">{basicInfoFields}</div>
-            )}
+            <div className="mt-4">{basicInfoFields}</div>
 
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={saving}
+              >
                 Cancel
               </Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    {mode === "add" ? "Creating..." : "Updating..."}
+                  </>
+                ) : (
+                  mode === "add" ? "Create Service" : "Save Changes"
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

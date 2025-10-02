@@ -92,21 +92,16 @@ export function VerifyOtp() {
         window.dispatchEvent(new CustomEvent("authStateChanged", { detail: userSession }));
         
         setIsSuccess(true);
+        
+        // Redirect to dashboard immediately
+        router.push("/dashboard");
+        
         toast({
           title: isExistingUser ? "Welcome Back!" : "Account Created!",
           description: isExistingUser
             ? "You have been logged in successfully"
             : "Your account has been created successfully",
         });
-
-        // Redirect to dashboard - force refresh if already on home page
-        setTimeout(() => {
-          if (window.location.pathname === "/") {
-            window.location.reload();
-          } else {
-            router.push("/");
-          }
-        }, 1000);
       }
     } catch (err) {
       const errorMessage = "An unexpected error occurred. Please try again.";

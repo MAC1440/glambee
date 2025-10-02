@@ -18,8 +18,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle, BookText } from "lucide-react";
+import { Service } from "@/types/service";
 import { useToast } from "@/hooks/use-toast";
-import { inventoryItems } from "@/lib/placeholder-data";
+// Removed unused inventoryItems import
 import { ServiceFormDialog } from "../services/ServiceFormDialog";
 import { fetchCategories, type Category } from "@/lib/api/categoriesApi";
 import { DataTable } from "@/components/ui/data-table";
@@ -46,23 +47,6 @@ export type ServiceRecipeItem = {
   quantity: number;
 };
 
-export type Service = {
-  id: string;
-  name: string;
-  description: string;
-  price: number | string;
-  originalPrice: number | null;
-  duration: number | null;
-  image: string | null;
-  category: string; // This now matches the database field
-  serviceCategory?: string;
-  includedServices?: { value: string; label: string }[];
-  artists?: string; // This matches the database field type
-  recipe?: ServiceRecipeItem[];
-  created_at?: string;
-  updated_at?: string;
-};
-
 export function ServicesList() {
   const { toast } = useToast();
   const [services, setServices] = React.useState<Service[]>([]);
@@ -76,9 +60,8 @@ export function ServicesList() {
   const [editingService, setEditingService] = React.useState<
     Service | undefined
   >(undefined);
-  const [defaultTab, setDefaultTab] = React.useState<"basic" | "recipe">(
-    "basic"
-  );
+  const [saving, setSaving] = React.useState(false);
+  // Removed defaultTab state
 
   const [globalFilter, setGlobalFilter] = React.useState("");
   supabase.auth.getUser().then(({ data, error }) => {
@@ -124,7 +107,7 @@ export function ServicesList() {
         services?.length || 0,
         "items"
       );
-      setServices((services || []) as unknown as Service[]);
+      setServices((services || []) as Service[]);
     } catch (err) {
       console.error("💥 Error fetching services:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch services");
@@ -177,42 +160,49 @@ export function ServicesList() {
 
   const handleOpenDialog = (
     mode: "add" | "edit",
-    service?: Service,
-    tab: "basic" | "recipe" = "basic"
+    service?: Service
   ) => {
-    console.log("🔧 Opening dialog:", { mode, service: service?.name, tab });
+    console.log("🔧 Opening dialog:", { mode, service: service?.name });
     setDialogMode(mode);
     setEditingService(service);
-    setDefaultTab(tab);
     setDialogOpen(true);
   };
 
   const handleSave = async (serviceData: Service) => {
     try {
+      setSaving(true);
       console.log("💾 Saving service:", {
         dialogMode,
         serviceData: {
           name: serviceData.name,
+          description: serviceData.description,
           price: serviceData.price,
-          category: serviceData.category,
-          // serviceCategory: serviceData.serviceCategory,
           duration: serviceData.duration,
-          // originalPrice: serviceData.originalPrice
+          category: serviceData.category,
         },
       });
 
       if (dialogMode === "add") {
         console.log("➕ Creating new service...");
-        console.log("📤 Data being sent to Supabase:", serviceData);
-
-        // Filter out fields that don't exist in the database schema
-        const { artists, ...dbServiceData } = serviceData as any;
-
-        console.log("📤 Filtered data for database:", dbServiceData);
+        console.log("📤 Data being sent to Supabase:", {
+          name: serviceData.name,
+          description: serviceData.description,
+          price: serviceData.price,
+          duration: serviceData.duration,
+          category: serviceData.category,
+        });
 
         const { data, error } = await supabase
           .from("services")
-          .insert([dbServiceData])
+          .insert([
+            {
+              name: serviceData.name,
+              description: serviceData.description,
+              price: serviceData.price,
+              duration: serviceData.duration,
+              category: serviceData.category,
+            }
+          ])
           .select();
 
         console.log("📊 Create response:", { data, error });
@@ -230,7 +220,7 @@ export function ServicesList() {
 
         if (data && data.length > 0) {
           console.log("✅ Service created successfully:", data[0]);
-          setServices((prev) => [data[0] as unknown as Service, ...prev]);
+          setServices((prev) => [data[0] as Service, ...prev]);
           toast({
             title: "Service Added",
             description: `${data[0].name} has been successfully created.`,
@@ -240,16 +230,23 @@ export function ServicesList() {
         }
       } else if (editingService) {
         console.log("✏️ Updating service:", editingService.id);
-        console.log("📤 Update data being sent to Supabase:", serviceData);
-
-        // Filter out fields that don't exist in the database schema
-        const { artists, ...dbServiceData } = serviceData as any;
-
-        console.log("📤 Filtered update data for database:", dbServiceData);
+        console.log("📤 Update data being sent to Supabase:", {
+          name: serviceData.name,
+          description: serviceData.description,
+          price: serviceData.price,
+          duration: serviceData.duration,
+          category: serviceData.category,
+        });
 
         const { data, error } = await supabase
           .from("services")
-          .update(dbServiceData)
+          .update({
+            name: serviceData.name,
+            description: serviceData.description,
+            price: serviceData.price,
+            duration: serviceData.duration,
+            category: serviceData.category,
+          })
           .eq("id", editingService.id)
           .select();
 
@@ -270,7 +267,7 @@ export function ServicesList() {
           console.log("✅ Service updated successfully:", data[0]);
           setServices((prev) =>
             prev.map((s) =>
-              s.id === data[0].id ? (data[0] as unknown as Service) : s
+              s.id === data[0].id ? (data[0] as Service) : s
             )
           );
           toast({
@@ -290,6 +287,8 @@ export function ServicesList() {
         } service. Please try again.`,
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -574,12 +573,9 @@ export function ServicesList() {
         isOpen={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}
-        category="Service"
-        service={editingService as any}
+        service={editingService}
         onSave={handleSave}
-        individualServices={[]}
-        inventoryItems={inventoryItems}
-        defaultTab={defaultTab}
+        saving={saving}
       />
     </>
   );

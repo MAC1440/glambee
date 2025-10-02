@@ -81,17 +81,13 @@ export function Auth() {
           // Dispatch custom event to notify layout provider
           window.dispatchEvent(new CustomEvent("authStateChanged", { detail: userSession }));
           
+          // Redirect to dashboard immediately
+          router.push("/dashboard");
+          
           toast({
             title: "Welcome Back!",
             description: "You have been logged in successfully",
           });
-          
-          // Redirect to dashboard - force refresh if already on home page
-          if (window.location.pathname === "/") {
-            window.location.reload();
-          } else {
-            router.push("/");
-          }
         } else {
           setError(loginResponse.error || "Login failed");
           toast({
