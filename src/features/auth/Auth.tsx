@@ -61,6 +61,7 @@ export function Auth() {
       if (userExists) {
         // User exists, login directly without OTP
         const loginResponse = await AuthService.directLogin(cleanPhoneNumber);
+        console.log('loginResponse', loginResponse);
         
         if (loginResponse.success && loginResponse.data) {
           // Create user session

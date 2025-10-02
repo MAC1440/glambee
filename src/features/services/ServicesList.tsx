@@ -19,8 +19,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle, BookText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { serviceCategories, inventoryItems } from "@/lib/placeholder-data";
+import { inventoryItems } from "@/lib/placeholder-data";
 import { ServiceFormDialog } from "../services/ServiceFormDialog";
+import { fetchCategories, type Category } from "@/lib/api/categoriesApi";
 import { DataTable } from "@/components/ui/data-table";
 import { DebouncedInput } from "@/components/ui/debounced-input";
 import { Input } from "@/components/ui/input";
@@ -52,12 +53,14 @@ export type Service = {
   price: number | string;
   originalPrice: number | null;
   duration: number | null;
-  image: string;
-  category: "Service" | "Deal" | "Promotion";
-  // serviceCategory?: string;
-  // includedServices?: { value: string; label: string }[];
-  artists?: { value: string; label: string }[];
-  // recipe?: ServiceRecipeItem[]
+  image: string | null;
+  category: string; // This now matches the database field
+  serviceCategory?: string;
+  includedServices?: { value: string; label: string }[];
+  artists?: string; // This matches the database field type
+  recipe?: ServiceRecipeItem[];
+  created_at?: string;
+  updated_at?: string;
 };
 
 export function ServicesList() {
@@ -65,6 +68,8 @@ export function ServicesList() {
   const [services, setServices] = React.useState<Service[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [categories, setCategories] = React.useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = React.useState(false);
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
@@ -79,6 +84,20 @@ export function ServicesList() {
   supabase.auth.getUser().then(({ data, error }) => {
     console.log("supabase.auth.getUser", data, error);
   });
+
+  // Fetch categories from Supabase
+  const fetchCategoriesData = React.useCallback(async () => {
+    try {
+      setLoadingCategories(true);
+      const fetchedCategories = await fetchCategories();
+      setCategories(fetchedCategories);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
+
   // Fetch services from Supabase
   const fetchServices = React.useCallback(async () => {
     try {
@@ -119,10 +138,11 @@ export function ServicesList() {
     }
   }, [toast]);
 
-  // Load services on component mount
+  // Load services and categories on component mount
   React.useEffect(() => {
     fetchServices();
-  }, [fetchServices]);
+    fetchCategoriesData();
+  }, [fetchServices, fetchCategoriesData]);
 
   // Log services state changes
   React.useEffect(() => {
@@ -347,7 +367,7 @@ export function ServicesList() {
       },
     },
     {
-      accessorKey: "serviceCategory",
+      accessorKey: "category",
       header: ({ column }) => {
         return (
           <Button
@@ -360,7 +380,7 @@ export function ServicesList() {
         );
       },
       cell: ({ row }) => {
-        const category = row.getValue("serviceCategory");
+        const category = row.getValue("category");
         return category ? (
           <Badge variant="outline">{category as string}</Badge>
         ) : null;
@@ -522,7 +542,7 @@ export function ServicesList() {
                 if (table && (table as any).TANSTACK_TABLE_INSTANCE) {
                   const column = (
                     table as any
-                  ).TANSTACK_TABLE_INSTANCE.getColumn("serviceCategory");
+                  ).TANSTACK_TABLE_INSTANCE.getColumn("category");
                   if (column) {
                     column.setFilterValue(value === "all" ? "" : value);
                   }
@@ -534,9 +554,9 @@ export function ServicesList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {serviceCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.title}>
+                    {category.title}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -544,7 +564,7 @@ export function ServicesList() {
           </div>
         </div>
         <DataTable
-          columns={columns}
+          columns={columns as any}
           data={services}
           globalFilter={globalFilter}
           onGlobalFilterChange={setGlobalFilter}

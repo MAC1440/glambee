@@ -24,8 +24,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useEffect, useMemo } from "react";
-import { staff, serviceCategories, inventoryItems as allInventoryItems } from "@/lib/placeholder-data";
+import { useEffect, useMemo, useState } from "react";
+import { staff, inventoryItems as allInventoryItems } from "@/lib/placeholder-data";
+import { fetchCategories, type Category } from "@/lib/api/categoriesApi";
 import { Select as ShadSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Trash2 } from "lucide-react";
@@ -114,6 +115,9 @@ export function ServiceFormDialog({
   inventoryItems = [],
   defaultTab = "basic",
 }: ServiceFormDialogProps) {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -150,6 +154,25 @@ export function ServiceFormDialog({
   const inventoryOptions = useMemo(() => {
       return inventoryItems.map(item => ({ value: item.id, label: item.name }));
   }, [inventoryItems]);
+
+  // Fetch categories from Supabase
+  useEffect(() => {
+    const loadCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const fetchedCategories = await fetchCategories();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    if (isOpen) {
+      loadCategories();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (category === 'Deal' && includedServices && includedServices.length > 0) {
@@ -243,15 +266,15 @@ export function ServiceFormDialog({
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Category</FormLabel>
-                            <ShadSelect onValueChange={field.onChange} defaultValue={field.value}>
+                            <ShadSelect onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCategories}>
                             <FormControl>
                                 <SelectTrigger>
-                                <SelectValue placeholder="Select a category" />
+                                <SelectValue placeholder={loadingCategories ? "Loading categories..." : "Select a category"} />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {serviceCategories.map((cat) => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                {categories.map((cat) => (
+                                <SelectItem key={cat.id} value={cat.title}>{cat.title}</SelectItem>
                                 ))}
                             </SelectContent>
                             </ShadSelect>
