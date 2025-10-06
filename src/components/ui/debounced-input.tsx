@@ -1,13 +1,13 @@
 
 "use client"
 
-import { Input, type InputProps } from "@/components/ui/input"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Search } from "lucide-react"
 import * as React from "react"
 
-interface DebouncedInputProps extends InputProps {
+interface DebouncedInputProps extends Omit<React.ComponentProps<"input">, 'value' | 'onChange'> {
   value: string | number
   onValueChange: (value: string | number) => void
   debounce?: number

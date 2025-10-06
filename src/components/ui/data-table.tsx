@@ -30,8 +30,6 @@ import { DataTablePagination } from "./data-table-pagination"
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  globalFilter?: string
-  onGlobalFilterChange?: (value: string) => void
 }
 
 // Use React.forwardRef to expose the TanStack table instance to parent components.
@@ -41,8 +39,6 @@ export const DataTable = React.forwardRef(function DataTable<TData, TValue>(
   {
     columns,
     data,
-    globalFilter,
-    onGlobalFilterChange,
   }: DataTableProps<TData, TValue>,
   ref: React.Ref<TanstackTable<TData>> // The ref will hold the TanStack table instance
 ) {
@@ -68,14 +64,12 @@ export const DataTable = React.forwardRef(function DataTable<TData, TValue>(
       columnVisibility,
       rowSelection,
       columnFilters,
-      globalFilter,
     },
     enableRowSelection: false,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: onGlobalFilterChange,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

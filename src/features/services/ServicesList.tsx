@@ -61,9 +61,13 @@ export function ServicesList() {
     Service | undefined
   >(undefined);
   const [saving, setSaving] = React.useState(false);
-  // Removed defaultTab state
 
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
+  const [searchQuery, setSearchQuery] = React.useState("");
+  
+  // Ref for the DataTable to access TanStack table instance
+  const tableRef = React.useRef<any>(null);
   supabase.auth.getUser().then(({ data, error }) => {
     console.log("supabase.auth.getUser", data, error);
   });
@@ -81,17 +85,28 @@ export function ServicesList() {
     }
   }, []);
 
-  // Fetch services from Supabase
-  const fetchServices = React.useCallback(async () => {
+  // Fetch services from Supabase with filtering
+  const fetchServices = React.useCallback(async (searchTerm?: string, category?: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log("🔍 Fetching services from Supabase...");
-      const { data: services, error } = await supabase
-        .from("services")
-        .select("*");
-      // .eq('category', 'Service');
+      console.log("🔍 Fetching services from Supabase...", { searchTerm, category });
+      
+      let query = supabase.from("services").select("*");
+
+      // Apply category filter
+      if (category && category !== "all") {
+        query = query.eq("category", category);
+      }
+
+      // Apply search filter across multiple columns
+      if (searchTerm && searchTerm.trim()) {
+        // Search across name, description, and category columns
+        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
+      }
+
+      const { data: services, error } = await query;
 
       console.log("📊 Supabase response:", { services, error });
       console.log("📋 Services data:", services);
@@ -107,7 +122,7 @@ export function ServicesList() {
         services?.length || 0,
         "items"
       );
-      setServices((services || []) as Service[]);
+      setServices((services || []) as unknown as Service[]);
     } catch (err) {
       console.error("💥 Error fetching services:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch services");
@@ -121,11 +136,30 @@ export function ServicesList() {
     }
   }, [toast]);
 
+  // Debounced search effect
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchServices(searchQuery, categoryFilter);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, categoryFilter, fetchServices]);
+
   // Load services and categories on component mount
   React.useEffect(() => {
     fetchServices();
     fetchCategoriesData();
   }, [fetchServices, fetchCategoriesData]);
+
+  // Handle search input change
+  const handleSearchChange = (value: string | number) => {
+    setSearchQuery(String(value));
+  };
+
+  // Handle category filter change
+  const handleCategoryChange = (value: string) => {
+    setCategoryFilter(value);
+  };
 
   // Log services state changes
   React.useEffect(() => {
@@ -220,7 +254,7 @@ export function ServicesList() {
 
         if (data && data.length > 0) {
           console.log("✅ Service created successfully:", data[0]);
-          setServices((prev) => [data[0] as Service, ...prev]);
+          setServices((prev) => [data[0] as unknown as Service, ...prev]);
           toast({
             title: "Service Added",
             description: `${data[0].name} has been successfully created.`,
@@ -267,7 +301,7 @@ export function ServicesList() {
           console.log("✅ Service updated successfully:", data[0]);
           setServices((prev) =>
             prev.map((s) =>
-              s.id === data[0].id ? (data[0] as Service) : s
+              s.id === data[0].id ? (data[0] as unknown as Service) : s
             )
           );
           toast({
@@ -503,7 +537,7 @@ export function ServicesList() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-red-600 mb-4">Error: {error}</p>
-            <Button onClick={fetchServices}>Try Again</Button>
+            <Button onClick={() => fetchServices()}>Try Again</Button>
           </div>
         </div>
       </div>
@@ -511,7 +545,7 @@ export function ServicesList() {
   }
 
   return (
-    <>
+    <> 
       <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
           <div className="text-left">
@@ -529,24 +563,15 @@ export function ServicesList() {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Input
-              value={globalFilter ?? ""}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              placeholder="Search all columns..."
+            <DebouncedInput
+              value={searchQuery}
+              onValueChange={handleSearchChange}
+              placeholder="Search services"
               className="max-w-sm"
             />
             <Select
-              onValueChange={(value) => {
-                const table = document.querySelector("table"); // A bit of a hack to get table instance
-                if (table && (table as any).TANSTACK_TABLE_INSTANCE) {
-                  const column = (
-                    table as any
-                  ).TANSTACK_TABLE_INSTANCE.getColumn("category");
-                  if (column) {
-                    column.setFilterValue(value === "all" ? "" : value);
-                  }
-                }
-              }}
+              value={categoryFilter}
+              onValueChange={handleCategoryChange}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by category" />
@@ -563,10 +588,9 @@ export function ServicesList() {
           </div>
         </div>
         <DataTable
+          ref={tableRef}
           columns={columns as any}
           data={services}
-          globalFilter={globalFilter}
-          onGlobalFilterChange={setGlobalFilter}
         />
       </div>
       <ServiceFormDialog
