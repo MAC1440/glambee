@@ -1,13 +1,14 @@
 import { ClientDetail } from "@/features/clients/ClientDetail";
-import { mockCustomers } from "@/lib/placeholder-data";
 
-export default function ClientDetailPage({
+export default async function ClientDetailPage({
   params,
 }: {
-  params: { email: string };
+  params: Promise<{ email: string }>;
 }) {
-  const clientEmail = decodeURIComponent(params.email);
-  const client = mockCustomers.find((c) => c.email === clientEmail);
+  const resolvedParams = await params;
+  const clientId = resolvedParams.email;
+  console.log("Params: ", resolvedParams)
+  console.log("Client while fetching in params: ", clientId)
 
-  return <ClientDetail client={client} />;
+  return <ClientDetail clientId={clientId} />;
 }

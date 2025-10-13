@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarView } from "@/features/staff/schedule/CalendarView";
 import { ServiceSelection, type CartItem } from "@/features/checkout/ServiceSelection";
-import type { ScheduleAppointment } from "@/lib/schedule-data";
 import { X, Clock, Calendar as CalendarIcon, User, ArrowLeft, Info } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,23 +13,48 @@ import { TimeSelection } from "./TimeSelection";
 import type { SlotInfo } from 'react-big-calendar';
 import { format } from "date-fns";
 import { ClientsList } from "../clients/ClientsList";
-import { mockCustomers } from "@/lib/placeholder-data";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AppointmentsApi, type AppointmentWithDetails, type CreateAppointmentData } from "@/lib/api/appointmentsApi";
+import { ClientsApi, type ClientWithDetails } from "@/lib/api/clientsApi";
 
-type Client = typeof mockCustomers[0];
+type Client = ClientWithDetails;
 
 export function NewAppointment({
   appointments,
   preselectedClient,
 }: {
-  appointments: ScheduleAppointment[];
+  appointments: AppointmentWithDetails[];
   preselectedClient?: Client;
 }) {
   const { toast } = useToast();
-  const [newAppointments, setNewAppointments] = useState<ScheduleAppointment[]>(appointments);
+  const [appointmentsList, setAppointmentsList] = useState<AppointmentWithDetails[]>(appointments);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch appointments on component mount if not provided
+  useEffect(() => {
+    if (appointments.length === 0) {
+      const fetchAppointments = async () => {
+        try {
+          setIsLoading(true);
+          const response = await AppointmentsApi.getAppointments();
+          setAppointmentsList(response.data);
+        } catch (error) {
+          console.error("Error fetching appointments:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load appointments.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchAppointments();
+    }
+  }, [appointments.length, toast]);
 
 
   const calendarEvents = useMemo(() => {
@@ -38,15 +62,15 @@ export function NewAppointment({
       servicesToBook.map(item => item.artist?.value).filter(Boolean) as string[]
     );
 
-    let confirmedAppointments = newAppointments;
+    let confirmedAppointments = appointmentsList;
     if (selectedArtistIds.size > 0) {
-      confirmedAppointments = newAppointments.filter(apt => selectedArtistIds.has(apt.staffId));
+      confirmedAppointments = appointmentsList.filter(apt => selectedArtistIds.has(apt.staff_id || ''));
     }
     
     const confirmedEvents = confirmedAppointments.map((apt) => ({
-      title: `${apt.service} - ${apt.customerName}`,
-      start: apt.start,
-      end: apt.end,
+      title: `${apt.services?.[0]?.name || 'Service'} - ${apt.customer?.name || apt.customer_name || 'Unknown'}`,
+      start: apt.start_time ? new Date(apt.start_time) : new Date(apt.date),
+      end: apt.end_time ? new Date(apt.end_time) : new Date(apt.date),
       resource: { ...apt, isTemporary: false },
     }));
 
@@ -75,7 +99,7 @@ export function NewAppointment({
     }
     
     return confirmedEvents;
-  }, [newAppointments, servicesToBook, selectedSlot, selectedClient]);
+  }, [appointmentsList, servicesToBook, selectedSlot, selectedClient]);
 
   const handleAddServiceToList = (item: CartItem) => {
     setServicesToBook(prev => [...prev, item]);
@@ -105,7 +129,7 @@ export function NewAppointment({
     });
   };
 
-  const handleBookAllAppointments = () => {
+  const handleBookAllAppointments = async () => {
     if (!selectedSlot) {
       toast({
         title: "No Time Slot Selected",
@@ -122,29 +146,30 @@ export function NewAppointment({
       });
       return;
     }
+    if (!selectedClient) {
+      toast({
+        title: "No Client Selected",
+        description: "Please select a client before booking.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    let cumulativeEndTime = new Date(selectedSlot.start);
     let allArtistsAssigned = true;
+    const appointmentsToCreate: CreateAppointmentData[] = [];
 
-    const appointmentsToAdd = servicesToBook.map(item => {
+    // Group services by staff member
+    const servicesByStaff = new Map<string, CartItem[]>();
+    servicesToBook.forEach(item => {
         if (!item.artist) {
             allArtistsAssigned = false;
+            return;
         }
-        const serviceDuration = item.service.duration || 30; // Default to 30 mins if not specified
-        const appointmentStart = new Date(cumulativeEndTime);
-        const appointmentEnd = new Date(appointmentStart.getTime() + serviceDuration * 60000);
-        
-        cumulativeEndTime = appointmentEnd;
-
-        return {
-            id: `sch_apt_${Date.now()}_${Math.random()}`,
-            customerName: selectedClient?.name || 'New Client',
-            customerAvatar: `https://picsum.photos/seed/${selectedClient?.name || 'New Client'}/100`,
-            service: item.service.name,
-            start: appointmentStart,
-            end: appointmentEnd,
-            staffId: item.artist?.value || '',
-        };
+        const staffId = item.artist.value;
+        if (!servicesByStaff.has(staffId)) {
+            servicesByStaff.set(staffId, []);
+        }
+        servicesByStaff.get(staffId)!.push(item);
     });
 
     if (!allArtistsAssigned) {
@@ -156,16 +181,66 @@ export function NewAppointment({
         return;
     }
 
+    // Create appointment data for each staff member
+    let cumulativeEndTime = new Date(selectedSlot.start);
+    for (const [staffId, services] of servicesByStaff) {
+        const appointmentStart = new Date(cumulativeEndTime);
+        let appointmentEnd = new Date(appointmentStart);
+        
+        // Calculate total duration for this staff member
+        const totalDuration = services.reduce((sum, service) => sum + (service.service.duration || 30), 0);
+        appointmentEnd.setMinutes(appointmentEnd.getMinutes() + totalDuration);
+        
+        appointmentsToCreate.push({
+            customerId: selectedClient.id,
+            staffId: staffId,
+            services: services.map(service => ({
+                serviceId: service.service.id,
+                price: typeof service.service.price === 'string' ? parseFloat(service.service.price) : service.service.price
+            })),
+            startTime: appointmentStart.toISOString(),
+            endTime: appointmentEnd.toISOString(),
+            date: appointmentStart.toISOString().split('T')[0],
+            notes: `Appointment for ${selectedClient.name}`,
+            bookingType: undefined,
+            bookingApproach: undefined
+        });
+        
+        cumulativeEndTime = appointmentEnd;
+    }
 
-    setNewAppointments(prev => [...prev, ...appointmentsToAdd]);
-    
-    toast({
-      title: "Appointments Booked!",
-      description: `${servicesToBook.length} service(s) for ${selectedClient?.name} have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
-    });
+    try {
+      setIsLoading(true);
+      
+      // Create all appointments
+      const createdAppointments = [];
+      for (const appointmentData of appointmentsToCreate) {
+        const createdAppointment = await AppointmentsApi.createAppointment(appointmentData);
+        createdAppointments.push(createdAppointment);
+      }
+      
+      // Refresh appointments list
+      const response = await AppointmentsApi.getAppointments();
+      setAppointmentsList(response.data);
+      
+      toast({
+        title: "✅ Appointments Booked!",
+        description: `${servicesToBook.length} service(s) for ${selectedClient.name} have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
+        className: "border-green-500 bg-green-50 text-green-900",
+      });
 
-    setServicesToBook([]);
-    setSelectedSlot(null);
+      setServicesToBook([]);
+      setSelectedSlot(null);
+    } catch (error) {
+      console.error("Error booking appointments:", error);
+      toast({
+        title: "Error",
+        description: "Failed to book appointments. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const servicesWithTime = useMemo(() => {
@@ -189,7 +264,17 @@ export function NewAppointment({
   }, [servicesToBook, selectedSlot]);
   
   if (!selectedClient) {
-    return <ClientsList onClientSelect={setSelectedClient} isSelectMode={true} />;
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-headline font-bold">Select a Client</h1>
+          <p className="text-muted-foreground mt-2">
+            Choose a client to start booking an appointment.
+          </p>
+        </div>
+        <ClientsList onClientSelect={(client) => setSelectedClient(client as unknown as ClientWithDetails)} isSelectMode={true} />
+      </div>
+    );
   }
 
   return (
@@ -249,8 +334,12 @@ export function NewAppointment({
                         </div>
                     ))}
                     <Separator className="my-4" />
-                     <Button className="w-full" onClick={handleBookAllAppointments} disabled={!selectedSlot}>
-                        Book All ({servicesToBook.length}) Appointments
+                     <Button 
+                        className="w-full" 
+                        onClick={handleBookAllAppointments} 
+                        disabled={!selectedSlot || isLoading}
+                    >
+                        {isLoading ? "Booking..." : `Book All (${servicesToBook.length}) Appointments`}
                     </Button>
                 </CardContent>
              </Card>

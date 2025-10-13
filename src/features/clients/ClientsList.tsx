@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,7 @@ import { ClientFormDialog } from "./ClientFormDialog";
 import { useToast } from "@/hooks/use-toast";
 import type { Client, ClientFormData } from "./ClientForm";
 import { DebouncedInput } from "@/components/ui/debounced-input";
+import { ClientsApi } from "@/lib/api/clientsApi";
 
 const getTagColor = (tag: string) => {
   switch (tag.toLowerCase()) {
@@ -48,88 +49,84 @@ type ClientsListProps = {
 
 
 export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsListProps) {
-    const [mockCustomers, setMockCustomers] = useState(initialMockCustomers);
+    const [customers, setCustomers] = useState<any[]>([]);
+    console.log("Customers: ", customers)
     const [isFormOpen, setIsFormOpen] = useState(false);
     const { toast } = useToast();
     const [globalFilter, setGlobalFilter] = useState('');
 
-    // Process appointments to build detailed client data
-    const clientsMap = new Map<
-    string,
-    {
-        name: string;
-        email: string;
-        appointments: number;
-        totalSpent: number;
-        lastVisit: string;
-        tags: string[];
-    }
-    >();
+    useEffect(() => {
+      console.log("In initial effect...")
+      const fetchClients = async () => {
+        try {
+          const response = await ClientsApi.getCustomers();
+          console.log("Clients response: ", response)
+          // API now returns PaginatedResponse, extract data array
+          setCustomers(response.data || []);
+        } catch (error) {
+          console.error("Error fetching clients:", error);
+          setCustomers([]);
+        }
+      }
+      fetchClients();
+    }, [isFormOpen === false]) // Added isFormOpen as dependency
 
-    appointments.forEach((apt) => {
-    if (!clientsMap.has(apt.customer.email)) {
-        clientsMap.set(apt.customer.email, {
-        name: apt.customer.name,
-        email: apt.customer.email,
-        appointments: 0,
-        totalSpent: 0,
-        lastVisit: "1970-01-01",
-        tags: [],
-        });
-    }
-    const clientData = clientsMap.get(apt.customer.email)!;
-    clientData.appointments++;
-    clientData.totalSpent += apt.price;
-    if (new Date(apt.date) > new Date(clientData.lastVisit)) {
-        clientData.lastVisit = apt.date;
-    }
-    });
-
-    const clients = mockCustomers.map(customer => {
-        const clientDetails = clientsMap.get(customer.email) || {
-            appointments: 0,
-            totalSpent: 0,
-            lastVisit: 'N/A',
-            tags: ['New']
-        };
-
-        const tags: string[] = [];
-        if (clientDetails.appointments > 5) tags.push("VIP");
-        if (clientDetails.appointments > 0 && clientDetails.appointments <= 2) tags.push("New");
-        if (clientDetails.totalSpent > 500) tags.push("High Spender");
-
+    // Process customers data - API now returns data with stats already calculated
+    const clients = customers?.map(customer => {
+        // Use the data from API response which already has appointments, totalSpent, lastVisit, tags
         return {
             ...customer,
-            ...clientDetails,
-            tags
+            // Ensure we have fallback values
+            appointments: customer?.appointments || 0,
+            totalSpent: customer?.totalSpent || 0,
+            lastVisit: customer?.lastVisit || 'N/A',
+            tags: customer?.tags || ['new'],
+            // Email and phone are now included from users table via API
+            email: customer?.email || 'No email',
+            phone: customer?.phone_number || 'No phone'
         };
-    }).sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime());
+    }).sort((a, b) => {
+        // Sort by lastVisit date, handling null values
+        const dateA = a.lastVisit === 'N/A' || !a.lastVisit ? new Date(0) : new Date(a.lastVisit);
+        const dateB = b.lastVisit === 'N/A' || !b.lastVisit ? new Date(0) : new Date(b.lastVisit);
+        return dateB.getTime() - dateA.getTime();
+    });
 
     const filteredClients = clients.filter(client => {
-        const filter = globalFilter.toLowerCase();
+        const filter = globalFilter?.toLowerCase();
         return (
-            client.name.toLowerCase().includes(filter) ||
-            client.email.toLowerCase().includes(filter) ||
-            client.phone.includes(filter)
+            client?.name?.toLowerCase().includes(filter) ||
+            client?.email?.toLowerCase().includes(filter) ||
+            client?.phone?.includes(filter)
         )
     })
 
 
-  const handleSaveClient = (clientData: ClientFormData) => {
-    const newClient: Client = {
-      ...clientData,
-      id: `cust_${Date.now()}`,
-      dob: clientData.dob,
-    };
-    
-    // Add to the local state. In a real app, this would be an API call.
-    setMockCustomers(prev => [newClient, ...prev]);
+  const handleSaveClient = async (clientData: ClientFormData) => {
+    try {
+      console.log("🚀 Starting client creation...");
+      
+      // Call the API to create the client
+      await ClientsApi.createCustomerFromForm(clientData);
+      console.log("✅ Client created successfully");
 
-    toast({
-        title: "Client Added",
-        description: `${newClient.name} has been successfully added.`
-    });
-    setIsFormOpen(false);
+      // Show success toast
+      toast({
+        title: "✅ Success",
+        description: `${clientData.name} has been successfully added.`,
+        className: "border-green-500 bg-green-50 text-green-900",
+      });
+      
+      // Close form - this will trigger useEffect to refresh data
+      setIsFormOpen(false);
+    } catch (error) {
+      console.error("❌ Error creating client:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create client. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
 
@@ -179,31 +176,31 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
             <TableBody>
               {filteredClients.map((client) => (
                 <TableRow
-                  key={client.email}
+                  key={client?.id}
                   className="hover:bg-muted/50"
                 >
                   <TableCell>
-                    <Link href={`/clients/${encodeURIComponent(client.email)}`} className="flex items-center gap-3 group">
+                    <Link href={`/clients/${(client?.id)}`} className="flex items-center gap-3 group">
                       <Avatar className="h-9 w-9">
                         <AvatarImage
-                          src={`https://picsum.photos/seed/${client.name}/100`}
+                          src={client?.avatar || `https://picsum.photos/seed/${client?.name}/100`}
                           alt="Avatar"
                         />
                         <AvatarFallback>
-                          {client.name.charAt(0)}
+                          {client?.name?.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium group-hover:underline">{client.name}</div>
+                        <div className="font-medium group-hover:underline">{client?.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {client.email}
+                          {client?.email || 'No email'}
                         </div>
                       </div>
                     </Link>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      {client.tags.map((tag) => (
+                      {client?.tags?.map((tag: string) => (
                         <Badge
                           key={tag}
                           variant="outline"
@@ -214,10 +211,10 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell>{client.lastVisit}</TableCell>
-                  <TableCell>{client.appointments}</TableCell>
+                  <TableCell>{client?.lastVisit}</TableCell>
+                  <TableCell>{client?.appointments}</TableCell>
                   <TableCell className="text-right">
-                    ${client.totalSpent.toFixed(2)}
+                    ${client?.totalSpent?.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     {isSelectMode ? (
@@ -227,13 +224,13 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                     ) : (
                         <div className="flex gap-2 justify-end">
                             <Button asChild variant="outline" size="sm">
-                               <Link href={`/checkout/${encodeURIComponent(client.email)}`}>
+                               <Link href={`/checkout/${(client?.id)}`}>
                                 <DollarSign className="mr-2 h-4 w-4" />
                                 Payment
                               </Link>
                             </Button>
                             <Button asChild variant="default" size="sm">
-                                <Link href={`/appointments?clientEmail=${encodeURIComponent(client.email)}`}>
+                                <Link href={`/appointments?clientId=${(client?.id)}`}>
                                     <CalendarPlus className="mr-2 h-4 w-4" />
                                     Book
                                 </Link>

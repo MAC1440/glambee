@@ -22,11 +22,11 @@ import { useToast } from "@/hooks/use-toast";
 
 type Customer = {
   id: string;
-  phone: string;
-  name: string;
-  email: string;
-  gender: string;
-  dob: string;
+  phone_number?: string | null;
+  name: string | null;
+  email?: string | null;
+  gender?: string | null;
+  // dob: string; // Not available in current schema
 };
 
 export function Checkout({ client }: { client: Customer | undefined }) {
@@ -116,11 +116,11 @@ export function Checkout({ client }: { client: Customer | undefined }) {
     <div className="flex flex-col gap-4 h-[calc(100vh-4rem)]">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild>
-          <Link href={`/clients/${encodeURIComponent(client.email)}`}>
+          <Link href={`/clients/${(client?.id)}`}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h1 className="text-xl font-semibold">Checkout for {client.name}</h1>
+        <h1 className="text-xl font-semibold">Checkout for {client.name || 'Unknown Client'}</h1>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-grow min-h-0">
         {/* Left Column: Service Selection */}

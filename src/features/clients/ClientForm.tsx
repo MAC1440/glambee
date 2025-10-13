@@ -26,14 +26,17 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { ClientsApi } from "@/lib/api/clientsApi";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export type Client = {
   id: string;
   name: string;
   email: string;
-  phone: string;
+  phone_number: string;
   gender: string;
-  dob: string;
+  // dob: string;
 };
 
 const formSchema = z.object({
@@ -41,9 +44,9 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string().min(10, { message: "Please enter a valid phone number." }),
   gender: z.string({ required_error: "Please select a gender." }),
-  dob: z.date({
-    required_error: "A date of birth is required.",
-  }),
+  // dob: z.date({
+  //   required_error: "A date of birth is required.",
+  // }),
 });
 
 export type ClientFormData = z.infer<typeof formSchema>;
@@ -55,25 +58,70 @@ type ClientFormProps = {
 };
 
 export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  
   const form = useForm<ClientFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: client?.name || "",
       email: client?.email || "",
-      phone: client?.phone || "",
+      phone: client?.phone_number || "",
       gender: client?.gender || undefined,
-      dob: client?.dob ? new Date(client.dob) : undefined,
+      // dob: client?.dob ? new Date(client.dob) : undefined,
     },
   });
+  console.log("Form: ", form)
 
-  const onSubmit = (values: ClientFormData) => {
-    // Convert date object back to string for consistency
-    const submissionData = {
-      ...values,
-      dob: values.dob.toISOString().split('T')[0]
-    }
-    onSave(submissionData);
+  const onSubmit = async (values: ClientFormData) => {
+      const formData = {
+        ...values,
+        // dob: values.dob.toISOString().split('T')[0]
+      };
+      onSave(formData);
   };
+  // const onSubmit = async (values: ClientFormData) => {
+  //   setIsLoading(true);
+  //   try {
+  //     // Convert date object back to string for consistency
+  //     const formData = {
+  //       ...values,
+  //       // dob: values.dob.toISOString().split('T')[0]
+  //     };
+
+  //     const newClient = await ClientsApi.createCustomerFromForm(formData);
+      
+  //     toast({
+  //       title: "Client Created",
+  //       description: `${values.name} has been successfully added.`,
+  //     });
+
+  //     // Call the onSave callback with the created client data
+  //     // onSave(newClient);
+  //     onSave(formData);
+  //   } catch (error: any) {
+  //     console.error('Error creating client:', error);
+      
+  //     // Handle specific error messages
+  //     let errorMessage = "Failed to create client. Please try again.";
+      
+  //     if (error.message?.includes('duplicate key')) {
+  //       errorMessage = "A client with this phone number already exists.";
+  //     } else if (error.message?.includes('signup')) {
+  //       errorMessage = "Failed to create account. Please check your phone number.";
+  //     } else if (error.message) {
+  //       errorMessage = error.message;
+  //     }
+      
+  //     toast({
+  //       title: "Error",
+  //       description: errorMessage,
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <Form {...form}>
@@ -143,7 +191,7 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
               </FormItem>
             )}
           />
-          <FormField
+          {/* <FormField
             control={form.control}
             name="dob"
             render={({ field }) => (
@@ -186,7 +234,7 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
         </div>
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

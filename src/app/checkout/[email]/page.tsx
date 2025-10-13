@@ -1,16 +1,23 @@
 
 import { Checkout } from "@/features/checkout/Checkout";
-import { mockCustomers } from "@/lib/placeholder-data";
+import { ClientsApi } from "@/lib/api/clientsApi";
 
-export default function CheckoutPage({
+export default async function CheckoutPage({
   params,
 }: {
-  params: { email: string };
+  params: Promise<{ email: string }>;
 }) {
-  const clientEmail = decodeURIComponent(params.email);
-  const client = mockCustomers.find((c) => c.email === clientEmail);
+  const resolvedParams = await params;
+  const clientId = resolvedParams.email; // The route parameter is 'email' but contains the client ID
+  
+  let client = null;
+  try {
+    client = await ClientsApi.getCustomerById(clientId);
+  } catch (error) {
+    console.error("Error fetching client for checkout:", error);
+  }
 
-  return <Checkout client={client} />;
+  return <Checkout client={client || undefined} />;
 }
 
     
