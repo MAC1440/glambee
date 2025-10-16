@@ -38,7 +38,11 @@ import { ClientFormDialog } from "./ClientFormDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ClientsApi, ClientWithDetails } from "@/lib/api/clientsApi";
 import { AppointmentsApi, AppointmentWithDetails } from "@/lib/api/appointmentsApi";
+import { StaffApi } from "@/lib/api/staffApi";
 import type { ClientFormData } from "./ClientForm";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Check, X, Edit2 } from "lucide-react";
 
 export function ClientDetail({ clientId }: { clientId: string }) {
   const [client, setClient] = useState<ClientWithDetails | null>(null);
@@ -47,11 +51,29 @@ export function ClientDetail({ clientId }: { clientId: string }) {
   console.log("Client id: ", clientId)
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [staffOptions, setStaffOptions] = useState<Array<{id: string, name: string}>>([]);
   const { toast } = useToast();
+
+  // Fetch staff options
+  useEffect(() => {
+    const fetchStaffOptions = async () => {
+      try {
+        const response = await StaffApi.getStaff({ limit: 100 });
+        setStaffOptions(response.data.map(staff => ({
+          id: staff.id,
+          name: staff.name || 'Unknown Staff'
+        })));
+      } catch (error) {
+        console.error("Error fetching staff options:", error);
+      }
+    };
+
+    fetchStaffOptions();
+  }, []);
 
   // Fetch client data and appointments from API
   useEffect(() => {
-    console.log("In detail effect...")
     const fetchClientData = async () => {
       try {
         setIsLoading(true);
@@ -159,6 +181,49 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         variant: "destructive",
       });
     }
+  };
+
+  const handleStaffEdit = (appointmentId: string) => {
+    setEditingStaffId(appointmentId);
+  };
+
+  const handleStaffSave = async (appointmentId: string, newStaffId: string | null) => {
+    try {
+      // Update the appointment with new staff
+      await AppointmentsApi.updateAppointmentStaff(appointmentId, newStaffId);
+      
+      // Update local state
+      setAppointments(prev => prev.map(apt => 
+        apt.id === appointmentId 
+          ? { 
+              ...apt, 
+              staff: newStaffId 
+                ? staffOptions.find(s => s.id === newStaffId) 
+                  ? { id: newStaffId, name: staffOptions.find(s => s.id === newStaffId)!.name, avatar: null }
+                  : undefined
+                : undefined 
+            }
+          : apt
+      ));
+      
+      setEditingStaffId(null);
+      toast({
+        title: "Success",
+        description: "Staff assignment updated successfully.",
+        className: "border-green-500 bg-green-50 text-green-900",
+      });
+    } catch (error) {
+      console.error("Error updating staff:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update staff assignment.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStaffCancel = () => {
+    setEditingStaffId(null);
   };
   
   // Generate payment history from appointments (computed on-demand)
@@ -270,12 +335,12 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 <User className="h-5 w-5 text-muted-foreground" />
                 <span className="text-muted-foreground">{client.gender || 'Not specified'}</span>
               </div>
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3">
                 <Cake className="h-5 w-5 text-muted-foreground" />
                 <span className="text-muted-foreground">
                   Date of birth not available
                 </span>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         </div>
@@ -311,16 +376,63 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {appointments && appointments.length > 0 ? appointments?.map((client) => (
-                        <TableRow key={client?.id}>
-                          <TableCell>{client?.date || 'N/A'}</TableCell>
+                      {appointments && appointments.length > 0 ? appointments?.map((appointment) => (
+                        <TableRow key={appointment?.id}>
+                          <TableCell>{appointment?.date || 'N/A'}</TableCell>
                           <TableCell className="font-medium">
-                            {client?.services?.map((service) => service.name).join(', ') || 'N/A'}
+                            {appointment?.services?.map((service) => service.name).join(', ') || 'N/A'}
                           </TableCell>
-                          <TableCell>{client?.staff?.name || 'N/A'}</TableCell>
+                          <TableCell className="group relative">
+                            {editingStaffId === appointment?.id ? (
+                              <div className="flex items-center gap-2">
+                                <Select
+                                  value={appointment?.staff?.id || ''}
+                                  onValueChange={(value) => {
+                                    if (value === 'unassigned') {
+                                      handleStaffSave(appointment.id, null);
+                                    } else {
+                                      handleStaffSave(appointment.id, value);
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue placeholder="Select staff" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                                    {staffOptions.map((staff) => (
+                                      <SelectItem key={staff.id} value={staff.id}>
+                                        {staff.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleStaffCancel}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 group">
+                                <span>{appointment?.staff?.name || 'N/A'}</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleStaffEdit(appointment.id)}
+                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             {/* ${totalSpent.toFixed(2)} */}
-                            {client?.bill || 'N/A'}
+                            {appointment?.bill || 'N/A'}
                           </TableCell>
                         </TableRow>
                       )) : (

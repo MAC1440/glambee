@@ -15,7 +15,7 @@ export interface AppointmentWithDetails extends Appointment {
         avatar: string | null;
     };
     staff?: {
-        id: string;
+        id: string | null;
         name: string | null;
         avatar: string | null;
     };
@@ -44,7 +44,7 @@ export interface PaginatedResponse<T> {
 
 export interface CreateAppointmentData {
     customerId: string;
-    staffId: string;
+    staffId: string | null;
     services: Array<{
         serviceId: string;
         price: number;
@@ -189,6 +189,63 @@ export class AppointmentsApi {
     }
 
     /**
+     * Update appointment staff assignment
+     */
+    static async updateAppointmentStaff(appointmentId: string, staffId: string | null): Promise<AppointmentWithDetails> {
+        try {
+            const { data: appointment, error } = await supabase
+                .from('appointments')
+                .update({
+                    staff_id: staffId,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', appointmentId)
+                .select(`
+                    *,
+                    customer:customers(
+                        id,
+                        name,
+                        auth_id
+                    ),
+                    staff:salons_staff(
+                        id,
+                        name,
+                        avatar
+                    )
+                `)
+                .single();
+
+            if (error) {
+                console.error('Error updating appointment staff:', error);
+                throw error;
+            }
+
+            // Transform the data to match AppointmentWithDetails interface
+            const transformedAppointment: AppointmentWithDetails = {
+                ...appointment,
+                customer: appointment.customer ? {
+                    id: appointment.customer.id,
+                    name: appointment.customer.name || '',
+                    email: null,
+                    phone_number: null,
+                    avatar: null
+                } : undefined,
+                staff: appointment.staff ? {
+                    id: appointment.staff.id,
+                    name: appointment.staff.name,
+                    avatar: appointment.staff.avatar
+                } : undefined,
+                services: [] // Will be populated separately if needed
+            };
+
+            return transformedAppointment;
+        } catch (error) {
+            console.error('Failed to update appointment staff:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get or create a default salon
      */
     private static async getDefaultSalonId(): Promise<string> {
@@ -270,7 +327,7 @@ export class AppointmentsApi {
                     customer_id: appointmentData.customerId,
                     customer_name: customer.name,
                     phone_number: phoneNumber,
-                    staff_id: appointmentData.staffId,
+                    staff_id: appointmentData.staffId || null,
                     salon_id: salonId,
                     date: appointmentData.date,
                     start_time: appointmentData.startTime,

@@ -42,7 +42,9 @@ export type Client = {
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string().min(10, { message: "Please enter a valid phone number." }),
+  phone: z.string()
+    .min(10, { message: "Please enter a valid phone number." })
+    .regex(/^[0-9]+$/, { message: "Phone number can only contain numbers." }),
   gender: z.string({ required_error: "Please select a gender." }),
   // dob: z.date({
   //   required_error: "A date of birth is required.",
@@ -160,7 +162,13 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                  <Input type="tel" placeholder="+1 (555) 123-4567" {...field} />
+                  <Input 
+                    type="tel" 
+                    placeholder="1234567890" 
+                    // pattern="[0-9]*"
+                    inputMode="numeric"
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

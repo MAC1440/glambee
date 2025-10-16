@@ -16,6 +16,7 @@ import { ClientsList } from "../clients/ClientsList";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AppointmentsApi, type AppointmentWithDetails, type CreateAppointmentData } from "@/lib/api/appointmentsApi";
 import { ClientsApi, type ClientWithDetails } from "@/lib/api/clientsApi";
+import { StaffApi } from "@/lib/api/staffApi";
 
 type Client = ClientWithDetails;
 
@@ -30,6 +31,7 @@ export function NewAppointment({
   const [appointmentsList, setAppointmentsList] = useState<AppointmentWithDetails[]>(appointments);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
+  // console.log("Services to book: ", servicesToBook)
   const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -158,28 +160,26 @@ export function NewAppointment({
     let allArtistsAssigned = true;
     const appointmentsToCreate: CreateAppointmentData[] = [];
 
-    // Group services by staff member
-    const servicesByStaff = new Map<string, CartItem[]>();
+    // Group services by staff member (allow null for unassigned services)
+    const servicesByStaff = new Map<string | null, CartItem[]>();
+    // console.log("Services by staff: ", servicesByStaff)
+    
     servicesToBook.forEach(item => {
-        if (!item.artist) {
-            allArtistsAssigned = false;
-            return;
+        let staffId: string | null = null;
+        
+        if (item.artist) {
+            staffId = item.artist.value;
+        } else {
+            // No artist selected - will be assigned to null staff
+            staffId = null;
+            // console.log(`No artist selected for service: ${item.service.name} - will be unassigned`);
         }
-        const staffId = item.artist.value;
+        
         if (!servicesByStaff.has(staffId)) {
             servicesByStaff.set(staffId, []);
         }
         servicesByStaff.get(staffId)!.push(item);
     });
-
-    if (!allArtistsAssigned) {
-         toast({
-            title: "Artist Not Assigned",
-            description: "Please select an artist for each service before booking.",
-            variant: "destructive",
-        });
-        return;
-    }
 
     // Create appointment data for each staff member
     let cumulativeEndTime = new Date(selectedSlot.start);
@@ -193,7 +193,7 @@ export function NewAppointment({
         
         appointmentsToCreate.push({
             customerId: selectedClient.id,
-            staffId: staffId,
+            staffId: staffId, // Pass null if no artist selected
             services: services.map(service => ({
                 serviceId: service.service.id,
                 price: typeof service.service.price === 'string' ? parseFloat(service.service.price) : service.service.price
@@ -211,7 +211,7 @@ export function NewAppointment({
 
     try {
       setIsLoading(true);
-      
+      // console.log("Creating appointments: ", appointmentsToCreate)
       // Create all appointments
       const createdAppointments = [];
       for (const appointmentData of appointmentsToCreate) {
@@ -223,9 +223,13 @@ export function NewAppointment({
       const response = await AppointmentsApi.getAppointments();
       setAppointmentsList(response.data);
       
+      // Check if any services are unassigned
+      const hasUnassignedServices = servicesToBook.some(item => !item.artist);
+      const staffMessage = hasUnassignedServices ? " (some services unassigned)" : "";
+      
       toast({
         title: "✅ Appointments Booked!",
-        description: `${servicesToBook.length} service(s) for ${selectedClient.name} have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
+        description: `${servicesToBook.length} service(s) for ${selectedClient.name} have been scheduled starting at ${format(selectedSlot.start, "p")}${staffMessage}.`,
         className: "border-green-500 bg-green-50 text-green-900",
       });
 
@@ -316,7 +320,9 @@ export function NewAppointment({
                         <div key={index} className="flex justify-between items-start text-sm p-2 rounded-md bg-muted/50">
                             <div>
                                 <p className="font-medium">{item.service.name}</p>
-                                <p className="text-xs text-muted-foreground">{item.artist?.label || 'No artist selected'}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {item.artist?.label || 'Unassigned'}
+                                </p>
                                 <div className="text-xs text-muted-foreground flex items-center gap-4 mt-1">
                                     <p className="flex items-center gap-1">
                                         <CalendarIcon className="h-3 w-3" />
