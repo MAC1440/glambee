@@ -358,6 +358,29 @@ export class ClientsApi {
     // }
     static async createCustomerFromForm(formData: ClientFormData): Promise<ClientWithDetails | null> {
         try {
+            // Step 1: Check if email already exists
+            const { data: existingEmailUser } = await supabase
+                .from('users')
+                .select('id, email')
+                .eq('email', formData.email)
+                .single();
+
+            if (existingEmailUser) {
+                throw new Error('A user with this email address already exists');
+            }
+
+            // Step 2: Check if phone number already exists
+            const { data: existingPhoneUser } = await supabase
+                .from('users')
+                .select('id, phone_number')
+                .eq('phone_number', formData.phone)
+                .single();
+
+            if (existingPhoneUser) {
+                throw new Error('A user with this phone number already exists');
+            }
+
+            // Step 3: Create auth user
             const result = await supabase.auth
                 .signUp({
                     phone: formData.phone,
@@ -369,7 +392,7 @@ export class ClientsApi {
 
                     const user = authData.user;
 
-                    // Step 2: Create entry in public.users
+                    // Step 4: Create entry in public.users
                     const { data: userData, error: userError } = await supabase
                         .from("users")
                         .insert({
@@ -385,7 +408,7 @@ export class ClientsApi {
                     console.log("User data: ", userData)
                     if (userError) throw userError;
 
-                    // Step 3: Create related customer
+                    // Step 5: Create related customer
                     const { data: customerData, error: customerError } = await supabase
                         .from("customers")
                         .insert({

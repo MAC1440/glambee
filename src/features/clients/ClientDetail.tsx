@@ -457,8 +457,10 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                         </TableRow>
                       )) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center h-24">
-                            No appointment history for this client.
+                          <TableCell colSpan={5} className="text-center h-24">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <p className="text-muted-foreground">No appointment history for this client.</p>
+                            </div>
                           </TableCell>
                         </TableRow>
                       )}
@@ -508,7 +510,9 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center h-24">
-                            No payment history for this client.
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <p className="text-muted-foreground">No payment history for this client.</p>
+                            </div>
                           </TableCell>
                         </TableRow>
                       )}
@@ -542,7 +546,9 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center h-24">
-                            No service history for this client.
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <p className="text-muted-foreground">No service history for this client.</p>
+                            </div>
                           </TableCell>
                         </TableRow>
                       )}
