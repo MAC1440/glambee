@@ -19,6 +19,7 @@ type ClientFormDialogProps = {
   onOpenChange: (isOpen: boolean) => void;
   client?: Client;
   onSave: (clientData: ClientFormData) => void;
+  isLoading?: boolean;
 };
 
 export function ClientFormDialog({
@@ -26,6 +27,7 @@ export function ClientFormDialog({
   onOpenChange,
   client,
   onSave,
+  isLoading = false,
 }: ClientFormDialogProps) {
   const title = client ? `Edit ${client.name}` : `Add New Client`;
   const description = client
@@ -39,7 +41,7 @@ export function ClientFormDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <ClientForm client={client} onSave={onSave} onCancel={() => onOpenChange(false)} />
+        <ClientForm client={client} onSave={onSave} onCancel={() => onOpenChange(false)} isLoading={isLoading} />
       </DialogContent>
     </Dialog>
   );

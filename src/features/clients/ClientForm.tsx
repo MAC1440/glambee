@@ -43,7 +43,7 @@ const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string()
-    .min(13, { message: "Please enter a valid phone number." })
+    .min(10, { message: "Please enter a valid phone number." })
     .max(15, { message: "Phone number is too long." })
     .regex(/^\+[0-9]+$/, { message: "Phone number must start with + and contain only numbers." }),
   gender: z.string({ required_error: "Please select a gender." }),
@@ -58,11 +58,11 @@ type ClientFormProps = {
   client?: Client;
   onSave: (clientData: any) => void; // Using any to avoid complex type casting on submit
   onCancel: () => void;
+  isLoading?: boolean; // Add loading state prop
 };
 
-export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
+export function ClientForm({ client, onSave, onCancel, isLoading = false }: ClientFormProps) {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
   
   const form = useForm<ClientFormData>({
     resolver: zodResolver(formSchema),
@@ -271,10 +271,12 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
           /> */}
         </div>
         <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>
-          <Button type="submit">Save Changes</Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save Changes"}
+          </Button>
         </div>
       </form>
     </Form>

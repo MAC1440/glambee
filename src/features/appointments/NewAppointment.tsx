@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarView } from "@/features/staff/schedule/CalendarView";
 import { ServiceSelection, type CartItem } from "@/features/checkout/ServiceSelection";
@@ -64,9 +64,15 @@ export function NewAppointment({
       servicesToBook.map(item => item.artist?.value).filter(Boolean) as string[]
     );
 
+    // Filter appointments by selected client if one is selected
     let confirmedAppointments = appointmentsList;
+    if (selectedClient) {
+      confirmedAppointments = appointmentsList.filter(apt => apt.customer_id === selectedClient.id);
+    }
+    
+    // Further filter by selected artists if any are chosen
     if (selectedArtistIds.size > 0) {
-      confirmedAppointments = appointmentsList.filter(apt => selectedArtistIds.has(apt.staff_id || ''));
+      confirmedAppointments = confirmedAppointments.filter(apt => selectedArtistIds.has(apt.staff_id || ''));
     }
     
     const confirmedEvents = confirmedAppointments.map((apt) => ({
@@ -367,10 +373,27 @@ export function NewAppointment({
                   <Info className="h-4 w-4" />
                   <AlertTitle>Pro Tip!</AlertTitle>
                   <AlertDescription>
-                    You can click and drag on any open time slot in the calendar to select it for a new appointment.
+                    {selectedClient 
+                      ? `You can click and drag on any open time slot in the calendar to select it for ${selectedClient.name}'s new appointment.`
+                      : "You can click and drag on any open time slot in the calendar to select it for a new appointment."
+                    }
                   </AlertDescription>
                 </Alert>
                 <Card className="h-full">
+                    <CardHeader>
+                      <CardTitle>
+                        {selectedClient 
+                          ? `${selectedClient.name}'s Appointments` 
+                          : "All Appointments"
+                        }
+                      </CardTitle>
+                      <CardDescription>
+                        {selectedClient 
+                          ? `Showing existing appointments for ${selectedClient.name}` 
+                          : "Showing all appointments in the system"
+                        }
+                      </CardDescription>
+                    </CardHeader>
                     <CardContent className="p-2 md:p-4 h-full">
                         <CalendarView 
                             events={calendarEvents}

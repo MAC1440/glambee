@@ -47,8 +47,8 @@ import { Check, X, Edit2 } from "lucide-react";
 export function ClientDetail({ clientId }: { clientId: string }) {
   const [client, setClient] = useState<ClientWithDetails | null>(null);
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
-  console.log("Appointments: ", appointments)
-  console.log("Client id: ", clientId)
+  // console.log("Appointments: ", appointments)
+  // console.log("Client id: ", clientId)
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
@@ -80,14 +80,14 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         
         // Fetch client data
         const clientData = await ClientsApi.getCustomerById(clientId);
-        console.log("Client data: ", clientData)
+        // console.log("Client data: ", clientData)
         setClient(clientData);
         
         // Fetch appointments for this client
         if (clientData) {
-          console.log("Fetching appointments for client:", clientId);
+          // console.log("Fetching appointments for client:", clientId);
           const appointmentsData = await AppointmentsApi.getAppointmentsByCustomerId(clientId);
-          console.log("Appointments data: ", appointmentsData)
+          // console.log("Appointments data: ", appointmentsData?.map((item) => new Date(item?.start_time || item?.date)))
           setAppointments(appointmentsData);
         }
       } catch (error) {
@@ -371,6 +371,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                       <TableRow>
                         <TableHead>Date</TableHead>
                         <TableHead>Service</TableHead>
+                        <TableHead>Time</TableHead>
                         <TableHead>Staff</TableHead>
                         <TableHead className="text-right">Price</TableHead>
                       </TableRow>
@@ -381,6 +382,9 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                           <TableCell>{appointment?.date || 'N/A'}</TableCell>
                           <TableCell className="font-medium">
                             {appointment?.services?.map((service) => service.name).join(', ') || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {appointment?.start_time ? format(new Date(appointment.start_time), 'hh:mm a') : 'N/A'}
                           </TableCell>
                           <TableCell className="group relative">
                             {editingStaffId === appointment?.id ? (
@@ -405,7 +409,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                                     sideOffset={4}
                                     avoidCollisions={false}
                                     collisionPadding={0}
-                                    className="!transform-none !top-auto !bottom-auto"
+                                    className="!transform-none !top-auto !bottom-auto max-h-40 overflow-y-auto"
                                     style={{
                                       position: 'absolute',
                                       top: '100%',

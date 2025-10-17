@@ -22,11 +22,11 @@ export interface ClientFormData {
 }
 
 export interface ClientFilters {
-    search?: string;
-    gender?: string;
-    activityStatus?: string;
-    isTestUser?: boolean;
-    hasSpinned?: boolean;
+  search?: string;
+  gender?: string;
+  activityStatus?: string;
+  isTestUser?: boolean;
+  hasSpinned?: boolean;
     limit?: number;
     offset?: number;
 }
@@ -38,17 +38,17 @@ export interface PaginatedResponse<T> {
 }
 
 export class ClientsApi {
-    /**
+  /**
      * Get all customers with optional filtering and pagination
-     */
+   */
     static async getCustomers(filters: ClientFilters = {}): Promise<PaginatedResponse<ClientWithDetails>> {
-        try {
+    try {
             const limit = filters.limit || 50;
             const offset = filters.offset || 0;
 
-            let query = supabase
-                .from('customers')
-                .select(`
+      let query = supabase
+        .from('customers')
+        .select(`
           *,
           appointments:appointments(count),
           appointments_data:appointments(
@@ -59,8 +59,8 @@ export class ClientsApi {
           )
         `, { count: 'exact' });
 
-            // Apply filters
-            if (filters.search) {
+      // Apply filters
+      if (filters.search) {
                 query = query.ilike('customer_name', `%${filters.search}%`);
             }
 
@@ -86,10 +86,10 @@ export class ClientsApi {
                 .order('created_at', { ascending: false })
                 .range(offset, offset + limit - 1);
 
-            if (error) {
-                console.error('Error fetching customers:', error);
-                throw error;
-            }
+      if (error) {
+        console.error('Error fetching customers:', error);
+        throw error;
+      }
 
             console.log("Customers in api: ", customers)
             // Get unique customer IDs to fetch user data
@@ -118,57 +118,57 @@ export class ClientsApi {
 
             // Transform data to include stats and user data
             const customersWithStats: ClientWithDetails[] = customers?.map(customer => {
-                const appointments = customer.appointments_data || [];
-                const totalSpent = appointments.reduce((sum, apt) => sum + (apt.bill || 0), 0);
-                const lastVisit = appointments.length > 0
-                    ? appointments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date
-                    : null;
+        const appointments = customer.appointments_data || [];
+        const totalSpent = appointments.reduce((sum, apt) => sum + (apt.bill || 0), 0);
+        const lastVisit = appointments.length > 0 
+          ? appointments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date
+          : null;
 
                 // Get user data for this customer
                 const user = customer?.auth_id ? usersMap.get(customer?.auth_id) : null;
 
-                // Generate tags based on stats
-                const tags: string[] = [];
-                if (appointments.length > 5) tags.push('VIP');
+        // Generate tags based on stats
+        const tags: string[] = [];
+        if (appointments.length > 5) tags.push('VIP');
                 if (appointments.length <= 2) tags.push('New');
-                if (totalSpent > 500) tags.push('High Spender');
+        if (totalSpent > 500) tags.push('High Spender');
                 // Note: These fields don't exist in the current customers table structure
                 // if (customer.is_test_user) tags.push('Test User');
                 // if (customer.activity_status === 'online') tags.push('Online');
 
-                return {
-                    ...customer,
+        return {
+          ...customer,
                     // Include user data from the users table
                     email: user?.email || null,
                     phone_number: user?.phone_number || null,
                     name: user?.fullname || customer.name,
                     avatar: user?.avatar || null,
-                    appointments: appointments.length,
-                    totalSpent,
-                    lastVisit,
-                    tags
-                };
-            }) || [];
+          appointments: appointments.length,
+          totalSpent,
+          lastVisit,
+          tags
+        };
+      }) || [];
 
             return {
                 data: customersWithStats,
                 count: count || 0,
                 hasMore: (offset + limit) < (count || 0)
             };
-        } catch (error) {
-            console.error('Failed to fetch customers:', error);
-            throw error;
-        }
+    } catch (error) {
+      console.error('Failed to fetch customers:', error);
+      throw error;
     }
+  }
 
-    /**
-     * Get a single customer by ID
-     */
+  /**
+   * Get a single customer by ID
+   */
     static async getCustomerById(id: string): Promise<ClientWithDetails | null> {
-        try {
-            const { data: customer, error } = await supabase
-                .from('customers')
-                .select(`
+    try {
+      const { data: customer, error } = await supabase
+        .from('customers')
+        .select(`
           *,
           appointments:appointments(
             id,
@@ -178,12 +178,12 @@ export class ClientsApi {
             status
           )
         `)
-                .eq('id', id)
-                .single();
+        .eq('id', id)
+        .single();
 
             if (error || !customer) {
-                return null;
-            }
+        return null;
+      }
 
             // Fetch user data if customer_id exists
             let user = null;
@@ -197,46 +197,46 @@ export class ClientsApi {
             }
 
             return this.transformCustomerWithStats({ ...customer, user });
-        } catch (error) {
-            console.error('Failed to fetch customer:', error);
-            return null;
-        }
+    } catch (error) {
+      console.error('Failed to fetch customer:', error);
+      return null;
     }
+  }
 
-    /**
-     * Create a new customer
-     */
+  /**
+   * Create a new customer
+   */
     static async createCustomer(customerData: CustomerInsert): Promise<ClientWithDetails> {
-        try {
-            const { data: customer, error } = await supabase
-                .from('customers')
+    try {
+      const { data: customer, error } = await supabase
+        .from('customers')
                 .insert({
                     ...customerData,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 })
-                .select()
-                .single();
+        .select()
+        .single();
 
-            if (error) {
-                console.error('Error creating customer:', error);
-                throw error;
-            }
+      if (error) {
+        console.error('Error creating customer:', error);
+        throw error;
+      }
 
-            return {
-                ...customer,
-                appointments: 0,
-                totalSpent: 0,
-                lastVisit: null,
-                tags: ['New']
-            };
-        } catch (error) {
-            console.error('Failed to create customer:', error);
-            throw error;
-        }
+      return {
+        ...customer,
+        appointments: 0,
+        totalSpent: 0,
+        lastVisit: null,
+        tags: ['New']
+      };
+    } catch (error) {
+      console.error('Failed to create customer:', error);
+      throw error;
     }
+  }
 
-    /**
+  /**
      * Create customer from form data (creates in both tables with proper FK handling)
      */
     // static async createCustomerFromForm(formData: ClientFormData): Promise<void> {
@@ -356,21 +356,21 @@ export class ClientsApi {
     //         throw error;
     //     }
     // }
-    static async createCustomerFromForm(formData: ClientFormData): Promise<void> {
+    static async createCustomerFromForm(formData: ClientFormData): Promise<ClientWithDetails | null> {
         try {
-            supabase.auth
+            const result = await supabase.auth
                 .signUp({
                     phone: formData.phone,
                     password: formData.phone,
                 })
-                .then(({ data: authData, error: signUpError }) => {
+                .then(async ({ data: authData, error: signUpError }) => {
                     console.log("Auth data: ", authData)
                     if (signUpError) throw signUpError;
 
                     const user = authData.user;
 
                     // Step 2: Create entry in public.users
-                    return supabase
+                    const { data: userData, error: userError } = await supabase
                         .from("users")
                         .insert({
                             id: user?.id, // link auth user
@@ -381,13 +381,12 @@ export class ClientsApi {
                         })
                         .select()
                         .single();
-                })
-                .then(({ data: userData, error: userError }) => {
+
                     console.log("User data: ", userData)
                     if (userError) throw userError;
 
                     // Step 3: Create related customer
-                    return supabase
+                    const { data: customerData, error: customerError } = await supabase
                         .from("customers")
                         .insert({
                             auth_id: userData.id, // link to public.users.id
@@ -396,16 +395,15 @@ export class ClientsApi {
                         })
                         .select()
                         .single();
-                })
-                .then(({ data: customerData, error: customerError }) => {
+
                     console.log("Customer data: ", customerData)
                     if (customerError) throw customerError;
 
                     console.log("✅ Customer created successfully:", customerData);
-                })
-                .catch((err) => {
-                    console.error("❌ Error:", err.message || err);
+                    return customerData;
                 });
+
+            return result;
         } catch (e) {
             console.error("❌ Error in catch: ", e);
             throw e;
@@ -432,14 +430,14 @@ export class ClientsApi {
 
             // Update the customers table
             const { data: customer, error: customerError } = await supabase
-                .from('customers')
+        .from('customers')
                 .update({
                     ...updates,
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', id)
-                .select()
-                .single();
+        .eq('id', id)
+        .select()
+        .single();
 
             if (customerError) {
                 console.error('Error updating customer:', customerError);
@@ -471,12 +469,12 @@ export class ClientsApi {
             }
 
             // Fetch the updated customer with user data
-            return await this.getCustomerById(id);
-        } catch (error) {
-            console.error('Failed to update customer:', error);
-            throw error;
-        }
+      return await this.getCustomerById(id);
+    } catch (error) {
+      console.error('Failed to update customer:', error);
+      throw error;
     }
+  }
 
     /**
      * Update customer from form data (updates both customers and users tables)
@@ -546,11 +544,11 @@ export class ClientsApi {
         }
     }
 
-    /**
-     * Delete a customer
-     */
-    static async deleteCustomer(id: string): Promise<boolean> {
-        try {
+  /**
+   * Delete a customer
+   */
+  static async deleteCustomer(id: string): Promise<boolean> {
+    try {
             // First get the customer to find auth_id
             const { data: customer } = await supabase
                 .from('customers')
@@ -572,26 +570,26 @@ export class ClientsApi {
             }
 
             // Then delete from customers table
-            const { error } = await supabase
-                .from('customers')
-                .delete()
-                .eq('id', id);
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id);
 
-            if (error) {
-                console.error('Error deleting customer:', error);
-                throw error;
-            }
+      if (error) {
+        console.error('Error deleting customer:', error);
+        throw error;
+      }
 
-            return true;
-        } catch (error) {
-            console.error('Failed to delete customer:', error);
-            throw error;
-        }
+      return true;
+    } catch (error) {
+      console.error('Failed to delete customer:', error);
+      throw error;
     }
+  }
 
-    /**
-     * Get customer statistics
-     */
+  /**
+   * Get customer statistics
+   */
     static async getCustomerStats(): Promise<{
         totalClients: number;
         activeClients: number;
@@ -600,41 +598,41 @@ export class ClientsApi {
     }> {
         try {
             const { data: customers, error } = await supabase
-                .from('customers')
-                .select('id, activity_status, is_test_user, created_at');
+        .from('customers')
+        .select('id, activity_status, is_test_user, created_at');
 
-            if (error) {
-                console.error('Error fetching customer stats:', error);
-                throw error;
-            }
+      if (error) {
+        console.error('Error fetching customer stats:', error);
+        throw error;
+      }
 
-            const now = new Date();
-            const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const now = new Date();
+      const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
             const stats = {
-                totalClients: customers?.length || 0,
-                activeClients: customers?.filter(c => c.activity_status === 'online').length || 0,
-                newClientsThisMonth: customers?.filter(c =>
-                    new Date(c.created_at) >= thisMonth
-                ).length || 0,
-                testUsers: customers?.filter(c => c.is_test_user).length || 0
-            };
+        totalClients: customers?.length || 0,
+        activeClients: customers?.filter(c => c.activity_status === 'online').length || 0,
+        newClientsThisMonth: customers?.filter(c => 
+          new Date(c.created_at) >= thisMonth
+        ).length || 0,
+        testUsers: customers?.filter(c => c.is_test_user).length || 0
+      };
 
-            return stats;
-        } catch (error) {
-            console.error('Failed to fetch customer stats:', error);
-            throw error;
-        }
+      return stats;
+    } catch (error) {
+      console.error('Failed to fetch customer stats:', error);
+      throw error;
     }
+  }
 
-    /**
+  /**
      * Search customers by name
-     */
+   */
     static async searchCustomers(searchTerm: string): Promise<ClientWithDetails[]> {
-        try {
+    try {
             const { data: customers, error } = await supabase
-                .from('customers')
-                .select(`
+        .from('customers')
+        .select(`
           *,
           appointments:appointments(count),
           appointments_data:appointments(
@@ -647,10 +645,10 @@ export class ClientsApi {
                 .ilike('customer_name', `%${searchTerm}%`)
                 .limit(10);
 
-            if (error) {
-                console.error('Error searching customers:', error);
-                throw error;
-            }
+      if (error) {
+        console.error('Error searching customers:', error);
+        throw error;
+      }
 
             // Get unique customer IDs to fetch user data
             const customerIds = customers?.map(c => c.auth_id).filter(Boolean) || [];
@@ -674,39 +672,39 @@ export class ClientsApi {
             return customers?.map(customer => {
                 const user = customer.auth_id ? usersMap.get(customer.auth_id) : null;
                 return this.transformCustomerWithStats({ ...customer, user });
-            }) || [];
-        } catch (error) {
-            console.error('Failed to search customers:', error);
-            throw error;
-        }
+      }) || [];
+    } catch (error) {
+      console.error('Failed to search customers:', error);
+      throw error;
     }
+  }
 
-    /**
-     * Update customer activity status
-     */
-    static async updateActivityStatus(id: string, status: 'online' | 'offline'): Promise<boolean> {
-        try {
-            const { error } = await supabase
-                .from('customers')
+  /**
+   * Update customer activity status
+   */
+  static async updateActivityStatus(id: string, status: 'online' | 'offline'): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('customers')
                 .update({
                     activity_status: status,
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', id);
+        .eq('id', id);
 
-            if (error) {
-                console.error('Error updating activity status:', error);
-                throw error;
-            }
+      if (error) {
+        console.error('Error updating activity status:', error);
+        throw error;
+      }
 
-            return true;
-        } catch (error) {
-            console.error('Failed to update activity status:', error);
-            throw error;
-        }
+      return true;
+    } catch (error) {
+      console.error('Failed to update activity status:', error);
+      throw error;
     }
+  }
 
-    /**
+  /**
      * Helper function to transform customer data with stats
      */
     private static transformCustomerWithStats(customer: any): ClientWithDetails {

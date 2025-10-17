@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { appointments, mockCustomers as initialMockCustomers } from "@/lib/placeholder-data";
-import { PlusCircle, CalendarPlus, UserCheck, DollarSign } from "lucide-react";
+import { PlusCircle, CalendarPlus, UserCheck, DollarSign, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { ClientFormDialog } from "./ClientFormDialog";
@@ -52,24 +52,29 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
     const [customers, setCustomers] = useState<any[]>([]);
     console.log("Customers: ", customers)
     const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isFormLoading, setIsFormLoading] = useState(false);
     const { toast } = useToast();
     const [globalFilter, setGlobalFilter] = useState('');
 
-    useEffect(() => {
-      console.log("In initial effect...")
-      const fetchClients = async () => {
-        try {
-          const response = await ClientsApi.getCustomers();
-          console.log("Clients response: ", response)
-          // API now returns PaginatedResponse, extract data array
-          setCustomers(response.data || []);
-        } catch (error) {
-          console.error("Error fetching clients:", error);
-          setCustomers([]);
-        }
+    const fetchClients = async () => {
+      try {
+        setIsLoading(true);
+        const response = await ClientsApi.getCustomers();
+        // console.log("Clients response: ", response)
+        // API now returns PaginatedResponse, extract data array
+        setCustomers(response.data || []);
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+        setCustomers([]);
+      } finally {
+        setIsLoading(false);
       }
+    }
+
+    useEffect(() => {
       fetchClients();
-    }, [isFormOpen === false]) // Added isFormOpen as dependency
+    }, [])
 
     // Process customers data - API now returns data with stats already calculated
     const clients = customers?.map(customer => {
@@ -104,28 +109,35 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
 
   const handleSaveClient = async (clientData: ClientFormData) => {
     try {
+      setIsFormLoading(true);
       console.log("🚀 Starting client creation...");
       
       // Call the API to create the client
-      await ClientsApi.createCustomerFromForm(clientData);
-      console.log("✅ Client created successfully");
+      const newClient = await ClientsApi.createCustomerFromForm(clientData);
+      console.log("✅ Client created successfully: ", newClient);
 
-      // Show success toast
-      toast({
-        title: "✅ Success",
-        description: `${clientData.name} has been successfully added.`,
-        className: "border-green-500 bg-green-50 text-green-900",
-      });
+      // Show success toast and refresh data
+      if(newClient) {
+        toast({
+          title: "✅ Success",
+          description: `${clientData.name} has been successfully added.`,
+          className: "border-green-500 bg-green-50 text-green-900",
+        });
+        // Refresh the clients list
+        await fetchClients();
+      }
       
-      // Close form - this will trigger useEffect to refresh data
+      // Close form
       setIsFormOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error creating client:", error);
       toast({
         title: "Error",
-        description: "Failed to create client. Please try again.",
+        description: error?.message || "Failed to create client. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsFormLoading(false);
     }
   };
 
@@ -162,86 +174,122 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
           <CardTitle>All Clients</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Tags</TableHead>
-                <TableHead>Last Visit</TableHead>
-                <TableHead>Total Appointments</TableHead>
-                <TableHead className="text-right">Total Spent</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClients.map((client) => (
-                <TableRow
-                  key={client?.id}
-                  className="hover:bg-muted/50"
-                >
-                  <TableCell>
-                    <Link href={`/clients/${(client?.id)}`} className="flex items-center gap-3 group">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage
-                          src={client?.avatar || `https://picsum.photos/seed/${client?.name}/100`}
-                          alt="Avatar"
-                        />
-                        <AvatarFallback>
-                          {client?.name?.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium group-hover:underline">{client?.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {client?.email || 'No email'}
-                        </div>
-                      </div>
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      {client?.tags?.map((tag: string) => (
-                        <Badge
-                          key={tag}
-                          variant="outline"
-                          className={cn(getTagColor(tag))}
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>{client?.lastVisit}</TableCell>
-                  <TableCell>{client?.appointments}</TableCell>
-                  <TableCell className="text-right">
-                    ${client?.totalSpent?.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {isSelectMode ? (
-                       <Button variant="default" onClick={() => onClientSelect?.(client)}>
-                            <UserCheck className="mr-2 h-4 w-4" /> Select
-                        </Button>
-                    ) : (
-                        <div className="flex gap-2 justify-end">
-                            <Button asChild variant="outline" size="sm">
-                               <Link href={`/checkout/${(client?.id)}`}>
-                                <DollarSign className="mr-2 h-4 w-4" />
-                                Payment
-                              </Link>
-                            </Button>
-                            <Button asChild variant="default" size="sm">
-                                <Link href={`/appointments?clientId=${(client?.id)}`}>
-                                    <CalendarPlus className="mr-2 h-4 w-4" />
-                                    Book
-                                </Link>
-                            </Button>
-                        </div>
-                    )}
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="text-muted-foreground">Loading clients...</p>
+              </div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Tags</TableHead>
+                  <TableHead>Last Visit</TableHead>
+                  <TableHead>Total Appointments</TableHead>
+                  <TableHead className="text-right">Total Spent</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredClients.length > 0 ? (
+                  filteredClients.map((client) => (
+                    <TableRow
+                      key={client?.id}
+                      className="hover:bg-muted/50"
+                    >
+                      <TableCell>
+                        <Link href={`/clients/${(client?.id)}`} className="flex items-center gap-3 group">
+                          <Avatar className="h-9 w-9">
+                            <AvatarImage
+                              src={client?.avatar || `https://picsum.photos/seed/${client?.name}/100`}
+                              alt="Avatar"
+                            />
+                            <AvatarFallback>
+                              {client?.name?.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium group-hover:underline">{client?.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {client?.email || 'No email'}
+                            </div>
+                          </div>
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {client?.tags?.map((tag: string) => (
+                            <Badge
+                              key={tag}
+                              variant="outline"
+                              className={cn(getTagColor(tag))}
+                            >
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>{client?.lastVisit}</TableCell>
+                      <TableCell>{client?.appointments}</TableCell>
+                      <TableCell className="text-right">
+                        ${client?.totalSpent?.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isSelectMode ? (
+                           <Button variant="default" onClick={() => onClientSelect?.(client)}>
+                                <UserCheck className="mr-2 h-4 w-4" /> Select
+                            </Button>
+                        ) : (
+                            <div className="flex gap-2 justify-end">
+                                <Button asChild variant="outline" size="sm">
+                                   <Link href={`/checkout/${(client?.id)}`}>
+                                    <DollarSign className="mr-2 h-4 w-4" />
+                                    Payment
+                                  </Link>
+                                </Button>
+                                <Button asChild variant="default" size="sm">
+                                    <Link href={`/appointments?clientId=${(client?.id)}`}>
+                                        <CalendarPlus className="mr-2 h-4 w-4" />
+                                        Book
+                                    </Link>
+                                </Button>
+                            </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12">
+                      <div className="flex flex-col items-center gap-4">
+                        <Search className="h-12 w-12 text-muted-foreground" />
+                        <div>
+                          <p className="text-lg font-medium text-muted-foreground">
+                            {globalFilter ? 'No clients found' : 'No clients available'}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {globalFilter 
+                              ? `No clients match "${globalFilter}". Try a different search term.`
+                              : 'Get started by adding your first client.'
+                            }
+                          </p>
+                        </div>
+                        {!isSelectMode && !globalFilter && (
+                          <Button onClick={() => setIsFormOpen(true)}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add First Client
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -249,6 +297,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
         onSave={handleSaveClient}
+        isLoading={isFormLoading}
     />
     </>
   );
