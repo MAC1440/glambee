@@ -374,7 +374,7 @@ export class ClientsApi {
                         .from("users")
                         .insert({
                             id: user?.id, // link auth user
-                            phone_number: user?.phone,
+                            phone_number: formData.phone, // Use formData.phone which includes the + prefix
                             email: formData.email,
                             fullname: formData.name,
                             user_type: 'customer',

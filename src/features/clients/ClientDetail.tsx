@@ -398,7 +398,23 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                                   <SelectTrigger className="w-32">
                                     <SelectValue placeholder="Select staff" />
                                   </SelectTrigger>
-                                  <SelectContent>
+                                  <SelectContent 
+                                    position="popper" 
+                                    side="bottom" 
+                                    align="start"
+                                    sideOffset={4}
+                                    avoidCollisions={false}
+                                    collisionPadding={0}
+                                    className="!transform-none !top-auto !bottom-auto"
+                                    style={{
+                                      position: 'absolute',
+                                      top: '100%',
+                                      left: 0,
+                                      right: 'auto',
+                                      bottom: 'auto',
+                                      transform: 'none !important'
+                                    }}
+                                  >
                                     <SelectItem value="unassigned">Unassigned</SelectItem>
                                     {staffOptions.map((staff) => (
                                       <SelectItem key={staff.id} value={staff.id}>

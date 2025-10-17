@@ -43,8 +43,9 @@ const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string()
-    .min(10, { message: "Please enter a valid phone number." })
-    .regex(/^[0-9]+$/, { message: "Phone number can only contain numbers." }),
+    .min(13, { message: "Please enter a valid phone number." })
+    .max(15, { message: "Phone number is too long." })
+    .regex(/^\+[0-9]+$/, { message: "Phone number must start with + and contain only numbers." }),
   gender: z.string({ required_error: "Please select a gender." }),
   // dob: z.date({
   //   required_error: "A date of birth is required.",
@@ -68,7 +69,7 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
     defaultValues: {
       name: client?.name || "",
       email: client?.email || "",
-      phone: client?.phone_number || "",
+      phone: client?.phone_number?.startsWith('+') ? client.phone_number : `+${client?.phone_number || ''}`,
       gender: client?.gender || undefined,
       // dob: client?.dob ? new Date(client.dob) : undefined,
     },
@@ -162,13 +163,38 @@ export function ClientForm({ client, onSave, onCancel }: ClientFormProps) {
               <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="tel" 
-                    placeholder="1234567890" 
-                    // pattern="[0-9]*"
-                    inputMode="numeric"
-                    {...field} 
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none">
+                      +
+                    </span>
+                    <Input 
+                      type="tel" 
+                      placeholder="1 (555) 123-4567" 
+                      className="pl-8"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={field.value?.replace('+', '') || ''}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        field.onChange('+' + value);
+                      }}
+                      onKeyDown={(e) => {
+                        // Allow: backspace, delete, tab, escape, enter, home, end, left, right
+                        if ([8, 9, 27, 13, 46, 35, 36, 37, 39].indexOf(e.keyCode) !== -1 ||
+                            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                            (e.keyCode === 65 && e.ctrlKey === true) ||
+                            (e.keyCode === 67 && e.ctrlKey === true) ||
+                            (e.keyCode === 86 && e.ctrlKey === true) ||
+                            (e.keyCode === 88 && e.ctrlKey === true)) {
+                          return;
+                        }
+                        // Ensure that it is a number and stop the keypress
+                        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                          e.preventDefault();
+                        }
+                      }}
+                    />
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
