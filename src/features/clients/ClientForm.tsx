@@ -77,6 +77,12 @@ export function ClientForm({ client, onSave, onCancel, isLoading = false }: Clie
   console.log("Form: ", form)
 
   const onSubmit = async (values: ClientFormData) => {
+      // If nothing changed, do nothing (no API call, no toast) and close dialog
+      if (!form.formState.isDirty) {
+        onCancel();
+        return;
+      }
+
       const formData = {
         ...values,
         // dob: values.dob.toISOString().split('T')[0]
@@ -274,7 +280,7 @@ export function ClientForm({ client, onSave, onCancel, isLoading = false }: Clie
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading || !form.formState.isDirty}>
             {isLoading ? "Saving..." : "Save Changes"}
           </Button>
         </div>

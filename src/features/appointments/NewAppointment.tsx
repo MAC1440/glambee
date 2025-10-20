@@ -128,6 +128,16 @@ export function NewAppointment({
   }
 
   const handleSlotSelect = (slotInfo: SlotInfo | Date) => {
+    // Require at least one service before selecting a slot
+    if (servicesToBook.length === 0) {
+      toast({
+        title: "No Services Selected",
+        description: "Please add at least one service before selecting a time slot.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const startDate = slotInfo instanceof Date ? slotInfo : slotInfo.start;
     const endDate = slotInfo instanceof Date ? slotInfo : slotInfo.end;
     setSelectedSlot({ start: startDate, end: endDate });
