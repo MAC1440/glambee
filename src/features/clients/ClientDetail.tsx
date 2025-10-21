@@ -20,7 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { appointments, mockCustomers } from "@/lib/placeholder-data";
 import { cn } from "@/lib/utils";
 import {
   Mail,
@@ -33,25 +32,90 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { format, parseISO, differenceInYears } from "date-fns";
 import { ClientFormDialog } from "./ClientFormDialog";
 import { useToast } from "@/hooks/use-toast";
+import { ClientsApi, ClientWithDetails } from "@/lib/api/clientsApi";
+import { AppointmentsApi, AppointmentWithDetails } from "@/lib/api/appointmentsApi";
+import { StaffApi } from "@/lib/api/staffApi";
+import type { ClientFormData } from "./ClientForm";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Check, X, Edit2 } from "lucide-react";
 
-type Customer = {
-  id: string;
-  phone: string;
-  name: string;
-  email: string;
-  gender: string;
-  dob: string;
-};
-
-export function ClientDetail({ client: initialClient }: { client: Customer | undefined }) {
-  const [client, setClient] = useState(initialClient);
+export function ClientDetail({ clientId }: { clientId: string }) {
+  const [client, setClient] = useState<ClientWithDetails | null>(null);
+  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [staffOptions, setStaffOptions] = useState<Array<{id: string, name: string}>>([]);
+  const [isFormLoading, setIsFormLoading] = useState(false);
   const { toast } = useToast();
+
+  // Fetch staff options
+  useEffect(() => {
+    const fetchStaffOptions = async () => {
+      try {
+        const response = await StaffApi.getStaff({ limit: 100 });
+        setStaffOptions(response.data.map(staff => ({
+          id: staff.id,
+          name: staff.name || 'Unknown Staff'
+        })));
+      } catch (error) {
+        console.error("Error fetching staff options:", error);
+      }
+    };
+
+    fetchStaffOptions();
+  }, []);
+
+  // Fetch client data and appointments from API
+  useEffect(() => {
+    const fetchClientData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch client data
+        const clientData = await ClientsApi.getCustomerById(clientId);
+        setClient(clientData);
+        
+        // Fetch appointments for this client
+        if (clientData) {
+          const appointmentsData = await AppointmentsApi.getAppointmentsByCustomerId(clientId);
+          setAppointments(appointmentsData);
+        }
+      } catch (error) {
+        console.error("Error fetching client data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load client details.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (clientId) {
+      fetchClientData();
+    }
+  }, [clientId, toast]);
   
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Loading...</CardTitle>
+          <CardDescription>
+            Please wait while we load the client details.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   if (!client) {
     return (
       <Card>
@@ -65,25 +129,9 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
     );
   }
 
-  const clientAppointments = appointments.filter(
-    (apt) => apt.customer.email === client.email
-  );
-
-  const totalSpent = clientAppointments.reduce(
-    (sum, apt) => sum + apt.price,
-    0
-  );
-
-  const tags: string[] = [];
-  if (clientAppointments.length > 5) {
-    tags.push("VIP");
-  }
-  if (clientAppointments.length > 0 && clientAppointments.length <= 2) {
-    tags.push("New");
-  }
-  if (totalSpent > 500) {
-    tags.push("High Spender");
-  }
+  // Use data from API response which already includes stats
+  const totalSpent = client.totalSpent || 0;
+  const tags = client.tags || [];
 
   const getTagColor = (tag: string) => {
     switch (tag.toLowerCase()) {
@@ -97,50 +145,119 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
         return "bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300";
     }
   };
-
-  const paymentHistory = clientAppointments.map((apt, index) => {
-    const statuses = ["Paid", "Pending", "Overdue"];
-    const status = statuses[index % statuses.length];
-    return {
-      id: `INV-${String(index + 1).padStart(3, "0")}`,
-      date: apt.date,
-      amount: apt.price,
-      status: status as "Paid" | "Pending" | "Overdue",
-      service: apt.service,
-    };
-  });
-
-  const servicesHistory = useMemo(() => {
-    const serviceMap = new Map<string, { count: number; total: number }>();
-    clientAppointments.forEach((apt) => {
-      const existing = serviceMap.get(apt.service) || { count: 0, total: 0 };
-      existing.count++;
-      existing.total += apt.price;
-      serviceMap.set(apt.service, existing);
-    });
-    return Array.from(serviceMap.entries()).map(([name, data]) => ({
-      name,
-      ...data,
-    }));
-  }, [clientAppointments]);
   
-  const handleSaveClient = (updatedClientData: Omit<Customer, 'id'>) => {
-    const updatedClient = { ...client, ...updatedClientData };
-    setClient(updatedClient);
-
-    const customerIndex = mockCustomers.findIndex(c => c.id === client.id);
-    if(customerIndex !== -1) {
-        mockCustomers[customerIndex] = updatedClient;
+  const handleSaveClient = async (updatedClientData: ClientFormData) => {
+    try {
+      setIsFormLoading(true)
+      // Update client using comprehensive API - this will update both customers and users tables
+      const updatedClient = await ClientsApi.updateCustomerFromForm(clientId, updatedClientData);
+      
+      if (updatedClient) {
+        setClient(updatedClient);
+        toast({
+          title: "Success",
+          description: `${client.name}'s details have been successfully updated.`,
+          className: "border-none",
+          style: {
+            backgroundColor: "lightgreen",
+            color: "black",
+          }
+        });
+      }
+      setIsFormOpen(false);
+    } catch (error: any) {
+      console.error("❌ Error updating client:", error);
+      toast({
+        title: "Error",
+        description: error?.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsFormLoading(false);
     }
-    
-    toast({
-        title: "Client Updated",
-        description: `${updatedClient.name}'s details have been successfully updated.`
-    });
-    setIsFormOpen(false);
+  };
+
+  const handleStaffEdit = (appointmentId: string) => {
+    setEditingStaffId(appointmentId);
+  };
+
+  const handleStaffSave = async (appointmentId: string, newStaffId: string | null) => {
+    try {
+      // Update the appointment with new staff
+      await AppointmentsApi.updateAppointmentStaff(appointmentId, newStaffId);
+      
+      // Update local state
+      setAppointments(prev => prev.map(apt => 
+        apt.id === appointmentId 
+          ? { 
+              ...apt, 
+              staff: newStaffId 
+                ? staffOptions.find(s => s.id === newStaffId) 
+                  ? { id: newStaffId, name: staffOptions.find(s => s.id === newStaffId)!.name, avatar: null }
+                  : undefined
+                : undefined 
+            }
+          : apt
+      ));
+      
+      setEditingStaffId(null);
+      toast({
+        title: "Success",
+        description: "Staff assignment updated successfully.",
+        className: "border-green-500 bg-green-50 text-green-900",
+      });
+    } catch (error) {
+      console.error("Error updating staff:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update staff assignment.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStaffCancel = () => {
+    setEditingStaffId(null);
   };
   
-  const age = client.dob ? differenceInYears(new Date(), parseISO(client.dob)) : null;
+  // Generate payment history from appointments (computed on-demand)
+  const getPaymentHistory = () => {
+    return appointments.map((appointment, index) => ({
+      id: `INV-${appointment.id.slice(-6).toUpperCase()}`,
+      date: appointment.date,
+      amount: appointment.bill || 0,
+      status: (appointment.payment_status === 'paid' ? 'Paid' : 'Pending') as "Paid" | "Pending" | "Overdue",
+      service: appointment.services?.[0]?.name || 'Service',
+    }));
+  };
+
+  // Generate services history from appointments (computed on-demand)
+  const getServicesHistory = () => {
+    const serviceMap = new Map<string, { count: number; total: number }>();
+    
+    appointments.forEach(appointment => {
+      appointment.services?.forEach(service => {
+        const existing = serviceMap.get(service.name) || { count: 0, total: 0 };
+        serviceMap.set(service.name, {
+          count: existing.count + 1,
+          total: existing.total + service.price
+        });
+      });
+    });
+    
+    return Array.from(serviceMap.entries()).map(([name, data]) => ({
+      name,
+      count: data.count,
+      total: data.total,
+    }));
+  };
+
+  // Note: DOB field is not available in current schema
+  const age = null;
+
+  // Compute data once for rendering
+  const paymentHistory = getPaymentHistory();
+  const servicesHistory = getServicesHistory();
 
   return (
     <>
@@ -154,7 +271,7 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
         </Button>
         <div className="flex items-center gap-2">
           <Button variant="outline" asChild>
-             <Link href={`/checkout/${encodeURIComponent(client.email)}`}>
+             <Link href={`/checkout/${client?.id}`}>
               <DollarSign className="mr-2 h-4 w-4" />
               Add Payment
             </Link>
@@ -163,9 +280,11 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
             <Edit className="mr-2 h-4 w-4" />
             Edit Client
           </Button>
-          <Button>
-            <CalendarPlus className="mr-2 h-4 w-4" />
-            Book Appointment
+          <Button asChild>
+            <Link href={`/appointments?clientId=${client?.id}`}>
+              <CalendarPlus className="mr-2 h-4 w-4" />
+              Book Appointment
+            </Link>
           </Button>
         </div>
       </div>
@@ -177,11 +296,11 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
             <CardHeader className="items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
                 <AvatarImage
-                  src={`https://picsum.photos/seed/${client.name}/150`}
-                  alt={client.name}
+                  src={client.avatar || `https://picsum.photos/seed/${client.name || 'client'}/150`}
+                  alt={client.name || 'Client'}
                 />
                 <AvatarFallback className="text-3xl">
-                  {client.name.charAt(0)}
+                  {client.name?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
               <CardTitle className="text-2xl">{client.name}</CardTitle>
@@ -200,22 +319,22 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
             <CardContent className="text-sm space-y-4">
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-muted-foreground" />
-                <span className="text-muted-foreground">{client.email}</span>
+                <span className="text-muted-foreground">{(client as any).email || 'No email'}</span>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-muted-foreground" />
-                <span className="text-muted-foreground">{client.phone}</span>
+                <span className="text-muted-foreground">{(client as any).phone_number || 'No phone'}</span>
               </div>
               <div className="flex items-center gap-3">
                 <User className="h-5 w-5 text-muted-foreground" />
-                <span className="text-muted-foreground">{client.gender}</span>
+                <span className="text-muted-foreground">{client.gender || 'Not specified'}</span>
               </div>
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3">
                 <Cake className="h-5 w-5 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  {client.dob ? `${format(parseISO(client.dob), "MMMM d, yyyy")} (${age} years old)` : "Not specified"}
+                  Date of birth not available
                 </span>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         </div>
@@ -246,28 +365,96 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
                       <TableRow>
                         <TableHead>Date</TableHead>
                         <TableHead>Service</TableHead>
+                        <TableHead>Time</TableHead>
                         <TableHead>Staff</TableHead>
                         <TableHead className="text-right">Price</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {clientAppointments.length > 0 ? (
-                        clientAppointments.map((apt) => (
-                          <TableRow key={apt.id}>
-                            <TableCell>{apt.date}</TableCell>
-                            <TableCell className="font-medium">
-                              {apt.service}
-                            </TableCell>
-                            <TableCell>{apt.staff}</TableCell>
-                            <TableCell className="text-right">
-                              ${apt.price.toFixed(2)}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
+                      {appointments && appointments.length > 0 ? appointments?.map((appointment) => (
+                        <TableRow key={appointment?.id}>
+                          <TableCell>{appointment?.date || 'N/A'}</TableCell>
+                          <TableCell className="font-medium">
+                            {appointment?.services?.map((service) => service.name).join(', ') || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {appointment?.start_time ? format(new Date(appointment.start_time), 'hh:mm a') : 'N/A'}
+                          </TableCell>
+                          <TableCell className="group relative">
+                            {editingStaffId === appointment?.id ? (
+                              <div className="flex items-center gap-2">
+                                <Select
+                                  value={appointment?.staff?.id || ''}
+                                  onValueChange={(value) => {
+                                    if (value === 'unassigned') {
+                                      handleStaffSave(appointment.id, null);
+                                    } else {
+                                      handleStaffSave(appointment.id, value);
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="w-32">
+                                    <SelectValue placeholder="Select staff" />
+                                  </SelectTrigger>
+                                  <SelectContent 
+                                    position="popper" 
+                                    side="bottom" 
+                                    align="start"
+                                    sideOffset={4}
+                                    avoidCollisions={false}
+                                    collisionPadding={0}
+                                    className="!transform-none !top-auto !bottom-auto max-h-40 overflow-y-auto"
+                                    style={{
+                                      position: 'absolute',
+                                      top: '100%',
+                                      left: 0,
+                                      right: 'auto',
+                                      bottom: 'auto',
+                                      transform: 'none !important'
+                                    }}
+                                  >
+                                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                                    {staffOptions.map((staff) => (
+                                      <SelectItem key={staff.id} value={staff.id}>
+                                        {staff.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={handleStaffCancel}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 group">
+                                <span>{appointment?.staff?.name || 'N/A'}</span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleStaffEdit(appointment.id)}
+                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {/* ${totalSpent.toFixed(2)} */}
+                            {appointment?.bill || 'N/A'}
+                          </TableCell>
+                        </TableRow>
+                      )) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center h-24">
-                            No appointment history for this client.
+                          <TableCell colSpan={5} className="text-center h-24">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <p className="text-muted-foreground">No appointment history for this client.</p>
+                            </div>
                           </TableCell>
                         </TableRow>
                       )}
@@ -286,31 +473,43 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {paymentHistory.map((invoice) => (
-                        <TableRow key={invoice.id}>
-                          <TableCell>{invoice.id}</TableCell>
-                          <TableCell>{invoice.date}</TableCell>
-                          <TableCell>{invoice.service}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={cn({
-                                "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300":
-                                  invoice.status === "Paid",
-                                "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300":
-                                  invoice.status === "Pending",
-                                "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300":
-                                  invoice.status === "Overdue",
-                              })}
-                            >
-                              {invoice.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            ${invoice.amount.toFixed(2)}
+                      {paymentHistory.length > 0 ? (
+                        paymentHistory.map((invoice) => (
+                          <TableRow key={invoice.id}>
+                            <TableCell>{invoice.id}</TableCell>
+                            <TableCell>
+                              {format(new Date(invoice.date), 'MMM dd, yyyy')}
+                            </TableCell>
+                            <TableCell>{invoice.service}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant="outline"
+                                className={cn({
+                                  "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300":
+                                    invoice.status === "Paid",
+                                  "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300":
+                                    invoice.status === "Pending",
+                                  "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300":
+                                    invoice.status === "Overdue",
+                                })}
+                              >
+                                {invoice.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              ${invoice.amount.toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center h-24">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <p className="text-muted-foreground">No payment history for this client.</p>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </TabsContent>
@@ -326,17 +525,27 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {servicesHistory.map((service) => (
-                        <TableRow key={service.name}>
-                          <TableCell className="font-medium">
-                            {service.name}
-                          </TableCell>
-                          <TableCell>{service.count}</TableCell>
-                          <TableCell className="text-right">
-                            ${service.total.toFixed(2)}
+                      {servicesHistory.length > 0 ? (
+                        servicesHistory.map((service) => (
+                          <TableRow key={service.name}>
+                            <TableCell className="font-medium">
+                              {service.name}
+                            </TableCell>
+                            <TableCell>{service.count}</TableCell>
+                            <TableCell className="text-right">
+                              ${service.total.toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center h-24">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <p className="text-muted-foreground">No service history for this client.</p>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </TabsContent>
@@ -349,8 +558,9 @@ export function ClientDetail({ client: initialClient }: { client: Customer | und
     <ClientFormDialog 
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
-        client={client}
+        client={client as any}
         onSave={handleSaveClient}
+        isLoading={isFormLoading}
     />
     </>
   );
