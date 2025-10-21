@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import { Database } from "@/lib/supabase/supabase";
+import { formatDuration } from "date-fns";
 
 type Customer = Database['public']['Tables']['customers']['Row'];
 type CustomerInsert = Database['public']['Tables']['customers']['Insert'];
@@ -358,7 +359,10 @@ export class ClientsApi {
     // }
     static async createCustomerFromForm(formData: ClientFormData): Promise<ClientWithDetails | null> {
         try {
-            // Step 1: Check if email already exists
+            // Check both email and phone for duplicates before creating
+            const validationErrors: string[] = [];
+
+            // Check if email already exists
             const { data: existingEmailUser } = await supabase
                 .from('users')
                 .select('id, email')
@@ -366,10 +370,10 @@ export class ClientsApi {
                 .single();
 
             if (existingEmailUser) {
-                throw new Error('A user with this email address already exists');
+                validationErrors.push('A user with this email address already exists');
             }
 
-            // Step 2: Check if phone number already exists
+            // Check if phone number already exists
             const { data: existingPhoneUser } = await supabase
                 .from('users')
                 .select('id, phone_number')
@@ -377,7 +381,16 @@ export class ClientsApi {
                 .single();
 
             if (existingPhoneUser) {
-                throw new Error('A user with this phone number already exists');
+                validationErrors.push('A user with this phone number already exists');
+            }
+
+            // If there are validation errors, throw a summarized message
+            if (validationErrors.length > 0) {
+                if (validationErrors.length === 1) {
+                    throw new Error(validationErrors[0]);
+                } else {
+                    throw new Error('The email address and phone number you entered are already in use by other users');
+                }
             }
 
             // Step 3: Create auth user
@@ -387,7 +400,6 @@ export class ClientsApi {
                     password: formData.phone,
                 })
                 .then(async ({ data: authData, error: signUpError }) => {
-                    console.log("Auth data: ", authData)
                     if (signUpError) throw signUpError;
 
                     const user = authData.user;
@@ -405,7 +417,6 @@ export class ClientsApi {
                         .select()
                         .single();
 
-                    console.log("User data: ", userData)
                     if (userError) throw userError;
 
                     // Step 5: Create related customer
@@ -419,10 +430,7 @@ export class ClientsApi {
                         .select()
                         .single();
 
-                    console.log("Customer data: ", customerData)
                     if (customerError) throw customerError;
-
-                    console.log("✅ Customer created successfully:", customerData);
                     return customerData;
                 });
 
@@ -503,10 +511,7 @@ export class ClientsApi {
      * Update customer from form data (updates both customers and users tables)
      */
     static async updateCustomerFromForm(id: string, formData: ClientFormData): Promise<ClientWithDetails | null> {
-        try {
-            console.log("🚀 Starting comprehensive client update...");
-            console.log("Form data: ", formData);
-            
+        try {            
             // First, get the current customer to find the auth_id
             const { data: currentCustomer, error: fetchError } = await supabase
                 .from('customers')
@@ -514,8 +519,6 @@ export class ClientsApi {
                 .eq('id', id)
                 .single();
 
-            console.log("Current customer: ", currentCustomer)
-            console.log("Fetch error: ", fetchError)
             if (fetchError || !currentCustomer) {
                 console.error('Error fetching current customer:', fetchError);
                 throw new Error('Customer not found');
@@ -540,7 +543,54 @@ export class ClientsApi {
 
             // Update the users table if auth_id exists
             if (currentCustomer.auth_id) {
-                const { error: userError } = await supabase
+                // Get current user data for comparison
+                const { data: currentUser } = await supabase
+                    .from('users')
+                    .select('email, phone_number')
+                    .eq('id', currentCustomer.auth_id)
+                    .single();
+
+                // Check both email and phone for duplicates before updating
+                const validationErrors: string[] = [];
+
+                // Check if email is being changed and if new email already exists
+                if (formData.email !== currentUser?.email) {
+                    const { data: existingEmailUser } = await supabase
+                        .from('users')
+                        .select('id')
+                        .eq('email', formData.email)
+                        .neq('id', currentCustomer.auth_id)
+                        .single();
+
+                    if (existingEmailUser) {
+                        validationErrors.push('A user with this email address already exists');
+                    }
+                }
+
+                // Check if phone is being changed and if new phone already exists
+                if (formData.phone !== currentUser?.phone_number) {
+                    const { data: existingPhoneUser } = await supabase
+                        .from('users')
+                        .select('id')
+                        .eq('phone_number', formData.phone)
+                        .neq('id', currentCustomer.auth_id)
+                        .single();
+
+                    if (existingPhoneUser) {
+                        validationErrors.push('A user with this phone number already exists');
+                    }
+                }
+
+                // If there are validation errors, throw a summarized message
+                if (validationErrors.length > 0) {
+                    if (validationErrors.length === 1) {
+                        throw new Error(validationErrors[0]);
+                    } else {
+                        throw new Error('The email address and phone number you entered are already in use by other users');
+                    }
+                }
+
+                const { data: user, error: userError } = await supabase
                     .from('users')
                     .update({
                         fullname: formData.name,
@@ -552,14 +602,12 @@ export class ClientsApi {
 
                 if (userError) {
                     console.error('Error updating user:', userError);
-                    // Don't throw here, as the customer update succeeded
-                    console.warn('Customer updated but user update failed:', userError);
+                    throw userError;
                 }
             }
 
             // Fetch the updated customer with user data
             const updatedClient = await this.getCustomerById(id);
-            console.log("✅ Client updated successfully:", updatedClient);
             return updatedClient;
         } catch (error) {
             console.error('Failed to update customer from form:', error);

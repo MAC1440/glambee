@@ -47,12 +47,11 @@ import { Check, X, Edit2 } from "lucide-react";
 export function ClientDetail({ clientId }: { clientId: string }) {
   const [client, setClient] = useState<ClientWithDetails | null>(null);
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
-  // console.log("Appointments: ", appointments)
-  // console.log("Client id: ", clientId)
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
   const [staffOptions, setStaffOptions] = useState<Array<{id: string, name: string}>>([]);
+  const [isFormLoading, setIsFormLoading] = useState(false);
   const { toast } = useToast();
 
   // Fetch staff options
@@ -80,14 +79,11 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         
         // Fetch client data
         const clientData = await ClientsApi.getCustomerById(clientId);
-        // console.log("Client data: ", clientData)
         setClient(clientData);
         
         // Fetch appointments for this client
         if (clientData) {
-          // console.log("Fetching appointments for client:", clientId);
           const appointmentsData = await AppointmentsApi.getAppointmentsByCustomerId(clientId);
-          // console.log("Appointments data: ", appointmentsData?.map((item) => new Date(item?.start_time || item?.date)))
           setAppointments(appointmentsData);
         }
       } catch (error) {
@@ -152,13 +148,9 @@ export function ClientDetail({ clientId }: { clientId: string }) {
   
   const handleSaveClient = async (updatedClientData: ClientFormData) => {
     try {
-      console.log("🚀 Starting client update...");
-      console.log("Update data: ", updatedClientData);
-      
+      setIsFormLoading(true)
       // Update client using comprehensive API - this will update both customers and users tables
       const updatedClient = await ClientsApi.updateCustomerFromForm(clientId, updatedClientData);
-      
-      console.log("✅ Client updated successfully:", updatedClient);
       
       if (updatedClient) {
         setClient(updatedClient);
@@ -173,13 +165,15 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         });
       }
       setIsFormOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error updating client:", error);
       toast({
         title: "Error",
-        description: "Failed to update client. Please try again.",
+        description: error?.message,
         variant: "destructive",
       });
+    } finally {
+      setIsFormLoading(false);
     }
   };
 
@@ -566,6 +560,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         onOpenChange={setIsFormOpen}
         client={client as any}
         onSave={handleSaveClient}
+        isLoading={isFormLoading}
     />
     </>
   );

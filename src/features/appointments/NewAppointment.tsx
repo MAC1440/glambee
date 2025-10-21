@@ -31,7 +31,6 @@ export function NewAppointment({
   const [appointmentsList, setAppointmentsList] = useState<AppointmentWithDetails[]>(appointments);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
-  // console.log("Services to book: ", servicesToBook)
   const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -178,7 +177,6 @@ export function NewAppointment({
 
     // Group services by staff member (allow null for unassigned services)
     const servicesByStaff = new Map<string | null, CartItem[]>();
-    // console.log("Services by staff: ", servicesByStaff)
     
     servicesToBook.forEach(item => {
         let staffId: string | null = null;
@@ -188,7 +186,6 @@ export function NewAppointment({
         } else {
             // No artist selected - will be assigned to null staff
             staffId = null;
-            // console.log(`No artist selected for service: ${item.service.name} - will be unassigned`);
         }
         
         if (!servicesByStaff.has(staffId)) {
@@ -227,7 +224,7 @@ export function NewAppointment({
 
     try {
       setIsLoading(true);
-      // console.log("Creating appointments: ", appointmentsToCreate)
+
       // Create all appointments
       const createdAppointments = [];
       for (const appointmentData of appointmentsToCreate) {

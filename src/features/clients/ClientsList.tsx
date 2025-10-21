@@ -50,7 +50,6 @@ type ClientsListProps = {
 
 export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsListProps) {
     const [customers, setCustomers] = useState<any[]>([]);
-    console.log("Customers: ", customers)
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormLoading, setIsFormLoading] = useState(false);
@@ -61,7 +60,6 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
       try {
         setIsLoading(true);
         const response = await ClientsApi.getCustomers();
-        // console.log("Clients response: ", response)
         // API now returns PaginatedResponse, extract data array
         setCustomers(response.data || []);
       } catch (error) {
@@ -110,11 +108,9 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
   const handleSaveClient = async (clientData: ClientFormData) => {
     try {
       setIsFormLoading(true);
-      console.log("🚀 Starting client creation...");
       
       // Call the API to create the client
       const newClient = await ClientsApi.createCustomerFromForm(clientData);
-      console.log("✅ Client created successfully: ", newClient);
 
       // Show success toast and refresh data
       if(newClient) {

@@ -74,7 +74,6 @@ export function ClientForm({ client, onSave, onCancel, isLoading = false }: Clie
       // dob: client?.dob ? new Date(client.dob) : undefined,
     },
   });
-  console.log("Form: ", form)
 
   const onSubmit = async (values: ClientFormData) => {
       // If nothing changed, do nothing (no API call, no toast) and close dialog

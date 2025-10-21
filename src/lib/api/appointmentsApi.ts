@@ -290,8 +290,6 @@ export class AppointmentsApi {
      */
     static async createAppointment(appointmentData: CreateAppointmentData): Promise<AppointmentWithDetails> {
         try {
-            console.log("🚀 Creating appointment:", appointmentData);
-
             // Get default salon ID
             const salonId = await this.getDefaultSalonId();
 
@@ -370,8 +368,6 @@ export class AppointmentsApi {
                 // Don't throw here, appointment was created successfully
                 console.warn('Appointment created but services failed:', servicesError);
             }
-
-            console.log("✅ Appointment created successfully:", appointment);
             
             // Return the created appointment with details
             const response = await this.getAppointments({ customerId: appointmentData.customerId });
