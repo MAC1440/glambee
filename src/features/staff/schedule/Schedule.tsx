@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -23,8 +23,7 @@ import { CalendarView } from "./CalendarView";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusCircle, LayoutGrid, Calendar, ChevronsUpDown } from "lucide-react";
-import { staff as allStaff } from "@/lib/placeholder-data";
+import { PlusCircle, LayoutGrid, Calendar, ChevronsUpDown, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,18 +32,66 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AppointmentsApi, type AppointmentWithDetails } from "@/lib/api/appointmentsApi";
+import { StaffApi, type StaffWithCategories } from "@/lib/api/staffApi";
 
-
-export function Schedule({ appointments }: { appointments: ScheduleAppointment[] }) {
+export function Schedule() {
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
+  console.log("Appointments: ", appointments);
+  const [staff, setStaff] = useState<StaffWithCategories[]>([]);
+  console.log("Staff: ", staff);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch appointments and staff data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Fetch appointments and staff in parallel
+        const [appointmentsResponse, staffResponse] = await Promise.all([
+          AppointmentsApi.getAppointments(),
+          StaffApi.getStaff()
+        ]);
+        
+        setAppointments(appointmentsResponse.data || []);
+        setStaff(staffResponse.data || []);
+      } catch (err) {
+        console.error('Error fetching schedule data:', err);
+        setError('Failed to load schedule data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Transform appointments to ScheduleAppointment format
+  const scheduleAppointments: ScheduleAppointment[] = useMemo(() => {
+    return appointments.map(apt => ({
+      id: apt.id,
+      customerName: apt.customer?.name || 'Unknown Customer',
+      customerAvatar: apt.customer?.avatar || `https://picsum.photos/seed/${apt.customer?.name}/100`,
+      service: apt.services?.map(s => s.name).join(', ') || 'No Service',
+      start: new Date(apt.start_time || new Date()),
+      end: new Date(apt.end_time || new Date()),
+      staffId: apt.staff?.id || 'unassigned'
+    }));
+  }, [appointments]);
 
   const filteredAppointments = useMemo(() => {
     if (!selectedStaffId) {
-      return appointments;
+      return scheduleAppointments;
     }
-    return appointments.filter((apt) => apt.staffId === selectedStaffId);
-  }, [appointments, selectedStaffId]);
+    return scheduleAppointments.filter((apt) => apt.staffId === selectedStaffId);
+  }, [scheduleAppointments, selectedStaffId]);
   
+  console.log("Schedule Appointments: ", scheduleAppointments);
+  console.log("Filtered Appointments: ", filteredAppointments);
   const todayAppointments = filteredAppointments.filter((apt) =>
     isToday(apt.start)
   );
@@ -60,20 +107,23 @@ export function Schedule({ appointments }: { appointments: ScheduleAppointment[]
   const calendarEvents = filteredAppointments
     .filter(apt => apt.service && apt.customerName)
     .map((apt) => {
-    return {
-      title: `${apt.service} - ${apt.customerName}`,
-      start: apt.start,
-      end: apt.end,
-      resource: apt,
-    };
-  });
+      const staffMember = staff.find(s => s.id === apt.staffId);
+      const staffName = staffMember?.name || 'Unassigned';
+      
+      return {
+        title: `${apt.service} - ${apt.customerName} - ${staffName}`,
+        start: apt.start,
+        end: apt.end,
+        resource: apt,
+      };
+    });
 
   const selectedStaffName = useMemo(() => {
     if (!selectedStaffId) {
       return "All Staff";
     }
-    return allStaff.find(s => s.id === selectedStaffId)?.name || "All Staff";
-  }, [selectedStaffId]);
+    return staff.find(s => s.id === selectedStaffId)?.name || "All Staff";
+  }, [selectedStaffId, staff]);
 
   const renderAppointmentTable = (
     appointments: ScheduleAppointment[],
@@ -135,6 +185,52 @@ export function Schedule({ appointments }: { appointments: ScheduleAppointment[]
     </Table>
   );
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <div className="text-left">
+            <h1 className="text-4xl font-headline font-bold">Schedule</h1>
+            <p className="text-muted-foreground mt-2">
+              Here are your upcoming appointments.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-muted-foreground">Loading schedule...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <div className="text-left">
+            <h1 className="text-4xl font-headline font-bold">Schedule</h1>
+            <p className="text-muted-foreground mt-2">
+              Here are your upcoming appointments.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-destructive">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8">
        <Tabs defaultValue="calendar">
@@ -164,12 +260,12 @@ export function Schedule({ appointments }: { appointments: ScheduleAppointment[]
                   <DropdownMenuItem onSelect={() => setSelectedStaffId(null)}>
                     All Staff
                   </DropdownMenuItem>
-                  {allStaff.map((staff) => (
+                  {staff.map((staffMember) => (
                     <DropdownMenuItem
-                      key={staff.id}
-                      onSelect={() => setSelectedStaffId(staff.id)}
+                      key={staffMember.id}
+                      onSelect={() => setSelectedStaffId(staffMember.id)}
                     >
-                      {staff.name}
+                      {staffMember.name}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>

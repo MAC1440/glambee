@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState }from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppointmentsTable } from "./AppointmentsTable";
 import { QuickActions } from "./QuickActions";
 import {
@@ -17,25 +17,64 @@ import {
   CircleDollarSign,
   Users,
   Repeat,
+  Loader2,
 } from "lucide-react";
 import { RevenueChart } from "./RevenueChart";
 import type { ScheduleAppointment } from "@/lib/schedule-data";
 import { DashboardCalendar } from "./DashboardCalendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isThisMonth, isThisWeek, isToday, format, parseISO } from "date-fns";
-import type { Appointment } from "@/lib/api/servicesApi";
-import { appointments as mockAppointments } from "@/lib/placeholder-data";
+import { AppointmentsApi, type AppointmentWithDetails } from "@/lib/api/appointmentsApi";
+import { StaffApi, type StaffWithCategories } from "@/lib/api/staffApi";
+import { Button } from "@/components/ui/button";
 
-export function Dashboard({
-  todayAppointments,
-  allAppointments,
-}: {
-  todayAppointments: Appointment[];
-  allAppointments: ScheduleAppointment[];
-}) {
+export function Dashboard() {
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
+  const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
+  const [staff, setStaff] = useState<StaffWithCategories[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredAppointments = allAppointments.filter(apt => {
+  // Fetch appointments and staff data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Fetch appointments and staff in parallel
+        const [appointmentsResponse, staffResponse] = await Promise.all([
+          AppointmentsApi.getAppointments(),
+          StaffApi.getStaff()
+        ]);
+        
+        setAppointments(appointmentsResponse.data || []);
+        setStaff(staffResponse.data || []);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Transform appointments to ScheduleAppointment format
+  const scheduleAppointments: ScheduleAppointment[] = useMemo(() => {
+    return appointments.map(apt => ({
+      id: apt.id,
+      customerName: apt.customer?.name || 'Unknown Customer',
+      customerAvatar: apt.customer?.avatar || `https://picsum.photos/seed/${apt.customer?.name}/100`,
+      service: apt.services?.map(s => s.name).join(', ') || 'No Service',
+      start: new Date(apt.start_time || new Date()),
+      end: new Date(apt.end_time || new Date()),
+      staffId: apt.staff?.id || 'unassigned'
+    }));
+  }, [appointments]);
+
+  const filteredAppointments = scheduleAppointments.filter(apt => {
     if (period === "today") return isToday(apt.start);
     if (period === "week") return isThisWeek(apt.start, { weekStartsOn: 1 });
     if (period === "month") return isThisMonth(apt.start);
@@ -43,22 +82,22 @@ export function Dashboard({
   });
   
   // Convert ScheduleAppointment to Appointment for consistency and to add price
-  const convertedFilteredAppointments: Appointment[] = filteredAppointments.map(apt => {
-    // Find the original service from the complete mock data to get the price
-    const originalService = mockAppointments.find(a => a.service === apt.service);
-    const price = originalService ? originalService.price : 0;
+  const convertedFilteredAppointments = filteredAppointments.map(apt => {
+    // Get price from the original appointment data
+    const originalAppointment = appointments.find(a => a.id === apt.id);
+    const price = originalAppointment?.bill || 0;
 
     return {
         id: apt.id,
-        salonId: 'salon_01', // Mock
+        salonId: originalAppointment?.salon_id || 'salon_01',
         customer: {
-            id: `cust_${apt.customerName}`, // Mock
-            phone: '', // Mock
+            id: originalAppointment?.customer?.id || `cust_${apt.customerName}`,
+            phone: originalAppointment?.customer?.phone_number || '',
             name: apt.customerName,
-            email: `${apt.customerName.toLowerCase().replace(' ', '.')}@example.com` // Mock
+            email: originalAppointment?.customer?.email || `${apt.customerName.toLowerCase().replace(' ', '.')}@example.com`
         },
         service: apt.service,
-        staff: originalService?.staff || 'Unknown', // Mock
+        staff: originalAppointment?.staff?.name || 'Unknown',
         date: format(apt.start, 'yyyy-MM-dd'),
         time: format(apt.start, 'p'),
         price: price,
@@ -89,6 +128,36 @@ export function Dashboard({
     }
   }
 
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-muted-foreground">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-destructive">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -194,7 +263,7 @@ export function Dashboard({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <DashboardCalendar allAppointments={allAppointments} period={period} />
+              <DashboardCalendar allAppointments={scheduleAppointments} staff={staff} period={period} />
             </CardContent>
           </Card>
         </div>

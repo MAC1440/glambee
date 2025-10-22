@@ -611,9 +611,9 @@ export class ClientsApi {
             return updatedClient;
         } catch (error) {
             console.error('Failed to update customer from form:', error);
-            throw error;
-        }
+      throw error;
     }
+  }
 
   /**
    * Delete a customer

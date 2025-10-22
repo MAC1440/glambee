@@ -235,7 +235,19 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                       </TableCell>
                       <TableCell className="text-right">
                         {isSelectMode ? (
-                           <Button variant="default" onClick={() => onClientSelect?.(client)}>
+                           <Button variant="default" 
+                           onClick={() => {
+                            // Update the URL with clientId (no reload, no redirect)
+                            const url = new URL(window.location.href);
+                            console.log("Check url: ", url)
+                            url.searchParams.set("clientId", client.id);
+                            console.log("Check url after setting clientId: ", url)
+                            window.history.pushState({}, "", url);
+                            console.log("Check url after pushing state: ", url)
+                            // Then call parent callback to select client
+                            onClientSelect?.(client);
+                          }}
+                           >
                                 <UserCheck className="mr-2 h-4 w-4" /> Select
                             </Button>
                         ) : (
