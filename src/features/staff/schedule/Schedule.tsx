@@ -281,20 +281,22 @@ export function Schedule() {
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[180px]">
+                <DropdownMenuContent className="w-[180px] max-h-[300px]">
                   <DropdownMenuLabel>Filter by Staff</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => setSelectedStaffId(null)}>
-                    All Staff
-                  </DropdownMenuItem>
-                  {staff.map((staffMember) => (
-                    <DropdownMenuItem
-                      key={staffMember.id}
-                      onSelect={() => setSelectedStaffId(staffMember.id)}
-                    >
-                      {staffMember.name}
+                  <DropdownMenuSeparator className="sticky top-0 z-10" />
+                  <div className="max-h-[240px] overflow-y-auto">
+                    <DropdownMenuItem onSelect={() => setSelectedStaffId(null)}>
+                      All Staff
                     </DropdownMenuItem>
-                  ))}
+                    {staff.map((staffMember) => (
+                      <DropdownMenuItem
+                        key={staffMember.id}
+                        onSelect={() => setSelectedStaffId(staffMember.id)}
+                      >
+                        {staffMember.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
 
