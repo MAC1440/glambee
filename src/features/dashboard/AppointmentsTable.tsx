@@ -51,45 +51,47 @@ export function AppointmentsTable({
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Customer</TableHead>
-              <TableHead>Service</TableHead>
-              <TableHead className="text-right">Time</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {appointments.length > 0 ? (
-              appointments.slice(0, 5).map((apt) => (
-                <TableRow key={apt.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage
-                          src={`https://picsum.photos/seed/${apt.customer.name}/100`}
-                          alt="Avatar"
-                        />
-                        <AvatarFallback>
-                          {apt.customer.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="font-medium">{apt.customer.name}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{apt.service}</TableCell>
-                  <TableCell className="text-right">{apt.time}</TableCell>
-                </TableRow>
-              ))
-            ) : (
+        <div className="max-h-80 overflow-y-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={3} className="text-center h-24">
-                  No appointments for this period.
-                </TableCell>
+                <TableHead>Customer</TableHead>
+                <TableHead>Service</TableHead>
+                <TableHead className="text-right">Time</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {appointments?.length > 0 ? (
+                appointments?.map((apt) => (
+                  <TableRow key={apt.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage
+                            src={`https://picsum.photos/seed/${apt.customer.name}/100`}
+                            alt="Avatar"
+                          />
+                          <AvatarFallback>
+                            {apt.customer.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="font-medium">{apt.customer.name}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{apt.service}</TableCell>
+                    <TableCell className="text-right">{apt.time}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center h-24">
+                    No appointments for this period.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </>
   );

@@ -6,8 +6,8 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CustomToolbar } from './Toolbar';
-import { useState, useMemo }from 'react';
-import type { SlotInfo } from 'react-big-calendar';
+import { useState, useMemo, useCallback }from 'react';
+import type { SlotInfo, NavigateAction } from 'react-big-calendar';
 import { staff } from '@/lib/placeholder-data';
 
 const locales = {
@@ -43,6 +43,11 @@ export function CalendarView({
     showToolbar?: boolean 
 }) {
   const [view, setView] = useState<View>(defaultView);
+  const [date, setDate] = useState(new Date());
+
+  const handleNavigate = useCallback((newDate: Date, view: View, action: NavigateAction) => {
+    setDate(newDate);
+  }, []);
 
   const staffColorMap = useMemo(() => {
     const map = new Map<string, { light: string, dark: string }>();
@@ -105,7 +110,9 @@ export function CalendarView({
         style={{ height: '100%' }}
         views={[Views.MONTH, Views.WEEK, Views.DAY]}
         view={view}
+        date={date}
         onView={(view) => setView(view)}
+        onNavigate={handleNavigate}
         onDrillDown={onDrillDown}
         selectable={!!onSelectSlot}
         onSelectSlot={onSelectSlot}

@@ -10,20 +10,36 @@ import { format, isSameDay } from 'date-fns';
 import type { ScheduleAppointment } from '@/lib/schedule-data';
 import type { SlotInfo, View } from 'react-big-calendar';
 import { Views } from 'react-big-calendar';
+import type { StaffWithCategories } from '@/lib/api/staffApi';
 
-export function DashboardCalendar({ allAppointments, period }: { allAppointments: ScheduleAppointment[], period: 'today' | 'week' | 'month' }) {
+export function DashboardCalendar({ 
+  allAppointments, 
+  staff = [],
+  period 
+}: { 
+  allAppointments: ScheduleAppointment[], 
+  staff?: StaffWithCategories[],
+  period: 'today' | 'week' | 'month' 
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedAppointments, setSelectedAppointments] = useState<ScheduleAppointment[]>([]);
 
   const calendarEvents = useMemo(() => {
-    return allAppointments.map((apt) => ({
-      title: apt.service,
-      start: apt.start,
-      end: apt.end,
-      resource: apt,
-    }));
-  }, [allAppointments]);
+    return allAppointments.map((apt) => {
+      // Find staff name from the appointment data
+      const staffName = apt.staffId && apt.staffId !== 'unassigned' 
+        ? staff.find(s => s.id === apt.staffId)?.name || 'Unknown Staff'
+        : 'Unassigned';
+      
+      return {
+        title: `${apt.service} - ${apt.customerName} - ${staffName}`,
+        start: apt.start,
+        end: apt.end,
+        resource: apt,
+      };
+    });
+  }, [allAppointments, staff]);
 
   const handleDateClick = (slotInfo: SlotInfo | Date) => {
     const date = slotInfo instanceof Date ? slotInfo : slotInfo.start;

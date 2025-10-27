@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AppointmentsApi, type AppointmentWithDetails, type CreateAppointmentData } from "@/lib/api/appointmentsApi";
 import { ClientsApi, type ClientWithDetails } from "@/lib/api/clientsApi";
 import { StaffApi } from "@/lib/api/staffApi";
+import Link from "next/link";
 
 type Client = ClientWithDetails;
 
@@ -32,6 +33,7 @@ export function NewAppointment({
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
+  console.log("Selected client: ", selectedClient)
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch appointments on component mount if not provided
@@ -306,8 +308,10 @@ export function NewAppointment({
                         <User className="h-4 w-4" /> Booking for {selectedClient.name}
                     </p>
                 </div>
-                 <Button variant="outline" onClick={() => setSelectedClient(null)}>
+                 <Button asChild variant="outline" onClick={() => setSelectedClient(null)}>
+                  <Link href="/appointments">
                     <ArrowLeft className="mr-2 h-4 w-4" /> Change Client
+                  </Link>
                 </Button>
             </div>
              <p className="text-muted-foreground mt-2">
