@@ -43,6 +43,9 @@ export function Schedule() {
   console.log("Staff: ", staff);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // You can adjust this
+
 
   // Fetch appointments and staff data
   useEffect(() => {
@@ -70,6 +73,10 @@ export function Schedule() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStaffId]);
+  
   // Transform appointments to ScheduleAppointment format
   const scheduleAppointments: ScheduleAppointment[] = useMemo(() => {
     return appointments.map(apt => ({
@@ -128,62 +135,86 @@ export function Schedule() {
   const renderAppointmentTable = (
     appointments: ScheduleAppointment[],
     showDate: boolean = false
-  ) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Customer</TableHead>
-          <TableHead>Service</TableHead>
-          {showDate && (
-            <TableHead className="hidden md:table-cell">Date</TableHead>
-          )}
-          <TableHead className="text-right">Time</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {appointments.length > 0 ? (
-          appointments
-            .sort(
-              (a, b) =>
-                a.start.getTime() - b.start.getTime()
-            )
-            .map((apt) => (
-              <TableRow key={apt.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9">
-                      <AvatarImage
-                        src={apt.customerAvatar}
-                        alt="Avatar"
-                      />
-                      <AvatarFallback>
-                        {apt.customerName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{apt.customerName}</div>
+  ) => {
+    const totalPages = Math.ceil(appointments.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentAppointments = appointments
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      .slice(startIndex, startIndex + itemsPerPage);
+  
+    return (
+      <div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Customer</TableHead>
+              <TableHead>Service</TableHead>
+              {showDate && <TableHead className="hidden md:table-cell">Date</TableHead>}
+              <TableHead className="text-right">Time</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {currentAppointments.length > 0 ? (
+              currentAppointments.map((apt) => (
+                <TableRow key={apt.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={apt.customerAvatar} alt="Avatar" />
+                        <AvatarFallback>{apt.customerName.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{apt.customerName}</div>
+                      </div>
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>{apt.service}</TableCell>
-                {showDate && (
-                  <TableCell className="hidden md:table-cell">
-                    {format(apt.start, "PPP")}
                   </TableCell>
-                )}
-                <TableCell className="text-right">{format(apt.start, "p")}</TableCell>
+                  <TableCell>{apt.service}</TableCell>
+                  {showDate && (
+                    <TableCell className="hidden md:table-cell">
+                      {format(apt.start, "PPP")}
+                    </TableCell>
+                  )}
+                  <TableCell className="text-right">{format(apt.start, "p")}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={showDate ? 4 : 3} className="text-center h-24">
+                  No appointments scheduled.
+                </TableCell>
               </TableRow>
-            ))
-        ) : (
-          <TableRow>
-            <TableCell colSpan={showDate ? 4 : 3} className="text-center h-24">
-              No appointments scheduled.
-            </TableCell>
-          </TableRow>
+            )}
+          </TableBody>
+        </Table>
+  
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-end items-center gap-2 py-4 pr-4">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+            >
+              Next
+            </Button>
+          </div>
         )}
-      </TableBody>
-    </Table>
-  );
+      </div>
+    );
+  };
+  
 
   // Loading state
   if (isLoading) {
@@ -281,7 +312,7 @@ export function Schedule() {
         </div>
 
         <TabsContent value="grid" className="mt-4">
-          <Tabs defaultValue="day">
+          <Tabs defaultValue="day" onValueChange={() => setCurrentPage(1)}>
             <TabsList>
               <TabsTrigger value="day">Day</TabsTrigger>
               <TabsTrigger value="week">Week</TabsTrigger>

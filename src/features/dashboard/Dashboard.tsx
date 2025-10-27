@@ -105,10 +105,55 @@ export function Dashboard() {
   });
 
 
-  const totalRevenue = convertedFilteredAppointments.reduce((sum, apt) => sum + apt.price, 0);
+  // Calculate total revenue for all appointments (not just filtered period)
+  const totalRevenue = scheduleAppointments.reduce((sum, apt) => {
+    const originalAppointment = appointments.find(a => a.id === apt.id);
+    return sum + (originalAppointment?.bill || 0);
+  }, 0);
+
+  // Calculate period-specific revenue
+  const periodRevenue = convertedFilteredAppointments.reduce((sum, apt) => sum + apt.price, 0);
   
-  // Mock data for other stats as we don't have historical data
-  const newClients = period === 'today' ? 12 : (period === 'week' ? 45 : 150);
+  // Calculate new clients dynamically
+  const newClients = useMemo(() => {
+    const startDate = new Date();
+    switch (period) {
+      case "today":
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case "week":
+        startDate.setDate(startDate.getDate() - 7);
+        break;
+      case "month":
+        startDate.setMonth(startDate.getMonth() - 1);
+        break;
+    }
+    
+    // Count unique customers who have appointments in the period
+    const periodCustomers = new Set();
+    convertedFilteredAppointments.forEach(apt => {
+      periodCustomers.add(apt.customer.id);
+    });
+    
+    return periodCustomers.size;
+  }, [convertedFilteredAppointments, period]);
+
+  // Calculate recurring clients percentage
+  const recurringClientsPercentage = useMemo(() => {
+    if (convertedFilteredAppointments.length === 0) return 0;
+    
+    // Count customers with more than one appointment
+    const customerAppointmentCounts = new Map();
+    convertedFilteredAppointments.forEach(apt => {
+      const count = customerAppointmentCounts.get(apt.customer.id) || 0;
+      customerAppointmentCounts.set(apt.customer.id, count + 1);
+    });
+    
+    const totalCustomers = customerAppointmentCounts.size;
+    const recurringCustomers = Array.from(customerAppointmentCounts.values()).filter(count => count > 1).length;
+    
+    return totalCustomers > 0 ? Math.round((recurringCustomers / totalCustomers) * 100) : 0;
+  }, [convertedFilteredAppointments]);
   
   const getCardTitle = () => {
     switch (period) {
@@ -181,7 +226,7 @@ export function Dashboard() {
             <CardContent>
                 <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
                 <p className="text-xs text-muted-foreground">
-                +20.1% from last month
+                Total revenue from all appointments
                 </p>
             </CardContent>
             </Card>
@@ -205,9 +250,9 @@ export function Dashboard() {
                 <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">+{newClients}</div>
+                <div className="text-2xl font-bold">{newClients}</div>
                 <p className="text-xs text-muted-foreground">
-                In this period
+                Unique clients in this period
                 </p>
             </CardContent>
             </Card>
@@ -217,7 +262,7 @@ export function Dashboard() {
                 <Repeat className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">63%</div>
+                <div className="text-2xl font-bold">{recurringClientsPercentage}%</div>
                 <p className="text-xs text-muted-foreground">
                 Of clients have more than one appointment
                 </p>
@@ -248,6 +293,9 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <RevenueChart appointments={convertedFilteredAppointments} period={period} />
+            <div className="mt-4 text-sm text-muted-foreground">
+              Period Revenue: ${periodRevenue.toFixed(2)} | Total Revenue: ${totalRevenue.toFixed(2)}
+            </div>
           </CardContent>
         </Card>
       </div>
