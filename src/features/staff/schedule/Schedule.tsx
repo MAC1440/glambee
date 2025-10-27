@@ -88,6 +88,9 @@ export function Schedule() {
     }));
   }, [appointments]);
 
+  console.log("Appointments: ", appointments);
+  console.log("Schedule Appointments: ", scheduleAppointments);
+
   const filteredAppointments = useMemo(() => {
     if (!selectedStaffId) {
       return scheduleAppointments;
@@ -95,6 +98,8 @@ export function Schedule() {
     return scheduleAppointments.filter((apt) => apt.staffId === selectedStaffId);
   }, [scheduleAppointments, selectedStaffId]);
   
+  console.log("Filtered Appointments: ", filteredAppointments);
+
   const todayAppointments = filteredAppointments.filter((apt) =>
     isToday(apt.start)
   );
@@ -102,6 +107,7 @@ export function Schedule() {
   const weeklyAppointments = filteredAppointments.filter((apt) =>
     isThisWeek(apt.start, { weekStartsOn: 0 })
   );
+  console.log("Filtered appointments weekly: ", weeklyAppointments);
 
   const monthlyAppointments = filteredAppointments.filter((apt) =>
     isThisMonth(apt.start)
@@ -137,6 +143,8 @@ export function Schedule() {
     const currentAppointments = appointments
       .sort((a, b) => a.start.getTime() - b.start.getTime())
       .slice(startIndex, startIndex + itemsPerPage);
+
+    console.log("Current appointments: ", currentAppointments);
   
     return (
       <div>

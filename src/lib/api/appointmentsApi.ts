@@ -63,7 +63,7 @@ export class AppointmentsApi {
      */
     static async getAppointments(filters: AppointmentFilters = {}): Promise<PaginatedResponse<AppointmentWithDetails>> {
         try {
-            const limit = filters.limit || 50;
+            const limit = filters.limit;
             const offset = filters.offset || 0;
 
             let query = supabase
@@ -107,10 +107,15 @@ export class AppointmentsApi {
                 query = query.lte('date', filters.dateTo);
             }
 
-            const { data: appointments, error, count } = await query
-                .order('date', { ascending: false })
-                .order('start_time', { ascending: false })
-                .range(offset, offset + limit - 1);
+            // Apply ordering
+            query = query.order('date', { ascending: false }).order('start_time', { ascending: false });
+            
+            // Apply range only if limit is specified
+            if (limit !== undefined && limit > 0) {
+                query = query.range(offset, offset + limit - 1);
+            }
+            
+            const { data: appointments, error, count } = await query;
 
             if (error) {
                 console.error('Error fetching appointments:', error);
@@ -167,7 +172,7 @@ export class AppointmentsApi {
             return {
                 data: appointmentsWithDetails,
                 count: count || 0,
-                hasMore: (offset + limit) < (count || 0)
+                hasMore: limit !== undefined ? (offset + limit) < (count || 0) : false
             };
         } catch (error) {
             console.error('Failed to fetch appointments:', error);
