@@ -38,9 +38,7 @@ import { StaffApi, type StaffWithCategories } from "@/lib/api/staffApi";
 export function Schedule() {
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
-  console.log("Appointments: ", appointments);
   const [staff, setStaff] = useState<StaffWithCategories[]>([]);
-  console.log("Staff: ", staff);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -97,14 +95,12 @@ export function Schedule() {
     return scheduleAppointments.filter((apt) => apt.staffId === selectedStaffId);
   }, [scheduleAppointments, selectedStaffId]);
   
-  console.log("Schedule Appointments: ", scheduleAppointments);
-  console.log("Filtered Appointments: ", filteredAppointments);
   const todayAppointments = filteredAppointments.filter((apt) =>
     isToday(apt.start)
   );
 
   const weeklyAppointments = filteredAppointments.filter((apt) =>
-    isThisWeek(apt.start, { weekStartsOn: 1 })
+    isThisWeek(apt.start, { weekStartsOn: 0 })
   );
 
   const monthlyAppointments = filteredAppointments.filter((apt) =>

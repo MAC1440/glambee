@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 export function Dashboard() {
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
+  console.log("Appointments: ", appointments);
   const [staff, setStaff] = useState<StaffWithCategories[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,10 +74,11 @@ export function Dashboard() {
       staffId: apt.staff?.id || 'unassigned'
     }));
   }, [appointments]);
+  console.log("Schedule Appointments: ", scheduleAppointments);
 
   const filteredAppointments = scheduleAppointments.filter(apt => {
     if (period === "today") return isToday(apt.start);
-    if (period === "week") return isThisWeek(apt.start, { weekStartsOn: 1 });
+    if (period === "week") return isThisWeek(apt.start, { weekStartsOn: 0 });
     if (period === "month") return isThisMonth(apt.start);
     return false;
   });
@@ -108,8 +110,12 @@ export function Dashboard() {
   // Calculate total revenue for all appointments (not just filtered period)
   const totalRevenue = scheduleAppointments.reduce((sum, apt) => {
     const originalAppointment = appointments.find(a => a.id === apt.id);
+    console.log("Original Appointment: ", originalAppointment);
     return sum + (originalAppointment?.bill || 0);
   }, 0);
+  console.log("Schedule Appointments length: ", scheduleAppointments?.length);
+  console.log("Appointments length: ", appointments?.length);
+  console.log("Revenue: ", totalRevenue);
 
   // Calculate period-specific revenue
   const periodRevenue = convertedFilteredAppointments.reduce((sum, apt) => sum + apt.price, 0);
