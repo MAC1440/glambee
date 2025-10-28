@@ -38,20 +38,16 @@ type ServiceFormDialogProps = {
   service?: Service;
   onSave: (service: Service) => void;
   saving?: boolean;
+  categories: Category[];
+  loadingCategories?: boolean;
 };
 
 const formSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  description: z.string().min(10, { message: "Description is too short." }),
   price: z.coerce.number().positive("Price must be greater than zero."),
-  originalPrice: z.coerce.number().optional().nullable(),
-  category: z.string().min(1, "Category is required."),
-  duration: z.coerce.number().int("Duration must be a whole number.").positive("Duration must be greater than zero."),
-  includedServices: z.array(z.object({
-    value: z.string(),
-    label: z.string(),
-  })).optional(),
+  time: z.string().min(1, "Duration is required."),
+  category_id: z.string().min(1, "Category is required."),
 });
 
 
@@ -62,21 +58,20 @@ export function ServiceFormDialog({
   service,
   onSave,
   saving = false,
+  categories,
+  loadingCategories = false,
 }: ServiceFormDialogProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
+  // const [categories, setCategories] = useState<Category[]>([]);
+  // const [loadingCategories, setLoadingCategories] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: service?.id || undefined,
+      id: service?.id,
       name: service?.name || "",
-      description: service?.description || "",
-      price: typeof service?.price === "number" ? service.price : parseFloat(service?.price || "0"),
-      originalPrice: service?.originalPrice || null,
-      category: service?.category || "",
-      duration: service?.duration || 0,
-      includedServices: service?.includedServices || undefined,
+      price: service?.price || 0,
+      time: service?.time,
+      category_id: service?.category_id || "",
     },
   });
 
@@ -85,23 +80,23 @@ export function ServiceFormDialog({
   // Removed unused options for now
 
   // Fetch categories from Supabase
-  useEffect(() => {
-    const loadCategories = async () => {
-      setLoadingCategories(true);
-      try {
-        const fetchedCategories = await fetchCategories();
-        setCategories(fetchedCategories);
-      } catch (error) {
-        console.error('Failed to load categories:', error);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
+  // useEffect(() => {
+  //   const loadCategories = async () => {
+  //     setLoadingCategories(true);
+  //     try {
+  //       const fetchedCategories = await fetchCategories();
+  //       setCategories(fetchedCategories);
+  //     } catch (error) {
+  //       console.error('Failed to load categories:', error);
+  //     } finally {
+  //       setLoadingCategories(false);
+  //     }
+  //   };
 
-    if (isOpen) {
-      loadCategories();
-    }
-  }, [isOpen]);
+  //   if (isOpen) {
+  //     loadCategories();
+  //   }
+  // }, [isOpen]);
 
   // Removed includedServices logic for now
 
@@ -111,12 +106,9 @@ export function ServiceFormDialog({
       form.reset({
         id: service?.id || undefined,
         name: service?.name || "",
-        description: service?.description || "",
-        price: typeof service?.price === "number" ? service.price : parseFloat(service?.price || "0"),
-        originalPrice: service?.originalPrice || null,
-        category: service?.category || "",
-        duration: service?.duration || 0,
-        includedServices: service?.includedServices || undefined,
+        price: service?.price || 0,
+        time: service?.time,
+        category_id: service?.category_id || "",
       });
     }
   }, [isOpen, service, form]);
@@ -150,47 +142,19 @@ export function ServiceFormDialog({
             />
             <FormField
                 control={form.control}
-                name="category"
+                name="time"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <ShadSelect onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCategories || saving}>
+                    <FormLabel>Duration (minutes)</FormLabel>
                     <FormControl>
-                        <SelectTrigger>
-                        <SelectValue placeholder={loadingCategories ? "Loading categories..." : "Select a category"} />
-                        </SelectTrigger>
+                        <Input placeholder="Type minutes here" {...field} type="number" disabled={saving} />
                     </FormControl>
-                    <SelectContent>
-                        {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.title}>{cat.title}</SelectItem>
-                        ))}
-                    </SelectContent>
-                    </ShadSelect>
                     <FormMessage />
                 </FormItem>
                 )}
             />
         </div>
-
-        <FormField
-        control={form.control}
-        name="description"
-        render={({ field }) => (
-            <FormItem>
-            <FormLabel>Description</FormLabel>
-            <FormControl>
-                <Textarea
-                placeholder="Describe the service..."
-                {...field}
-                disabled={saving}
-                />
-            </FormControl>
-            <FormMessage />
-            </FormItem>
-        )}
-        />
         
-        <div className="grid grid-cols-2 gap-4">
         <FormField
             control={form.control}
             name="price"
@@ -210,26 +174,37 @@ export function ServiceFormDialog({
             </FormItem>
             )}
         />
+        
         <FormField
             control={form.control}
-            name="duration"
+            name="category_id"
             render={({ field }) => (
             <FormItem>
-                <FormLabel>Duration (minutes)</FormLabel>
-                <FormControl>
-                <Input 
-                    type="number"
-                    {...field}
-                    onChange={e => field.onChange(e.target.valueAsNumber)}
-                    disabled={saving}
-                />
-                </FormControl>
+                <FormLabel>Category</FormLabel>
+                <ShadSelect onValueChange={field.onChange} defaultValue={field.value} disabled={saving}>
+                    <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {loadingCategories ? (
+                            <SelectItem value="loading" disabled>
+                                Loading categories...
+                            </SelectItem>
+                        ) : (
+                            categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                    {category.name}
+                                </SelectItem>
+                            ))
+                        )}
+                    </SelectContent>
+                </ShadSelect>
                 <FormMessage />
             </FormItem>
             )}
         />
-        </div>
-
     </div>
   );
 
@@ -255,7 +230,7 @@ export function ServiceFormDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={saving}>
+              <Button type="submit" disabled={saving || !form.formState.isDirty}>
                 {saving ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

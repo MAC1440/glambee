@@ -32,11 +32,49 @@ export interface PaginatedResponse<T> {
 
 export class ServicesApi {
   /**
+   * Get or create a default salon ID
+   */
+  private static async getDefaultSalonId(): Promise<string> {
+    try {
+      const { data: existingSalon, error: fetchError } = await supabase
+        .from('salons')
+        .select('id')
+        .limit(1)
+        .single();
+
+      if (existingSalon && !fetchError) {
+        return existingSalon.id;
+      }
+
+      const { data: newSalon, error: createError } = await supabase
+        .from('salons')
+        .insert({
+          name: 'Default Salon',
+          activity_status: 'active',
+          is_premium: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select('id')
+        .single();
+
+      if (createError || !newSalon) {
+        throw new Error('Failed to create default salon');
+      }
+
+      return newSalon.id;
+    } catch (error) {
+      console.error('Error getting default salon:', error);
+      throw new Error('Failed to get salon ID');
+    }
+  }
+
+  /**
    * Get all salon services with optional filtering and pagination
    */
   static async getServices(filters: ServiceFilters = {}): Promise<PaginatedResponse<ServiceWithStaff>> {
     try {
-      const limit = filters.limit || 50;
+      const limit = filters.limit;
       const offset = filters.offset || 0;
 
       let query = supabase
@@ -57,9 +95,13 @@ export class ServicesApi {
         query = query.ilike('name', `%${filters.search}%`);
       }
 
+      query = query.order('created_at', { ascending: false });
+
+      if (limit !== undefined && limit > 0) {
+        query = query.range(offset, offset + limit - 1);
+      }
+
       const { data: services, error, count } = await query
-        .order('name', { ascending: true })
-        .range(offset, offset + limit - 1);
 
       if (error) {
         console.error('Error fetching services:', error);
@@ -81,7 +123,7 @@ export class ServicesApi {
       return {
         data: servicesWithStaff,
         count: count || 0,
-        hasMore: (offset + limit) < (count || 0)
+        hasMore: limit !== undefined ? (offset + limit) < (count || 0) : false
       };
     } catch (error) {
       console.error('Failed to fetch services:', error);
@@ -168,6 +210,11 @@ export class ServicesApi {
    */
   static async createService(serviceData: SalonServiceInsert): Promise<ServiceWithStaff> {
     try {
+      // Ensure salon_id is set
+      if (!serviceData.salon_id) {
+        serviceData.salon_id = await this.getDefaultSalonId();
+      }
+      
       const { data: service, error } = await supabase
         .from('salons_services')
         .insert({

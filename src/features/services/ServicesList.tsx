@@ -40,7 +40,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { supabase } from "@/lib/supabase/client";
+import { ServicesApi } from "@/lib/api/servicesApi";
 
 export type ServiceRecipeItem = {
   itemId: string;
@@ -68,9 +68,6 @@ export function ServicesList() {
   
   // Ref for the DataTable to access TanStack table instance
   const tableRef = React.useRef<any>(null);
-  supabase.auth.getUser().then(({ data, error }) => {
-    console.log("supabase.auth.getUser", data, error);
-  });
 
   // Fetch categories from Supabase
   const fetchCategoriesData = React.useCallback(async () => {
@@ -85,44 +82,15 @@ export function ServicesList() {
     }
   }, []);
 
-  // Fetch services from Supabase with filtering
-  const fetchServices = React.useCallback(async (searchTerm?: string, category?: string) => {
+  // Fetch all services once (no filtering)
+  const fetchServices = React.useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log("🔍 Fetching services from Supabase...", { searchTerm, category });
-      
-      let query = supabase.from("services").select("*");
+      const response = await ServicesApi.getServices();
 
-      // Apply category filter
-      if (category && category !== "all") {
-        query = query.eq("category", category);
-      }
-
-      // Apply search filter across multiple columns
-      if (searchTerm && searchTerm.trim()) {
-        // Search across name, description, and category columns
-        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
-      }
-
-      const { data: services, error } = await query;
-
-      console.log("📊 Supabase response:", { services, error });
-      console.log("📋 Services data:", services);
-      console.log("❌ Error (if any):", error);
-
-      if (error) {
-        console.error("🚨 Supabase error:", error);
-        throw error;
-      }
-
-      console.log(
-        "✅ Services fetched successfully:",
-        services?.length || 0,
-        "items"
-      );
-      setServices((services || []) as unknown as Service[]);
+      setServices(response.data || []);
     } catch (err) {
       console.error("💥 Error fetching services:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch services");
@@ -136,14 +104,27 @@ export function ServicesList() {
     }
   }, [toast]);
 
-  // Debounced search effect
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchServices(searchQuery, categoryFilter);
-    }, 300); // 300ms debounce
+  // Client-side filtering
+  const filteredServices = React.useMemo(() => {
+    let filtered = services;
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery, categoryFilter, fetchServices]);
+    // Apply search filter
+    if (searchQuery && searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(service => 
+        service.name.toLowerCase().includes(query) ||
+        service.time.toLowerCase().includes(query) ||
+        service.price.toString().includes(query)
+      );
+    }
+
+    // Apply category filter (if needed in future)
+    if (categoryFilter && categoryFilter !== "all") {
+      // filtered = filtered.filter(service => service.category_id === categoryFilter);
+    }
+
+    return filtered;
+  }, [services, searchQuery, categoryFilter]);
 
   // Load services and categories on component mount
   React.useEffect(() => {
@@ -161,155 +142,58 @@ export function ServicesList() {
     setCategoryFilter(value);
   };
 
-  // Log services state changes
-  React.useEffect(() => {
-    console.log("📋 Services state updated:", services);
-  }, [services]);
-
-  // Test function to verify Supabase connection
-  const testSupabaseConnection = async () => {
-    try {
-      console.log("🧪 Testing Supabase connection...");
-      const { data, error } = await supabase
-        .from("services")
-        .select("count")
-        .limit(1);
-
-      console.log("🧪 Connection test result:", { data, error });
-
-      if (error) {
-        console.error("🧪 Connection test failed:", error);
-      } else {
-        console.log("✅ Supabase connection successful!");
-      }
-    } catch (err) {
-      console.error("🧪 Connection test error:", err);
-    }
-  };
-
-  // Test connection on component mount
-  React.useEffect(() => {
-    testSupabaseConnection();
-  }, []);
 
   const handleOpenDialog = (
     mode: "add" | "edit",
     service?: Service
   ) => {
-    console.log("🔧 Opening dialog:", { mode, service: service?.name });
     setDialogMode(mode);
     setEditingService(service);
     setDialogOpen(true);
   };
 
-  const handleSave = async (serviceData: Service) => {
+  const handleSave = async (serviceData: any) => {
     try {
       setSaving(true);
-      console.log("💾 Saving service:", {
-        dialogMode,
-        serviceData: {
-          name: serviceData.name,
-          description: serviceData.description,
-          price: serviceData.price,
-          duration: serviceData.duration,
-          category: serviceData.category,
-        },
-      });
 
       if (dialogMode === "add") {
-        console.log("➕ Creating new service...");
-        console.log("📤 Data being sent to Supabase:", {
+        const savedService = await ServicesApi.createService({
           name: serviceData.name,
-          description: serviceData.description,
           price: serviceData.price,
-          duration: serviceData.duration,
-          category: serviceData.category,
+          time: serviceData.time,
+          category_id: serviceData.category_id,
+          salon_id: '', // Will be set by the API's getDefaultSalonId() method
         });
 
-        const { data, error } = await supabase
-          .from("services")
-          .insert([
-            {
-              name: serviceData.name,
-              description: serviceData.description,
-              price: serviceData.price,
-              duration: serviceData.duration,
-              category: serviceData.category,
-            }
-          ])
-          .select();
-
-        console.log("📊 Create response:", { data, error });
-
-        if (error) {
-          console.error("🚨 Create error:", error);
-          console.error("🚨 Error details:", {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-          });
-          throw error;
-        }
-
-        if (data && data.length > 0) {
-          console.log("✅ Service created successfully:", data[0]);
-          setServices((prev) => [data[0] as unknown as Service, ...prev]);
-          toast({
-            title: "Service Added",
-            description: `${data[0].name} has been successfully created.`,
-          });
-        } else {
-          throw new Error("No data returned from create operation");
-        }
+        setServices((prev) => [savedService, ...prev]);
+        toast({
+          title: "✅ Service Added",
+          description: `${savedService.name} has been successfully created.`,
+          style: {
+            backgroundColor: "lightgreen",
+            color: "black",
+          }
+        });
       } else if (editingService) {
-        console.log("✏️ Updating service:", editingService.id);
-        console.log("📤 Update data being sent to Supabase:", {
+        const savedService = await ServicesApi.updateService(editingService.id, {
           name: serviceData.name,
-          description: serviceData.description,
           price: serviceData.price,
-          duration: serviceData.duration,
-          category: serviceData.category,
+          time: `${serviceData.time}`,
+          category_id: serviceData.category_id,
         });
 
-        const { data, error } = await supabase
-          .from("services")
-          .update({
-            name: serviceData.name,
-            description: serviceData.description,
-            price: serviceData.price,
-            duration: serviceData.duration,
-            category: serviceData.category,
-          })
-          .eq("id", editingService.id)
-          .select();
-
-        console.log("📊 Update response:", { data, error });
-
-        if (error) {
-          console.error("🚨 Update error:", error);
-          console.error("🚨 Error details:", {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-          });
-          throw error;
-        }
-
-        if (data && data.length > 0) {
-          console.log("✅ Service updated successfully:", data[0]);
+        if (savedService) {
           setServices((prev) =>
-            prev.map((s) =>
-              s.id === data[0].id ? (data[0] as unknown as Service) : s
-            )
+            prev.map((s) => s.id === savedService.id ? savedService : s)
           );
           toast({
-            title: "Service Updated",
-            description: `${data[0].name}'s details have been updated.`,
+            title: "✅ Service Updated",
+            description: `${savedService.name}'s details have been updated.`,
+            style: {
+              backgroundColor: "lightgreen",
+              color: "black",
+            }
           });
-        } else {
-          throw new Error("No data returned from update operation");
         }
       }
     } catch (err) {
@@ -328,28 +212,16 @@ export function ServicesList() {
 
   const handleDelete = async (serviceId: string) => {
     try {
-      const serviceName =
-        services.find((s) => s.id === serviceId)?.name || "The service";
-
-      console.log("🗑️ Deleting service:", { serviceId, serviceName });
-
-      const { error } = await supabase
-        .from("services")
-        .delete()
-        .eq("id", serviceId);
-
-      console.log("📊 Delete response:", { error });
-
-      if (error) {
-        console.error("🚨 Delete error:", error);
-        throw error;
-      }
-
-      console.log("✅ Service deleted successfully:", serviceId);
+      const serviceName = services.find((s) => s.id === serviceId)?.name || "The service";
+      await ServicesApi.deleteService(serviceId);
       setServices((prev) => prev.filter((s) => s.id !== serviceId));
       toast({
-        title: "Service Deleted",
+        title: "✅ Service Deleted",
         description: `${serviceName} has been removed.`,
+        style: {
+          backgroundColor: "lightgreen",
+          color: "black",
+        }
       });
     } catch (err) {
       console.error("💥 Error deleting service:", err);
@@ -364,96 +236,25 @@ export function ServicesList() {
   const columns: ColumnDef<Service>[] = [
     {
       accessorKey: "name",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Name
-            <CaretSortIcon className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
+      header: "Name",
       cell: ({ row }) => {
         const service = row.original;
         // const hasRecipe = service.recipe && service.recipe.length > 0;
         return (
           <div className="flex items-center gap-2">
             <div className="capitalize">{row.getValue("name")}</div>
-            {/* {hasRecipe && (
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenDialog("edit", service, "recipe")}>
-                                    <BookText className="h-4 w-4 text-muted-foreground"/>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>View/Edit Recipe</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                 )} */}
           </div>
         );
       },
     },
     {
-      accessorKey: "category",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Category
-            <CaretSortIcon className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
-      cell: ({ row }) => {
-        const category = row.getValue("category");
-        return category ? (
-          <Badge variant="outline">{category as string}</Badge>
-        ) : null;
-      },
-      filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id));
-      },
-    },
-    {
-      accessorKey: "duration",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Duration (min)
-            <CaretSortIcon className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
-      cell: ({ row }) => <div>{row.getValue("duration")}</div>,
+      accessorKey: "time",
+      header: "Duration",
+      cell: ({ row }) => <div>{row.getValue("time")}</div>,
     },
     {
       accessorKey: "price",
-      header: ({ column }) => {
-        return (
-          <div className="text-right">
-            <Button
-              variant="ghost"
-              onClick={() =>
-                column.toggleSorting(column.getIsSorted() === "asc")
-              }
-            >
-              Price
-              <CaretSortIcon className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        );
-      },
+      header: "Price",
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("price"));
         const formatted = new Intl.NumberFormat("en-US", {
@@ -461,11 +262,21 @@ export function ServicesList() {
           currency: "USD",
         }).format(amount);
 
-        return <div className="text-right font-medium pr-4">{formatted}</div>;
+        return <div className="font-medium pr-4">{formatted}</div>;
+      },
+    },
+    {
+      accessorKey: "category_id",
+      header: "Category",
+      cell: ({ row }) => {
+        const categoryId = row.original.category_id as string;
+        const category = categories.find(cat => cat.id === categoryId);
+        return <div>{category?.name || 'Unknown'}</div>;
       },
     },
     {
       id: "actions",
+      header: "Actions",
       enableHiding: false,
       cell: ({ row }) => {
         const service = row.original;
@@ -504,7 +315,7 @@ export function ServicesList() {
         <div className="flex items-center justify-between">
           <div className="text-left">
             <h1 className="text-4xl font-headline font-bold">
-              Individual Services
+              All Individual Services
             </h1>
             <p className="text-muted-foreground mt-2">
               Manage your individual salon services.
@@ -527,7 +338,7 @@ export function ServicesList() {
         <div className="flex items-center justify-between">
           <div className="text-left">
             <h1 className="text-4xl font-headline font-bold">
-              Individual Services
+              All Individual Services
             </h1>
             <p className="text-muted-foreground mt-2">
               Manage your individual salon services.
@@ -550,7 +361,7 @@ export function ServicesList() {
         <div className="flex items-center justify-between">
           <div className="text-left">
             <h1 className="text-4xl font-headline font-bold">
-              Individual Services
+              All Individual Services
             </h1>
             <p className="text-muted-foreground mt-2">
               Manage your individual salon services.
@@ -564,33 +375,18 @@ export function ServicesList() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <DebouncedInput
-              value={searchQuery}
+              value={searchQuery ?? ''}
               onValueChange={handleSearchChange}
               placeholder="Search services"
-              className="max-w-sm"
+              className="w-full max-w-sm"
             />
-            <Select
-              value={categoryFilter}
-              onValueChange={handleCategoryChange}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.title}>
-                    {category.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Category filter removed since salons_services uses category_id instead of category string */}
           </div>
         </div>
         <DataTable
           ref={tableRef}
           columns={columns as any}
-          data={services}
+          data={filteredServices}
         />
       </div>
       <ServiceFormDialog
@@ -600,6 +396,8 @@ export function ServicesList() {
         service={editingService}
         onSave={handleSave}
         saving={saving}
+        categories={categories}
+        loadingCategories={loadingCategories}
       />
     </>
   );
