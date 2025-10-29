@@ -285,12 +285,12 @@ export function NewAppointment({
   if (!selectedClient) {
     return (
       <div className="flex flex-col gap-8">
-        <div className="text-center">
+        {/* <div className="text-center">
           <h1 className="text-4xl font-headline font-bold">Select a Client</h1>
           <p className="text-muted-foreground mt-2">
             Choose a client to start booking an appointment.
           </p>
-        </div>
+        </div> */}
         <ClientsList onClientSelect={(client) => setSelectedClient(client as unknown as ClientWithDetails)} isSelectMode={true} />
       </div>
     );

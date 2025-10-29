@@ -147,7 +147,39 @@ export function ServiceFormDialog({
                 <FormItem>
                     <FormLabel>Duration (minutes)</FormLabel>
                     <FormControl>
-                        <Input placeholder="Type minutes here" {...field} type="number" disabled={saving} />
+                        <Input 
+                        placeholder="Type minutes here" 
+                        {...field} 
+                        type="number" 
+                        min="0"
+                        disabled={saving}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow empty string, but strip minus sign and negative values
+                            if (value === '') {
+                                field.onChange('');
+                            } else {
+                                const numValue = parseFloat(value.replace(/-/g, ''));
+                                if (!isNaN(numValue) && numValue >= 0) {
+                                    field.onChange(value.replace(/-/g, ''));
+                                }
+                            }
+                        }}
+                        onKeyDown={(e) => {
+                            // Prevent typing minus sign
+                            if (e.key === '-') {
+                                e.preventDefault();
+                            }
+                        }}
+                        onPaste={(e) => {
+                            e.preventDefault();
+                            const paste = (e.clipboardData || (window as any).clipboardData).getData('text');
+                            const sanitized = paste.replace(/-/g, '');
+                            if (sanitized === '' || (!isNaN(parseFloat(sanitized)) && parseFloat(sanitized) >= 0)) {
+                                field.onChange(sanitized);
+                            }
+                        }}
+                        />
                     </FormControl>
                     <FormMessage />
                 </FormItem>
@@ -164,9 +196,34 @@ export function ServiceFormDialog({
                 <FormControl>
                 <Input 
                     type="number" 
-                    step="0.01" 
+                    // step="0.01" 
+                    min="0"
                     {...field}
-                    onChange={e => field.onChange(e.target.valueAsNumber)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '') {
+                        field.onChange('');
+                    } else {
+                        const numValue = parseFloat(value.replace(/-/g, ''));
+                        if (!isNaN(numValue) && numValue >= 0) {
+                          field.onChange(value.replace(/-/g, ''));
+                        }
+                    }
+                    }}
+                    onKeyDown={(e) => {
+                      // Prevent typing minus sign
+                      if (e.key === '-') {
+                          e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const paste = (e.clipboardData || (window as any).clipboardData).getData('text');
+                      const sanitized = paste.replace(/-/g, '');
+                      if (sanitized === '' || (!isNaN(parseFloat(sanitized)) && parseFloat(sanitized) >= 0)) {
+                        field.onChange(sanitized);
+                      }
+                    }}
                     disabled={saving}
                 />
                 </FormControl>
