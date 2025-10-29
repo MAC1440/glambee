@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import * as z from "zod";
@@ -45,9 +46,21 @@ type ServiceFormDialogProps = {
 const formSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  price: z.coerce.number().positive("Price must be greater than zero."),
+  price: z.coerce.number().positive("Value must be greater than zero."),
   time: z.string().min(1, "Duration is required."),
   category_id: z.string().min(1, "Category is required."),
+  gender: z.string().min(1, "Gender is required."),
+  has_range: z.boolean().optional().default(false),
+  starting_from: z.coerce.number().positive("Starting from must be greater than zero.").optional().nullable(),
+}).refine((data) => {
+  // If has_range is true, starting_from must be provided
+  if (data.has_range && (!data.starting_from || data.starting_from <= 0)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Starting from is required when price range is enabled.",
+  path: ["starting_from"],
 });
 
 
@@ -72,6 +85,9 @@ export function ServiceFormDialog({
       price: service?.price || 0,
       time: service?.time,
       category_id: service?.category_id || "",
+      gender: service?.gender || "Both",
+      has_range: service?.has_range || false,
+      starting_from: service?.starting_from || null,
     },
   });
 
@@ -109,9 +125,17 @@ export function ServiceFormDialog({
         price: service?.price || 0,
         time: service?.time,
         category_id: service?.category_id || "",
+        gender: service?.gender || "Both",
+        has_range: service?.has_range || false,
+        starting_from: service?.starting_from || null,
       });
     }
   }, [isOpen, service, form]);
+
+  const hasRange = form.watch("has_range");
+  const selectedCategoryId = form.watch("category_id");
+  const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
+  const isConsultation = selectedCategory?.name?.toLowerCase() === "consultation";
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     onSave(values as Service);
@@ -126,142 +150,248 @@ export function ServiceFormDialog({
 
   const basicInfoFields = (
     <div className="space-y-4 py-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., Signature Haircut" {...field} disabled={saving} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
-            <FormField
-                control={form.control}
-                name="time"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Duration (minutes)</FormLabel>
-                    <FormControl>
-                        <Input 
-                        placeholder="Type minutes here" 
-                        {...field} 
-                        type="number" 
-                        min="0"
-                        disabled={saving}
-                        onChange={(e) => {
-                            const value = e.target.value;
-                            // Allow empty string, but strip minus sign and negative values
-                            if (value === '') {
-                                field.onChange('');
-                            } else {
-                                const numValue = parseFloat(value.replace(/-/g, ''));
-                                if (!isNaN(numValue) && numValue >= 0) {
-                                    field.onChange(value.replace(/-/g, ''));
-                                }
-                            }
-                        }}
-                        onKeyDown={(e) => {
-                            // Prevent typing minus sign
-                            if (e.key === '-') {
-                                e.preventDefault();
-                            }
-                        }}
-                        onPaste={(e) => {
-                            e.preventDefault();
-                            const paste = (e.clipboardData || (window as any).clipboardData).getData('text');
-                            const sanitized = paste.replace(/-/g, '');
-                            if (sanitized === '' || (!isNaN(parseFloat(sanitized)) && parseFloat(sanitized) >= 0)) {
-                                field.onChange(sanitized);
-                            }
-                        }}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-        </div>
-        
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
+          control={form.control}
+          name="name"
+          render={({ field }) => (
             <FormItem>
-                <FormLabel>Price ($)</FormLabel>
-                <FormControl>
-                <Input 
-                    type="number" 
-                    // step="0.01" 
-                    min="0"
-                    {...field}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === '') {
-                        field.onChange('');
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Signature Haircut" {...field} disabled={saving} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="time"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Duration (minutes)</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Type minutes here"
+                  type="number"
+                  min="0"
+                  {...field}
+                  disabled={saving}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow empty string, but strip minus sign and negative values
+                    if (value === '') {
+                      field.onChange('');
                     } else {
-                        const numValue = parseFloat(value.replace(/-/g, ''));
-                        if (!isNaN(numValue) && numValue >= 0) {
-                          field.onChange(value.replace(/-/g, ''));
-                        }
+                      const numValue = parseFloat(value.replace(/-/g, ''));
+                      console.log("Num value for duration: ", numValue)
+                      if (!isNaN(numValue) && numValue > 0) {
+                        field.onChange(value.replace(/-/g, ''));
+                      }
                     }
-                    }}
-                    onKeyDown={(e) => {
-                      // Prevent typing minus sign
-                      if (e.key === '-') {
-                          e.preventDefault();
-                      }
-                    }}
-                    onPaste={(e) => {
+                  }}
+                  onKeyDown={(e) => {
+                    // Prevent typing minus sign
+                    if (e.key === '-') {
                       e.preventDefault();
-                      const paste = (e.clipboardData || (window as any).clipboardData).getData('text');
-                      const sanitized = paste.replace(/-/g, '');
-                      if (sanitized === '' || (!isNaN(parseFloat(sanitized)) && parseFloat(sanitized) >= 0)) {
-                        field.onChange(sanitized);
-                      }
-                    }}
-                    disabled={saving}
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const paste = (e.clipboardData || (window as any).clipboardData).getData('text');
+                    const sanitized = paste.replace(/-/g, '');
+                    if (sanitized === '' || (!isNaN(parseFloat(sanitized)) && parseFloat(sanitized) >= 0)) {
+                      field.onChange(sanitized);
+                    }
+                  }}
                 />
-                </FormControl>
-                <FormMessage />
+              </FormControl>
+              <FormMessage />
             </FormItem>
-            )}
+          )}
         />
-        
+      </div>
+
+      <FormField
+        control={form.control}
+        name="has_range"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked);
+                  // Clear starting_from when checkbox is unchecked
+                  if (!checked) {
+                    form.setValue("starting_from", null);
+                  }
+                }}
+                disabled={saving}
+              />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel>Has Price Range <span className="text-muted-foreground"><small>(Enable this if the service has a price range.)</small></span></FormLabel>
+              {/* <p className="text-sm text-muted-foreground">
+                        Enable this if the service has a price range.
+                    </p> */}
+            </div>
+          </FormItem>
+        )}
+      />
+
+      {hasRange && (
         <FormField
-            control={form.control}
-            name="category_id"
-            render={({ field }) => (
+          control={form.control}
+          name="starting_from"
+          render={({ field }) => (
             <FormItem>
-                <FormLabel>Category</FormLabel>
-                <ShadSelect onValueChange={field.onChange} defaultValue={field.value} disabled={saving}>
-                    <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                        {loadingCategories ? (
-                            <SelectItem value="loading" disabled>
-                                Loading categories...
-                            </SelectItem>
-                        ) : (
-                            categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
-                                    {category.name}
-                                </SelectItem>
-                            ))
-                        )}
-                    </SelectContent>
-                </ShadSelect>
-                <FormMessage />
+              <FormLabel>Starting From ($)</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="Enter minimum value"
+                  {...field}
+                  value={field.value ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      field.onChange(null);
+                    } else {
+                      const numValue = parseFloat(value.replace(/-/g, ''));
+                      if (!isNaN(numValue) && numValue >= 0) {
+                        field.onChange(numValue);
+                      } else {
+                        field.onChange(null);
+                      }
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Prevent typing minus sign
+                    if (e.key === '-') {
+                      e.preventDefault();
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const paste = (e.clipboardData || (window as any).clipboardData).getData('text');
+                    const sanitized = paste.replace(/-/g, '');
+                    if (sanitized === '' || (!isNaN(parseFloat(sanitized)) && parseFloat(sanitized) >= 0)) {
+                      field.onChange(parseFloat(sanitized));
+                    } else {
+                      field.onChange(null);
+                    }
+                  }}
+                  disabled={saving}
+                />
+              </FormControl>
+              <FormMessage />
             </FormItem>
-            )}
+          )}
         />
+      )}
+
+      <FormField
+        control={form.control}
+        name="price"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>{isConsultation ? "Consultation Fee ($)" : "Price ($)"}</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                // step="0.01" 
+                min="0"
+                {...field}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    field.onChange('');
+                  } else {
+                    const numValue = parseFloat(value.replace(/-/g, ''));
+                    if (!isNaN(numValue) && numValue >= 0) {
+                      field.onChange(value.replace(/-/g, ''));
+                    }
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // Prevent typing minus sign
+                  if (e.key === '-') {
+                    e.preventDefault();
+                  }
+                }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const paste = (e.clipboardData || (window as any).clipboardData).getData('text');
+                  const sanitized = paste.replace(/-/g, '');
+                  if (sanitized === '' || (!isNaN(parseFloat(sanitized)) && parseFloat(sanitized) >= 0)) {
+                    field.onChange(sanitized);
+                  }
+                }}
+                disabled={saving}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="category_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <ShadSelect onValueChange={field.onChange} defaultValue={field.value} disabled={saving}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {loadingCategories ? (
+                    <SelectItem value="loading" disabled>
+                      Loading categories...
+                    </SelectItem>
+                  ) : (
+                    categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </ShadSelect>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="gender"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Gender</FormLabel>
+              <ShadSelect onValueChange={field.onChange} defaultValue={field.value} disabled={saving}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Men">Men</SelectItem>
+                  <SelectItem value="Women">Women</SelectItem>
+                  <SelectItem value="Both">Both</SelectItem>
+                </SelectContent>
+              </ShadSelect>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
     </div>
   );
 
@@ -279,9 +409,9 @@ export function ServiceFormDialog({
 
 
             <DialogFooter className="pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => onOpenChange(false)}
                 disabled={saving}
               >
@@ -305,4 +435,3 @@ export function ServiceFormDialog({
   );
 }
 
-    

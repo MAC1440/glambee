@@ -162,6 +162,9 @@ export function ServicesList() {
           price: serviceData.price,
           time: serviceData.time,
           category_id: serviceData.category_id,
+          gender: serviceData.gender,
+          has_range: serviceData.has_range || false,
+          starting_from: serviceData.has_range ? serviceData.starting_from : null,
           salon_id: '', // Will be set by the API's getDefaultSalonId() method
         });
 
@@ -180,6 +183,9 @@ export function ServicesList() {
           price: serviceData.price,
           time: `${serviceData.time}`,
           category_id: serviceData.category_id,
+          gender: serviceData.gender,
+          has_range: serviceData.has_range || false,
+          starting_from: serviceData.has_range ? serviceData.starting_from : null,
         });
 
         if (savedService) {
@@ -253,6 +259,20 @@ export function ServicesList() {
       cell: ({ row }) => <div>{row.getValue("time")}</div>,
     },
     {
+      accessorKey: "starting_from",
+      header: "Starting From",
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("starting_from"));
+        const formatted = amount ? new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount)
+        : 'N/A'
+
+        return <div className="font-medium pr-4">{formatted}</div>;
+      },
+    },
+    {
       accessorKey: "price",
       header: "Price",
       cell: ({ row }) => {
@@ -272,6 +292,14 @@ export function ServicesList() {
         const categoryId = row.original.category_id as string;
         const category = categories.find(cat => cat.id === categoryId);
         return <div>{category?.name || 'Unknown'}</div>;
+      },
+    },
+    {
+      accessorKey: "gender",
+      header: "Gender",
+      cell: ({ row }) => {
+        const gender = row.original.gender as string;
+        return <div>{gender || 'Unknown'}</div>;
       },
     },
     {

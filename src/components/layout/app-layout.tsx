@@ -165,8 +165,8 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
       <Sidebar collapsible="icon" variant="sidebar" side="left" className="group-data-[variant=sidebar]:bg-sidebar text-sidebar-foreground">
         <SidebarHeader>
           <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-            <SalonFlowLogo className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden text-black dark:text-white">SalonFlow</span>
+            <SalonFlowLogo className="h-6 w-6 text-primary" src="/partner app store logo.png" />
+            <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden text-black dark:text-white">GlamBee</span>
           </div>
         </SidebarHeader>
         <SidebarContent>

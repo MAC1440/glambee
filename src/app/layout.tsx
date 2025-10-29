@@ -6,8 +6,13 @@ import { LayoutProvider } from "@/components/layout/layout-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "SalonFlow",
+  title: "GlamBee",
   description: "Manage your salon with ease.",
+  icons: {
+    icon: "/partner app store logo.png",
+    shortcut: "/partner app store logo.png",
+    apple: "/partner app store logo.png",
+  },
 };
 
 export default function RootLayout({

@@ -244,7 +244,7 @@ export function NewAppointment({
       
       toast({
         title: "✅ Appointments Booked!",
-        description: `${servicesToBook.length} service(s) for ${selectedClient.name} have been scheduled starting at ${format(selectedSlot.start, "p")}${staffMessage}.`,
+        description: `${servicesToBook.length} service(s) for ${selectedClient.name} have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
         className: "border-green-500 bg-green-50 text-green-900",
       });
 

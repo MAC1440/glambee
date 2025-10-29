@@ -40,6 +40,7 @@ import { ServiceFormDialog } from "./ServiceFormDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ServicesApi } from "@/lib/api/servicesApi";
 import { Service } from "@/types/service";
+import { fetchCategories, type Category } from "@/lib/api/categoriesApi";
 
 type User = {
   id: string;
@@ -139,6 +140,8 @@ export function Services() {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -172,6 +175,21 @@ export function Services() {
     fetchServices();
   }, [toast]);
 
+  useEffect(() => {
+    const loadCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const fetchedCategories = await fetchCategories();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    loadCategories();
+  }, []);
+
   const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "SALON_ADMIN";
 
   const handleOpenDialog = (mode: "add" | "edit", service?: Service) => {
@@ -187,8 +205,11 @@ export function Services() {
         savedService = await ServicesApi.createService({
           name: serviceData.name,
           price: serviceData.price,
-          time: `${serviceData.duration || 30} minutes`,
-          // salon_id will be set by the API's getDefaultSalonId() method
+          time: serviceData.duration,
+          gender: serviceData.gender,
+          has_range: serviceData.has_range || false,
+          starting_from: serviceData.has_range ? serviceData.starting_from : null,
+          salon_id: '', // Will be set by the API's getDefaultSalonId() method
         });
         setServices(prev => [savedService, ...prev]);
         toast({ title: "Success", description: `${savedService.name} has been added.` });
@@ -196,7 +217,10 @@ export function Services() {
         savedService = await ServicesApi.updateService(serviceData.id, {
           name: serviceData.name,
           price: serviceData.price,
-          time: `${serviceData.duration || 30} minutes`,
+          time: `serviceData.duration`,
+          gender: serviceData.gender,
+          has_range: serviceData.has_range || false,
+          starting_from: serviceData.has_range ? serviceData.starting_from : null,
         }) || serviceData;
         setServices(prev => prev.map(s => s.id === serviceData.id ? savedService : s));
         toast({ title: "Success", description: `${savedService.name} has been updated.` });
@@ -289,6 +313,8 @@ export function Services() {
         mode={dialogMode}
         service={editingService}
         onSave={handleSaveService}
+        categories={categories}
+        loadingCategories={loadingCategories}
       />
     </>
   );

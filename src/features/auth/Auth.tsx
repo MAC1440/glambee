@@ -131,13 +131,13 @@ export function Auth() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <Card className="w-full max-w-sm bg-black/30 border-golden-700/50 text-golden-200">
+      <Card className="w-full max-w-sm bg-black/30 border-green-700/50 text-green-200">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <SalonFlowLogo className="h-12 w-12 text-golden-400" />
+            <SalonFlowLogo className="h-12 w-12 text-green-400" />
           </div>
-          <CardTitle className="text-2xl font-headline text-golden-300">Welcome to SalonFlow</CardTitle>
-          <CardDescription className="text-golden-400/80">
+          <CardTitle className="text-2xl font-headline text-green-300">Welcome to SalonFlow</CardTitle>
+          <CardDescription className="text-green-400/80">
             Enter your phone number to get started or sign in.
           </CardDescription>
         </CardHeader>
@@ -152,9 +152,9 @@ export function Auth() {
                 value={formattedPhone}
                 onChange={handlePhoneChange}
                 placeholder="+921212121212"
-                className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
+                className="bg-black/50 border-green-700/50 text-green-200 placeholder:text-green-400/60"
               />
-              <p className="text-xs text-golden-400/60">
+              <p className="text-xs text-green-400/60">
                 Enter your phone number with country code (e.g., +92 for Pakistan)
               </p>
             </div>
@@ -163,7 +163,7 @@ export function Auth() {
           <CardFooter className="flex flex-col gap-4">
             <Button 
               type="submit" 
-              className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950"
+              className="w-full bg-green-600 hover:bg-green-700 text-purple-950"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -175,7 +175,7 @@ export function Auth() {
                 "Continue"
               )}
             </Button>
-            <div className="text-sm text-center text-golden-400/80">
+            <div className="text-sm text-center text-green-400/80">
               We'll send you a verification code via SMS
             </div>
           </CardFooter>

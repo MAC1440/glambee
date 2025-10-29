@@ -52,15 +52,15 @@ export function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <Card className="w-full max-w-sm bg-black/30 border-golden-700/50 text-golden-200">
+      <Card className="w-full max-w-sm bg-black/30 border-green-700/50 text-green-200">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <SalonFlowLogo className="h-12 w-12 text-golden-400" />
+            <SalonFlowLogo className="h-12 w-12 text-green-400" />
           </div>
-          <CardTitle className="text-2xl font-headline text-golden-300">
+          <CardTitle className="text-2xl font-headline text-green-300">
             Welcome Back
           </CardTitle>
-          <CardDescription className="text-golden-400/80">
+          <CardDescription className="text-green-400/80">
             Enter your credentials to sign in.
             <br />
             <small>Try: super@admin.com / password</small>
@@ -82,7 +82,7 @@ export function Login() {
         <form onSubmit={handleLogin}>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email" className="text-golden-300">
+              <Label htmlFor="email" className="text-green-300">
                 Email
               </Label>
               <Input
@@ -91,7 +91,7 @@ export function Login() {
                 name="email"
                 placeholder="m@example.com"
                 required
-                className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
+                className="bg-black/50 border-green-700/50 text-green-200 placeholder:text-green-400/60"
                 defaultValue="super@admin.com"
               />
             </div>
@@ -102,23 +102,23 @@ export function Login() {
                 type="password"
                 name="password"
                 required
-                className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
+                className="bg-black/50 border-green-700/50 text-green-200 placeholder:text-green-400/60"
                 defaultValue="password"
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-purple-950" disabled={isSubmitting}>
               {isSubmitting ? "Signing In..." : "Sign In"}
             </Button>
           </CardFooter>
         </form>
 
-        <div className="text-sm text-center text-golden-400/80 pb-6">
+        <div className="text-sm text-center text-green-400/80 pb-6">
           Don't have an account?{" "}
           <Link
             href="/auth"
-            className="underline text-golden-300 hover:text-golden-200"
+            className="underline text-green-300 hover:text-green-200"
           >
             Sign up
           </Link>
