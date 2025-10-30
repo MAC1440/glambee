@@ -45,9 +45,23 @@ type ServiceFormDialogProps = {
 
 const formSchema = z.object({
   id: z.string().optional(),
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  name: z.string()
+    .min(2, { message: "Name must be at least 2 characters." })
+    .refine((val) => val.trim().length > 0, {
+      message: "Name cannot be only whitespace."
+    })
+    .refine((val) => !val.startsWith(' ') && !val.endsWith(' '), {
+      message: "Name cannot start or end with spaces."
+    }),
   price: z.coerce.number().positive("Value must be greater than zero."),
-  time: z.string().min(1, "Duration is required."),
+  time: z.string()
+    .min(1, "Duration is required.")
+    .refine((val) => {
+      const numValue = parseFloat(val);
+      return !isNaN(numValue) && numValue > 0;
+    }, {
+      message: "Duration must be a positive number."
+    }),
   category_id: z.string().min(1, "Category is required."),
   gender: z.string().min(1, "Gender is required."),
   has_range: z.boolean().optional().default(false),
@@ -91,6 +105,8 @@ export function ServiceFormDialog({
     },
   });
 
+  // Fetch Simple price for validating starting from field
+  const servicePrice = form.watch('price')
   // Recipe functionality removed for now
 
   // Removed unused options for now
@@ -134,7 +150,7 @@ export function ServiceFormDialog({
 
   const hasRange = form.watch("has_range");
   const selectedCategoryId = form.watch("category_id");
-  const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
+  const selectedCategory = categories?.find(cat => cat.id === selectedCategoryId);
   const isConsultation = selectedCategory?.name?.toLowerCase() === "consultation";
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
@@ -184,7 +200,6 @@ export function ServiceFormDialog({
                       field.onChange('');
                     } else {
                       const numValue = parseFloat(value.replace(/-/g, ''));
-                      console.log("Num value for duration: ", numValue)
                       if (!isNaN(numValue) && numValue > 0) {
                         field.onChange(value.replace(/-/g, ''));
                       }
@@ -231,7 +246,7 @@ export function ServiceFormDialog({
               />
             </FormControl>
             <div className="space-y-1 leading-none">
-              <FormLabel>Has Price Range <span className="text-muted-foreground"><small>(Enable this if the service has a price range.)</small></span></FormLabel>
+              <FormLabel>Has Range <span className="text-muted-foreground"><small>(Enable this if the service has a range.)</small></span></FormLabel>
               {/* <p className="text-sm text-muted-foreground">
                         Enable this if the service has a price range.
                     </p> */}
@@ -260,7 +275,7 @@ export function ServiceFormDialog({
                       field.onChange(null);
                     } else {
                       const numValue = parseFloat(value.replace(/-/g, ''));
-                      if (!isNaN(numValue) && numValue >= 0) {
+                      if (!isNaN(numValue) && numValue >= 0 && numValue < servicePrice) {
                         field.onChange(numValue);
                       } else {
                         field.onChange(null);
