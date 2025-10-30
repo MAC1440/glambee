@@ -155,22 +155,22 @@ export function VerifyOtp() {
   if (isSuccess) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-sm bg-black/30 border-golden-700/50 text-golden-200">
+        <Card className="w-full max-w-sm bg-black/30 border-green-700/50 text-green-200">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <CheckCircle className="h-16 w-16 text-green-400" />
             </div>
-            <CardTitle className="text-2xl font-headline text-golden-300">
+            <CardTitle className="text-2xl font-headline text-green-300">
               {isExistingUser ? "Login Successful!" : "Account Created!"}
             </CardTitle>
-            <CardDescription className="text-golden-400/80">
+            <CardDescription className="text-green-400/80">
               {isExistingUser
                 ? "Welcome back! Redirecting to dashboard..."
                 : "Your account has been created successfully. Redirecting to dashboard..."}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <LoadingSpinner size="lg" className="text-golden-400" />
+            <LoadingSpinner size="lg" className="text-green-400" />
           </CardContent>
         </Card>
       </div>
@@ -179,12 +179,12 @@ export function VerifyOtp() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <Card className="w-full max-w-sm bg-black/30 border-golden-700/50 text-golden-200">
+      <Card className="w-full max-w-sm bg-black/30 border-green-700/50 text-green-200">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline text-golden-300">
+          <CardTitle className="text-2xl font-headline text-green-300">
             {isExistingUser ? "Welcome Back!" : "Verify OTP"}
           </CardTitle>
-          <CardDescription className="text-golden-400/80">
+          <CardDescription className="text-green-400/80">
             {isExistingUser
               ? `Enter the 6-digit code sent to ${phone} to complete your login`
               : `Enter the 6-digit code sent to ${phone} to create your account`}
@@ -203,7 +203,7 @@ export function VerifyOtp() {
                 placeholder="123456"
                 maxLength={6}
                 required
-                className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60 text-center text-lg tracking-widest"
+                className="bg-black/50 border-green-700/50 text-green-200 placeholder:text-green-400/60 text-center text-lg tracking-widest"
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -214,7 +214,7 @@ export function VerifyOtp() {
                 variant="ghost"
                 onClick={handleResendOtp}
                 disabled={resendTimer > 0 || isLoading}
-                className="text-golden-400 hover:text-golden-300 text-sm"
+                className="text-green-400 hover:text-green-300 text-sm"
               >
                 {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend OTP"}
               </Button>
@@ -223,7 +223,7 @@ export function VerifyOtp() {
           <CardContent className="space-y-4">
             <Button
               type="submit"
-              className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950"
+              className="w-full bg-green-600 hover:bg-green-700 text-purple-950"
               disabled={isLoading || otp.length < 4}
             >
               {isLoading ? (
@@ -242,7 +242,7 @@ export function VerifyOtp() {
               type="button"
               variant="outline"
               onClick={() => router.push("/auth")}
-              className="w-full border-golden-700/50 text-golden-300 hover:bg-golden-700/20"
+              className="w-full border-green-700/50 text-green-300 hover:bg-green-700/20"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Auth

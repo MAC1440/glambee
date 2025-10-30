@@ -40,7 +40,14 @@ export type Client = {
 };
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  name: z.string()
+    .min(2, { message: "Name must be at least 2 characters." })
+    .refine((val) => val.trim().length > 0, {
+      message: "Name cannot be only whitespace."
+    })
+    .refine((val) => !val.startsWith(' ') && !val.endsWith(' '), {
+      message: "Name cannot start or end with spaces."
+    }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string()
     .min(10, { message: "Please enter a valid phone number." })

@@ -1,10 +1,13 @@
 export type Service = {
   id: string;
   name: string;
-  description: string;
-  price: number | string;
-  originalPrice: number | null;
-  duration: number | null;
-  category: "Service" | "Deal" | "Promotion";
-  includedServices?: { value: string; label: string }[];
+  salon_id: string;
+  category_id: string | null;
+  gender: string | null;
+  price: number;
+  starting_from: number | null;
+  has_range: boolean | null;
+  time: string;
+  created_at: string;
+  updated_at: string;
 };

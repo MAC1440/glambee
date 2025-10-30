@@ -89,13 +89,13 @@ export function Signup() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <Card className="w-full max-w-sm bg-black/30 border-golden-700/50 text-golden-200">
+      <Card className="w-full max-w-sm bg-black/30 border-green-700/50 text-green-200">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <SalonFlowLogo className="h-12 w-12 text-golden-400" />
+            <SalonFlowLogo className="h-12 w-12 text-green-400" />
           </div>
-          <CardTitle className="text-2xl font-headline text-golden-300">Create an Account</CardTitle>
-          <CardDescription className="text-golden-400/80">
+          <CardTitle className="text-2xl font-headline text-green-300">Create an Account</CardTitle>
+          <CardDescription className="text-green-400/80">
             Enter your phone number to get started.
           </CardDescription>
         </CardHeader>
@@ -111,9 +111,9 @@ export function Signup() {
                 onChange={handlePhoneChange}
                 placeholder={getPhonePlaceholder()}
                 required
-                className="bg-black/50 border-golden-700/50 text-golden-200 placeholder:text-golden-400/60"
+                className="bg-black/50 border-green-700/50 text-green-200 placeholder:text-green-400/60"
               />
-              <p className="text-xs text-golden-400/60">
+              <p className="text-xs text-green-400/60">
                 Enter your phone number with country code (e.g., +1 for US)
               </p>
             </div>
@@ -122,7 +122,7 @@ export function Signup() {
           <CardFooter className="flex flex-col gap-4">
             <Button 
               type="submit" 
-              className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950"
+              className="w-full bg-green-600 hover:bg-green-700 text-purple-950"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -134,9 +134,9 @@ export function Signup() {
                 "Sign Up"
               )}
             </Button>
-            <div className="text-sm text-center text-golden-400/80">
+            <div className="text-sm text-center text-green-400/80">
               Already have an account?{" "}
-              <Link href="/auth" className="underline text-golden-300 hover:text-golden-200">
+              <Link href="/auth" className="underline text-green-300 hover:text-green-200">
                 Sign in
               </Link>
             </div>

@@ -2,17 +2,17 @@ import { supabase } from "@/lib/supabase/client";
 
 export interface Category {
   id: string;
-  title: string;
-  image_url?: string;
-  created_at?: string;
+  name?: string | null;
+  image_url?: string | null;
+  created_at?: string | null;
 }
 
 export async function fetchCategories(): Promise<Category[]> {
   try {
     const { data: categories, error } = await supabase
-      .from('categories')
-      .select('id, title, image_url, created_at')
-      .order('title', { ascending: true });
+      .from('staff_categories')
+      .select('id, name, image_url, created_at')
+      .order('name', { ascending: true });
 
     if (error) {
       console.error('Error fetching categories:', error);

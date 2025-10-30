@@ -12,10 +12,10 @@ export function QuickActions() {
         <Button asChild>
           <Link href="/appointments">Book New Appointment</Link>
         </Button>
-        <Button asChild variant="secondary">
+        <Button asChild>
           <Link href="/services">Manage Services</Link>
         </Button>
-        <Button asChild variant="secondary">
+        <Button asChild>
           <Link href="/staff/schedule">View Schedule</Link>
         </Button>
       </CardContent>

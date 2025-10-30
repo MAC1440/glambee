@@ -38,8 +38,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ServiceFormDialog } from "./ServiceFormDialog";
 import { useToast } from "@/hooks/use-toast";
-import { useGetServicesQuery } from "@/lib/api/servicesApi";
+import { ServicesApi } from "@/lib/api/servicesApi";
 import { Service } from "@/types/service";
+import { fetchCategories, type Category } from "@/lib/api/categoriesApi";
 
 type User = {
   id: string;
@@ -68,14 +69,9 @@ const ServiceCard = ({
         <div className="text-6xl mb-2">💇‍♀️</div>
         <p className="text-muted-foreground text-sm">Service Image</p>
       </div>
-      {service.category === "Promotion" && (
-        <Badge className="absolute top-2 right-2 bg-red-500 text-white border-red-500">
-          Promotion
-        </Badge>
-      )}
-      {service.category === "Deal" && (
-        <Badge className="absolute top-2 right-2 bg-secondary text-secondary-foreground border-secondary">
-          Deal
+      {service.category_id && (
+        <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground">
+          Category: {service.category_id}
         </Badge>
       )}
       {showAdminControls && (
@@ -117,18 +113,16 @@ const ServiceCard = ({
     </AlertDialogContent>
     <CardHeader>
       <CardTitle className="font-headline text-2xl">{service.name}</CardTitle>
-      <CardDescription>{service.description}</CardDescription>
+      <CardDescription>Duration: {service.time}</CardDescription>
     </CardHeader>
     <CardContent className="flex-grow flex items-end justify-start">
       <div className="flex items-center gap-2">
         <p className="text-2xl font-bold text-primary">
-          {typeof service.price === "number"
-            ? `$${service.price}`
-            : service.price}
+          ${service.price}
         </p>
-        {service.originalPrice && (
-          <p className="text-lg text-muted-foreground line-through">
-            ${service.originalPrice}
+        {service.starting_from && (
+          <p className="text-lg text-muted-foreground">
+            Starting from ${service.starting_from}
           </p>
         )}
       </div>
@@ -143,14 +137,15 @@ const ServiceCard = ({
 
 export function Services() {
   const [user, setUser] = useState<User | null>(null);
-  const { data: initialServices = [], isLoading } = useGetServicesQuery();
-  const [services, setServices] = useState<Service[]>(initialServices);
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
-  const [dialogCategory, setDialogCategory] = useState<Service['category']>('Service');
   const [editingService, setEditingService] = useState<Service | undefined>(undefined);
 
 
@@ -162,48 +157,101 @@ export function Services() {
   }, []);
 
   useEffect(() => {
-    if (initialServices) {
-      setServices(initialServices as Service[]);
-    }
-  }, [initialServices]);
+    const fetchServices = async () => {
+      try {
+        setIsLoading(true);
+        const response = await ServicesApi.getServices();
+        setServices(response.data);
+      } catch (e) {
+        console.error("Error fetching services:", e);
+        toast({ 
+          title: "Error", 
+          description: "Failed to fetch services. Please try again." 
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchServices();
+  }, [toast]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      setLoadingCategories(true);
+      try {
+        const fetchedCategories = await fetchCategories();
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "SALON_ADMIN";
 
-  const handleOpenDialog = (
-    mode: "add" | "edit",
-    category: Service['category'],
-    service?: Service
-  ) => {
+  const handleOpenDialog = (mode: "add" | "edit", service?: Service) => {
     setDialogMode(mode);
-    setDialogCategory(category);
     setEditingService(service);
     setDialogOpen(true);
   };
 
-  const handleSaveService = (serviceData: Service) => {
-    if (dialogMode === 'add') {
-      const newService = {
-        ...serviceData,
-        id: `service_${Date.now()}`,
-      };
-      setServices(prev => [newService, ...prev]);
-      toast({ title: "Success", description: `${newService.name} has been added.` });
-    } else {
-      setServices(prev => prev.map(s => s.id === serviceData.id ? serviceData : s));
-      toast({ title: "Success", description: `${serviceData.name} has been updated.` });
+  const handleSaveService = async (serviceData: any) => {
+    try {
+      let savedService: Service;
+      if (dialogMode === 'add') {
+        savedService = await ServicesApi.createService({
+          name: serviceData.name,
+          price: serviceData.price,
+          time: serviceData.duration,
+          gender: serviceData.gender,
+          has_range: serviceData.has_range || false,
+          starting_from: serviceData.has_range ? serviceData.starting_from : null,
+          salon_id: '', // Will be set by the API's getDefaultSalonId() method
+        });
+        setServices(prev => [savedService, ...prev]);
+        toast({ title: "Success", description: `${savedService.name} has been added.` });
+      } else {
+        savedService = await ServicesApi.updateService(serviceData.id, {
+          name: serviceData.name,
+          price: serviceData.price,
+          time: `serviceData.duration`,
+          gender: serviceData.gender,
+          has_range: serviceData.has_range || false,
+          starting_from: serviceData.has_range ? serviceData.starting_from : null,
+        }) || serviceData;
+        setServices(prev => prev.map(s => s.id === serviceData.id ? savedService : s));
+        toast({ title: "Success", description: `${savedService.name} has been updated.` });
+      }
+    } catch (error) {
+      console.error("Error saving service:", error);
+      toast({ 
+        title: "Error", 
+        description: `Failed to ${dialogMode === 'add' ? 'create' : 'update'} service.` 
+      });
     }
   };
 
-  const handleDeleteService = (serviceId: string) => {
+  const handleDeleteService = async (serviceId: string) => {
     const serviceName = services.find(s => s.id === serviceId)?.name || 'The item';
-    setServices((prev) => prev.filter((s) => s.id !== serviceId));
-    toast({ title: "Deleted", description: `${serviceName} has been removed.` });
+    try {
+      await ServicesApi.deleteService(serviceId);
+      setServices((prev) => prev.filter((s) => s.id !== serviceId));
+      toast({ title: "Deleted", description: `${serviceName} has been removed.` });
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete service. Please try again." 
+      });
+    }
   };
 
 
-  const promotions = services.filter((s) => s.category === "Promotion");
-  const deals = services.filter((s) => s.category === "Deal");
-  const individualServices = services.filter((s) => s.category === "Service");
+  // Group by category_id if needed, or just show all services
+  // For now, we'll show all services since salons_services doesn't have category field
 
   const renderServiceSection = (title: string, data: Service[]) =>
     data.length > 0 && (
@@ -218,7 +266,7 @@ export function Services() {
                 key={service.id}
                 service={service}
                 showAdminControls={isAdmin}
-                onEdit={(s) => handleOpenDialog("edit", s.category, s)}
+                onEdit={(s) => handleOpenDialog("edit", s)}
                 onDelete={handleDeleteService}
               />
             ))}
@@ -248,23 +296,15 @@ export function Services() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleOpenDialog('add', 'Promotion')}>
-                  Add Promotion/Discount
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleOpenDialog('add', 'Deal')}>
-                  Add Package Deal
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleOpenDialog('add', 'Service')}>
-                  Add Individual Service
+                <DropdownMenuItem onClick={() => handleOpenDialog('add')}>
+                  Add Service
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
         </div>
 
-        {renderServiceSection("Promotions & Discounts", promotions)}
-        {renderServiceSection("Package Deals", deals)}
-        {renderServiceSection("Individual Services", individualServices)}
+        {renderServiceSection("All Services", services)}
       </div>
 
       <ServiceFormDialog
@@ -273,6 +313,8 @@ export function Services() {
         mode={dialogMode}
         service={editingService}
         onSave={handleSaveService}
+        categories={categories}
+        loadingCategories={loadingCategories}
       />
     </>
   );
