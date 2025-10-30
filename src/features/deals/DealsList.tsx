@@ -265,12 +265,17 @@ export function DealsList() {
       header: "Valid Period",
       cell: ({ row }) => {
         const deal = row.original;
-        const validFrom = deal.valid_from ? new Date(deal.valid_from).toLocaleDateString() : 'N/A';
-        const validTill = deal.valid_till ? new Date(deal.valid_till).toLocaleDateString() : 'N/A';
+        // For dates
+        const validFrom = deal?.valid_from ? deal?.valid_from.slice(0, 10) : 'N/A';
+        const validFromTime = deal?.valid_from ? deal?.valid_from.slice(11, 16) : 'N/A';
+
+        // For time
+        const validTill = deal?.valid_till ? deal?.valid_till.slice(0, 10) : 'N/A';
+        const validTillTime = deal?.valid_till ? deal?.valid_till.slice(11, 16) : 'N/A';
         return (
           <div className="text-sm">
-            <div>From: {validFrom}</div>
-            <div>Till: {validTill}</div>
+            <div>From: {validFrom} - {validFromTime}</div>
+            <div>Till: {validTill} - {validTillTime}</div>
           </div>
         );
       },

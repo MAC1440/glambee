@@ -339,10 +339,10 @@ export function DealFormDialog({
                         <Input
                           type="datetime-local"
                           {...field}
-                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+                          value={field.value ? field.value.slice(0, 16) : ''}
                           onChange={(e) => {
                             const value = e.target.value;
-                            field.onChange(value ? new Date(value).toISOString() : null);
+                            field.onChange(value ? value : null);
                           }}
                           min={new Date().toISOString().slice(0, 16)}
                           disabled={saving}
@@ -363,10 +363,10 @@ export function DealFormDialog({
                         <Input
                           type="datetime-local"
                           {...field}
-                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+                          value={field.value ? field.value.slice(0, 16) : ''}
                           onChange={(e) => {
                             const value = e.target.value;
-                            field.onChange(value ? new Date(value).toISOString() : null);
+                            field.onChange(value ? value : null);
                           }}
                           min={new Date().toISOString().slice(0, 16)}
                           disabled={saving}
