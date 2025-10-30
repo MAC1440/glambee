@@ -1,143 +1,310 @@
-
 "use client";
 
 import * as React from "react";
-import {
-  CaretSortIcon,
-} from "@radix-ui/react-icons";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 import {
   ColumnDef,
   getFilteredRowModel,
+  ColumnFiltersState,
+  SortingState,
 } from "@tanstack/react-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuItem,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Calendar, DollarSign, Image, MessageSquare } from "lucide-react";
+import { DealWithSalon, DealFilters } from "@/types/deal";
 import { useToast } from "@/hooks/use-toast";
-import { services as allServices } from "@/lib/placeholder-data";
-import { ServiceFormDialog } from "../services/ServiceFormDialog";
+import { DealFormDialog } from "./DealFormDialog";
 import { DataTable } from "@/components/ui/data-table";
 import { DebouncedInput } from "@/components/ui/debounced-input";
-
-type Service = {
-  id: string;
-  name: string;
-  description: string;
-  price: number | string;
-  originalPrice: number | null;
-  duration: number | null;
-  image: string;
-  category: "Service" | "Deal" | "Promotion";
-  includedServices?: { value: string; label: string }[];
-  artists?: { value: string; label: string }[];
-};
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { DealsApi } from "@/lib/api/dealsApi";
 
 export function DealsList() {
-  const { toast } = useToast();
-  const [deals, setDeals] = React.useState<Service[]>(
-    allServices.filter((s) => s.category === "Deal")
-  );
-
+  const [deals, setDeals] = React.useState<DealWithSalon[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [editingDeal, setEditingDeal] = React.useState<DealWithSalon | null>(null);
   const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
-  const [editingService, setEditingService] = React.useState<
-    Service | undefined
-  >(undefined);
+  const [saving, setSaving] = React.useState(false);
+  const tableRef = React.useRef<any>(null);
+  const { toast } = useToast();
 
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const fetchDeals = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log("Loading deals with filters:", { searchQuery, categoryFilter });
+      const response = await DealsApi.getDeals({
+        search: searchQuery || undefined,
+        limit: 50
+      });
+      console.log("Deals API response:", response);
+      setDeals(response.data);
+    } catch (err) {
+      console.error("Error loading deals:", err);
+      setError(err instanceof Error ? err.message : "Failed to load deals");
+      toast({
+        title: "Error",
+        description: "Failed to load deals. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, categoryFilter, toast]);
+
+  // Client-side filtering
+  const filteredDeals = React.useMemo(() => {
+    let filtered = deals;
+
+    // Apply search filter
+    if (searchQuery && searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(deal => 
+        deal.title.toLowerCase().includes(query) ||
+        (deal.popup_title && deal.popup_title.toLowerCase().includes(query)) ||
+        deal.price?.toString().includes(query) ||
+        deal.discounted_price?.toString().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [deals, searchQuery]);
+
+  // Load deals on component mount
+  React.useEffect(() => {
+    fetchDeals();
+  }, [fetchDeals]);
+
+  // Handle search input change
+  const handleSearchChange = (value: string | number) => {
+    setSearchQuery(String(value));
+  };
+
+  // Handle category filter change
+  const handleCategoryChange = (value: string) => {
+    setCategoryFilter(value);
+  };
 
   const handleOpenDialog = (
     mode: "add" | "edit",
-    service?: Service
+    deal?: DealWithSalon
   ) => {
     setDialogMode(mode);
-    setEditingService(service);
+    setEditingDeal(deal || null);
     setDialogOpen(true);
   };
 
-  const handleSave = (serviceData: Service) => {
-    if (dialogMode === "add") {
-      const newService = {
-        ...serviceData,
-        id: `deal_${Date.now()}`,
-      };
-      setDeals((prev) => [newService, ...prev]);
+  const handleSave = async (dealData: any) => {
+    try {
+      setSaving(true);
+
+      console.log("Deal data for create: ", dealData)
+      if (dialogMode === "add") {
+        const savedDeal = await DealsApi.createDeal(dealData);
+        setDeals((prev) => [savedDeal, ...prev]);
+        toast({
+          title: "✅ Deal Added",
+          description: `${savedDeal.title} has been successfully created.`,
+          style: {
+            backgroundColor: "lightgreen",
+            color: "black",
+          }
+        });
+      } else if (editingDeal) {
+        const savedDeal = await DealsApi.updateDeal(editingDeal.id, dealData);
+        if (savedDeal) {
+          setDeals((prev) =>
+            prev.map((d) => d.id === savedDeal.id ? savedDeal : d)
+          );
+          toast({
+            title: "✅ Deal Updated",
+            description: `${savedDeal.title}'s details have been updated.`,
+            style: {
+              backgroundColor: "lightgreen",
+              color: "black",
+            }
+          });
+        }
+      }
+      setDialogOpen(false);
+      setEditingDeal(null);
+    } catch (err) {
+      console.error("💥 Error saving deal:", err);
       toast({
-        title: "Deal Added",
-        description: `${newService.name} has been successfully created.`,
+        title: "Error",
+        description: `Failed to ${
+          dialogMode === "add" ? "create" : "update"
+        } deal. Please try again.`,
+        variant: "destructive",
       });
-    } else if (editingService) {
-      const updatedService = { ...serviceData, id: editingService.id };
-      setDeals((prev) =>
-        prev.map((s) => (s.id === updatedService.id ? updatedService : s))
-      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (dealId: string) => {
+    try {
+      const dealName = deals.find((d) => d.id === dealId)?.title || "The deal";
+      await DealsApi.deleteDeal(dealId);
+      setDeals((prev) => prev.filter((d) => d.id !== dealId));
       toast({
-        title: "Deal Updated",
-        description: `${updatedService.name}'s details have been updated.`,
+        title: "✅ Deal Deleted",
+        description: `${dealName} has been removed.`,
+        style: {
+          backgroundColor: "lightgreen",
+          color: "black",
+        }
+      });
+    } catch (err) {
+      console.error("💥 Error deleting deal:", err);
+      toast({
+        title: "Error",
+        description: "Failed to delete deal. Please try again.",
+        variant: "destructive",
       });
     }
   };
 
-  const handleDelete = (serviceId: string) => {
-    const serviceName = deals.find((s) => s.id === serviceId)?.name || "The deal";
-    setDeals((prev) => prev.filter((s) => s.id !== serviceId));
-    toast({
-      title: "Deal Deleted",
-      description: `${serviceName} has been removed.`,
-    });
+  const handleTogglePopup = async (id: string, enabled: boolean) => {
+    try {
+      await DealsApi.toggleDealPopup(id, enabled);
+      toast({
+        title: "Success",
+        description: `Deal popup ${enabled ? "enabled" : "disabled"} successfully.`,
+      });
+      fetchDeals();
+    } catch (error) {
+      console.error("Error toggling popup:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update popup status. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const columns: ColumnDef<Service>[] = [
+  const isDealActive = (deal: DealWithSalon) => {
+    console.log("Deal: ", deal)
+    console.log("Valid from: ", new Date(deal.valid_from ?? ""))
+    const now = new Date();
+    const validFrom = deal.valid_from ? new Date(deal.valid_from) : null;
+    const validTill = deal.valid_till ? new Date(deal.valid_till) : null;
+
+    if (validFrom && now < validFrom) return false;
+    if (validTill && now > validTill) return false;
+    return true;
+  };
+
+  const columns: ColumnDef<DealWithSalon>[] = [
     {
-      accessorKey: "name",
-      header: ({ column }) => {
+      accessorKey: "title",
+      header: "Title",
+      cell: ({ row }) => {
+        const deal = row.original;
         return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Name
-            <CaretSortIcon className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="capitalize">{row.getValue("title")}</div>
+            {deal.media_url && (
+              <Image className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
         );
       },
-      cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
     },
-     {
+    {
       accessorKey: "price",
-      header: () => <div className="text-right">Price</div>,
+      header: "Price",
       cell: ({ row }) => {
-        const price = parseFloat(row.getValue("price"));
-        const formatted = new Intl.NumberFormat("en-US", {
+        const amount = parseFloat(row.getValue("price"));
+        const formatted = amount ? new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(price);
-
-        return <div className="text-right font-medium">{formatted}</div>;
+        }).format(amount) : 'N/A';
+        return <div className="font-medium pr-4">{formatted}</div>;
       },
     },
-     {
-      accessorKey: "originalPrice",
-      header: () => <div className="text-right">Original Price</div>,
+    {
+      accessorKey: "discounted_price",
+      header: "Discounted Price",
       cell: ({ row }) => {
-        const price = row.getValue("originalPrice") as number | null;
-        if (!price) return <div className="text-right text-muted-foreground">N/A</div>;
-        const formatted = new Intl.NumberFormat("en-US", {
+        const amount = parseFloat(row.getValue("discounted_price"));
+        const formatted = amount ? new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
-        }).format(price);
-
-        return <div className="text-right font-medium line-through">{formatted}</div>;
+        }).format(amount) : 'N/A';
+        return <div className="font-medium pr-4">{formatted}</div>;
+      },
+    },
+    {
+      accessorKey: "valid_from",
+      header: "Valid Period",
+      cell: ({ row }) => {
+        const deal = row.original;
+        const validFrom = deal.valid_from ? new Date(deal.valid_from).toLocaleDateString() : 'N/A';
+        const validTill = deal.valid_till ? new Date(deal.valid_till).toLocaleDateString() : 'N/A';
+        return (
+          <div className="text-sm">
+            <div>From: {validFrom}</div>
+            <div>Till: {validTill}</div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        console.log("Row: ", row)
+        const deal = row.original;
+        const isActive = isDealActive(deal);
+        console.log("Is active: ", isActive)
+        return (
+          <Badge variant={isActive ? "default" : "secondary"}>
+            {isActive ? "Active" : "Inactive"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "dealpopup",
+      header: "Popup",
+      cell: ({ row }) => {
+        const deal = row.original;
+        return (
+          <Badge variant={deal.dealpopup ? "default" : "outline"}>
+            {deal.dealpopup ? "Enabled" : "Disabled"}
+          </Badge>
+        );
       },
     },
     {
       id: "actions",
+      header: "Actions",
       enableHiding: false,
       cell: ({ row }) => {
         const deal = row.original;
@@ -151,11 +318,21 @@ export function DealsList() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleOpenDialog("edit", deal)}>
+              <DropdownMenuItem
+                onClick={() => handleOpenDialog("edit", deal)}
+              >
                 Edit
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleTogglePopup(deal.id, !deal.dealpopup)}
+              >
+                {deal.dealpopup ? "Disable Popup" : "Enable Popup"}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleDelete(deal.id)} className="text-red-600">
+              <DropdownMenuItem
+                onClick={() => handleDelete(deal.id)}
+                className="text-red-600"
+              >
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -165,44 +342,92 @@ export function DealsList() {
     },
   ];
 
-  return (
-    <>
-    <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
-        <div className="text-left">
-          <h1 className="text-4xl font-headline font-bold">Package Deals</h1>
-          <p className="text-muted-foreground mt-2">
-            Bundle services together for special value.
-          </p>
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <div className="text-left">
+            <h1 className="text-4xl font-headline font-bold">
+              All Deals
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage your salon deals and promotions.
+            </p>
+          </div>
         </div>
-        <Button onClick={() => handleOpenDialog("add")}>
-          <PlusCircle className="mr-2" /> Add Deal
-        </Button>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading deals...</p>
+          </div>
+        </div>
       </div>
-      
-       <div className="flex items-center justify-between">
-          <DebouncedInput
-            value={globalFilter ?? ""}
-            onValueChange={(value) => setGlobalFilter(String(value))}
-            className="max-w-sm"
-            placeholder="Search all columns..."
-          />
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <div className="text-left">
+            <h1 className="text-4xl font-headline font-bold">
+              All Deals
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage your salon deals and promotions.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Error: {error}</p>
+            <Button onClick={() => fetchDeals()}>Try Again</Button>
+          </div>
+        </div>
       </div>
-      <DataTable 
-        columns={columns} 
-        data={deals}
-        globalFilter={globalFilter}
-        onGlobalFilterChange={setGlobalFilter}
-       />
-    </div>
-    <ServiceFormDialog
+    );
+  }
+
+  return (
+    <> 
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <div className="text-left">
+            <h1 className="text-4xl font-headline font-bold">
+              All Deals
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage your salon deals and promotions.
+            </p>
+          </div>
+          <Button onClick={() => handleOpenDialog("add")}>
+            <PlusCircle className="mr-2" /> Add Deal
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <DebouncedInput
+              value={searchQuery ?? ''}
+              onValueChange={handleSearchChange}
+              placeholder="Search deals"
+              className="w-full max-w-sm"
+            />
+          </div>
+        </div>
+        <DataTable
+          ref={tableRef}
+          columns={columns as any}
+          data={filteredDeals}
+        />
+      </div>
+      <DealFormDialog
         isOpen={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}
-        category="Deal"
-        service={editingService}
+        deal={editingDeal}
         onSave={handleSave}
-        individualServices={allServices.filter(s => s.category === 'Service')}
+        saving={saving}
       />
     </>
   );
