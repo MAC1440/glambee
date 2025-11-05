@@ -28,32 +28,51 @@ import { Textarea } from "@/components/ui/textarea";
 type NewRoleDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onSave: (values: { name: string; description: string; }) => void;
+  onSave: (values: { name: string; description?: string | null; }, isEditing: boolean) => void;
+  editingRole: { name: string; description?: string; id?: string } | null;
 };
 
 const formSchema = z.object({
   name: z.string().min(3, "Role name must be at least 3 characters."),
-  description: z.string().min(10, "Description is too short."),
+  description: z.string().optional().nullable(),
 });
 
 export function NewRoleDialog({
   isOpen,
   onOpenChange,
   onSave,
+  editingRole,
 }: NewRoleDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: "", description: "" },
   });
 
+  // useEffect(() => {
+  //   if (isOpen) {
+  //     form.reset();
+  //   }
+  // }, [isOpen, form]);
+
   useEffect(() => {
     if (isOpen) {
-      form.reset();
+      if (editingRole) {
+        form.reset({
+          name: editingRole.name || "",
+          description: editingRole.description || "",
+        });
+      } else {
+        form.reset({
+          name: "",
+          description: "",
+        });
+      }
     }
-  }, [isOpen, form]);
+  }, [isOpen, editingRole, form]);
+  
   
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    onSave(values);
+    onSave(values, !!editingRole);
     onOpenChange(false);
   };
 
@@ -63,9 +82,9 @@ export function NewRoleDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>Add New Role</DialogTitle>
+              <DialogTitle>{editingRole ? 'Edit Role' : 'Add New Role'}</DialogTitle>
               <DialogDescription>
-                Define a new role. You can set its permissions after creating it.
+                {editingRole ? 'Edit the role details.' : 'Define a new role. You can set its permissions after creating it.'}
               </DialogDescription>
             </DialogHeader>
 
@@ -88,9 +107,13 @@ export function NewRoleDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Describe what this role can do..." {...field} />
+                    <Textarea 
+                      placeholder="Describe what this role can do..." 
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -101,7 +124,7 @@ export function NewRoleDialog({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Create Role</Button>
+              <Button type="submit">{editingRole ? 'Save Changes' : 'Create Role'}</Button>
             </DialogFooter>
           </form>
         </Form>

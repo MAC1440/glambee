@@ -11,6 +11,10 @@ export interface StaffWithCategories extends SalonStaff {
     name: string | null;
     tag_line: string | null;
   }[];
+  assignedRole?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface StaffFilters {
@@ -313,4 +317,312 @@ export class StaffApi {
       throw error;
     }
   }
+
+  /**
+   * Get all staff with their assigned roles
+   * Returns all staff members regardless of whether they have role assignments
+   */
+  static async getStaffWithRoles(salonId?: string): Promise<StaffWithCategories[]> {
+    try {
+      // Fetch staff separately - always fetch all staff
+      let staffQuery = supabase
+        .from('salons_staff')
+        .select('*');
+
+      if (salonId) {
+        staffQuery = staffQuery.eq('salon_id', salonId);
+      }
+
+      const { data: staff, error: staffError } = await staffQuery.order('name', { ascending: true });
+
+      if (staffError) {
+        console.error('Error fetching staff:', staffError);
+        throw staffError;
+      }
+
+      // Return empty array if no staff found
+      if (!staff || staff.length === 0) {
+        return [];
+      }
+
+      // Get all staff IDs
+      const staffIds = staff.map(s => s.id);
+
+      // Fetch role assignments with roles for these staff members
+      // Don't throw error if this fails - just continue without roles
+      const { data: roleAssignments, error: assignmentsError } = await supabase
+        .from('staff_role_assignments')
+        .select(`
+          staff_id,
+          role:staff_roles(
+            id,
+            name
+          )
+        `)
+        .in('staff_id', staffIds);
+
+      if (assignmentsError) {
+        console.warn('Error fetching role assignments (continuing without roles):', assignmentsError);
+        // Continue execution - staff will have assignedRole: null
+      }
+
+      // Create a map of staff_id to role
+      const roleMap = new Map<string, { id: string; name: string }>();
+      if (roleAssignments && roleAssignments.length > 0) {
+        roleAssignments.forEach((assignment: any) => {
+          if (assignment && assignment.role) {
+            roleMap.set(assignment.staff_id, {
+              id: assignment.role.id,
+              name: assignment.role.name
+            });
+          }
+        });
+      } else {
+        console.log('No role assignments found - all staff will have assignedRole: null');
+      }
+
+      // Merge staff with their assigned roles
+      // Staff without role assignments will have assignedRole: null
+      // Fallback to salons_staff.role column for backward compatibility
+      const staffWithRoles: StaffWithCategories[] = staff.map((member) => {
+        let assignedRole = roleMap.get(member.id) || null;
+
+        // Fallback: If no role assignment but salons_staff.role has a value, use that
+        // This handles cases where the sync hasn't run yet or legacy data exists
+        if (!assignedRole && member.role) {
+          // Try to find the role by name to get the proper structure
+          // For now, we'll use the role string directly as assignedRole.name
+          // This is temporary until sync runs
+          assignedRole = {
+            id: '', // We don't have the ID from just the name
+            name: member.role
+          };
+        }
+
+        return {
+          ...member,
+          assignedRole, // null if no role assigned
+          categories: []
+        };
+      });
+
+      return staffWithRoles;
+    } catch (error) {
+      console.error('Failed to fetch staff with roles:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get assigned role for a staff member
+   */
+  static async getStaffRole(staffId: string): Promise<{ id: string; name: string } | null> {
+    try {
+      const { data: assignment, error } = await supabase
+        .from('staff_role_assignments')
+        .select(`
+          role:staff_roles(
+            id,
+            name
+          )
+        `)
+        .eq('staff_id', staffId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching staff role:', error);
+        throw error;
+      }
+
+      if (!assignment || !assignment.role) {
+        return null;
+      }
+
+      return {
+        id: assignment.role.id,
+        name: assignment.role.name
+      };
+    } catch (error) {
+      console.error('Failed to fetch staff role:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Assign a role to a staff member
+   * If a role already exists, it will be updated
+   * Also updates the salons_staff.role column for backward compatibility
+   */
+  static async assignRoleToStaff(staffId: string, roleId: string): Promise<boolean> {
+    try {
+      // First, get the role name from staff_roles table
+      const { data: role, error: roleError } = await supabase
+        .from('staff_roles')
+        .select('name')
+        .eq('id', roleId)
+        .single();
+
+      if (roleError || !role) {
+        console.error('Error fetching role:', roleError);
+        throw new Error('Role not found');
+      }
+
+      const roleName = role.name;
+
+      // Check if staff member already has a role assigned
+      const { data: existingAssignment } = await supabase
+        .from('staff_role_assignments')
+        .select('*')
+        .eq('staff_id', staffId)
+        .maybeSingle();
+
+      if (existingAssignment) {
+        // Update existing assignment
+        const { error } = await supabase
+          .from('staff_role_assignments')
+          .update({ role_id: roleId })
+          .eq('staff_id', staffId);
+
+        if (error) {
+          console.error('Error updating role assignment:', error);
+          throw error;
+        }
+      } else {
+        // Create new assignment
+        const { error } = await supabase
+          .from('staff_role_assignments')
+          .insert({
+            staff_id: staffId,
+            role_id: roleId
+          });
+
+        if (error) {
+          console.error('Error assigning role to staff:', error);
+          throw error;
+        }
+      }
+
+      // Also update salons_staff.role column for backward compatibility
+      const { error: updateStaffError } = await supabase
+        .from('salons_staff')
+        .update({ role: roleName })
+        .eq('id', staffId);
+
+      if (updateStaffError) {
+        console.error('Error updating salons_staff.role:', updateStaffError);
+        // Don't throw - the role assignment was successful, this is just for backward compatibility
+        console.warn('Role assignment succeeded but failed to update salons_staff.role');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to assign role to staff:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove role assignment from a staff member
+   * Also clears the salons_staff.role column for backward compatibility
+   */
+  static async removeRoleFromStaff(staffId: string): Promise<boolean> {
+    try {
+      // Remove from staff_role_assignments
+      const { error } = await supabase
+        .from('staff_role_assignments')
+        .delete()
+        .eq('staff_id', staffId);
+
+      if (error) {
+        console.error('Error removing role from staff:', error);
+        throw error;
+      }
+
+      // Also clear salons_staff.role column for backward compatibility
+      const { error: updateStaffError } = await supabase
+        .from('salons_staff')
+        .update({ role: null })
+        .eq('id', staffId);
+
+      if (updateStaffError) {
+        console.error('Error clearing salons_staff.role:', updateStaffError);
+        // Don't throw - the role removal was successful
+        console.warn('Role removal succeeded but failed to clear salons_staff.role');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to remove role from staff:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sync salons_staff.role column with staff_role_assignments table
+   * This is a one-time migration function to update all existing records
+   * Can be called to ensure data consistency
+   */
+  // static async syncStaffRoles(): Promise<{ updated: number; errors: number }> {
+  //   try {
+  //     console.log('Starting role sync...');
+
+  //     // Get all role assignments with role names
+  //     const { data: assignments, error: assignmentsError } = await supabase
+  //       .from('staff_role_assignments')
+  //       .select(`
+  //         staff_id,
+  //         role:staff_roles(
+  //           name
+  //         )
+  //       `);
+
+  //     if (assignmentsError) {
+  //       console.error('Error fetching role assignments:', assignmentsError);
+  //       throw assignmentsError;
+  //     }
+
+  //     if (!assignments || assignments.length === 0) {
+  //       console.log('No role assignments found to sync');
+  //       return { updated: 0, errors: 0 };
+  //     }
+
+  //     let updated = 0;
+  //     let errors = 0;
+
+  //     // Update each staff member's role column
+  //     for (const assignment of assignments) {
+  //       try {
+  //         const staffId = assignment.staff_id;
+  //         const roleName = (assignment as any).role?.name;
+
+  //         if (!roleName) {
+  //           console.warn(`Skipping assignment for staff ${staffId} - role name not found`);
+  //           errors++;
+  //           continue;
+  //         }
+
+  //         const { error: updateError } = await supabase
+  //           .from('salons_staff')
+  //           .update({ role: roleName })
+  //           .eq('id', staffId);
+
+  //         if (updateError) {
+  //           console.error(`Error updating staff ${staffId}:`, updateError);
+  //           errors++;
+  //         } else {
+  //           updated++;
+  //         }
+  //       } catch (error) {
+  //         console.error(`Error processing assignment for staff ${assignment.staff_id}:`, error);
+  //         errors++;
+  //       }
+  //     }
+
+  //     console.log(`Role sync completed: ${updated} updated, ${errors} errors`);
+  //     return { updated, errors };
+  //   } catch (error) {
+  //     console.error('Failed to sync staff roles:', error);
+  //     throw error;
+  //   }
+  // }
 }
