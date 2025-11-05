@@ -84,6 +84,15 @@ export class ServicesApi {
       // Apply filters
       if (filters.salonId) {
         query = query.eq('salon_id', filters.salonId);
+      } else {
+        // Try to get default salon, but don't filter if it fails
+        try {
+          const defaultSalonId = await this.getDefaultSalonId();
+          query = query.eq('salon_id', defaultSalonId);
+        } catch (error) {
+          console.log("No default salon found, fetching all services");
+          // Don't filter by salon_id if no default salon exists
+        }
       }
       if (filters.categoryId) {
         query = query.eq('category_id', filters.categoryId);

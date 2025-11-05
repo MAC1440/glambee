@@ -295,6 +295,14 @@ export function ServicesList() {
       },
     },
     {
+      accessorKey: "service_discount",
+      header: "Discount",
+      cell: ({ row }) => {
+        const serviceDiscount = parseFloat(row.getValue("service_discount"));
+        return <div>{serviceDiscount ? `${serviceDiscount}%` : 'N/A'}</div>;
+      },
+    },
+    {
       accessorKey: "gender",
       header: "Gender",
       cell: ({ row }) => {

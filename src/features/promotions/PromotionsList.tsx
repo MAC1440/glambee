@@ -7,7 +7,6 @@ import {
 } from "@radix-ui/react-icons";
 import {
   ColumnDef,
-  getFilteredRowModel,
 } from "@tanstack/react-table";
 import {
   DropdownMenu,
@@ -20,111 +19,154 @@ import {
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { services as allServices } from "@/lib/placeholder-data";
-import { ServiceFormDialog } from "../services/ServiceFormDialog";
 import { DataTable } from "@/components/ui/data-table";
-import { DebouncedInput } from "@/components/ui/debounced-input";
-
-type Service = {
-  id: string;
-  name: string;
-  description: string;
-  price: number | string;
-  originalPrice: number | null;
-  duration: number | null;
-  image: string;
-  category: "Service" | "Deal" | "Promotion";
-  includedServices?: { value: string; label: string }[];
-  artists?: { value: string; label: string }[];
-};
+import { PromotionsApi, DiscountWithSalon } from "@/lib/api/promotionsApi";
+import { PromotionFormDialog } from "./PromotionFormDialog";
 
 export function PromotionsList() {
   const { toast } = useToast();
-  const [promotions, setPromotions] = React.useState<Service[]>(
-    allServices.filter((s) => s.category === "Promotion")
-  );
-
+  const [promotions, setPromotions] = React.useState<DiscountWithSalon[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
-  const [editingService, setEditingService] = React.useState<
-    Service | undefined
-  >(undefined);
-  
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [editingPromotion, setEditingPromotion] = React.useState<DiscountWithSalon | undefined>(undefined);
+
+  // Fetch promotions on mount
+  React.useEffect(() => {
+    const loadPromotions = async () => {
+      try {
+        setLoading(true);
+        const response = await PromotionsApi.getDiscounts();
+        setPromotions(response.data);
+      } catch (error) {
+        console.error("Error loading promotions:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load promotions. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPromotions();
+  }, [toast]);
 
   const handleOpenDialog = (
     mode: "add" | "edit",
-    service?: Service
+    promotion?: DiscountWithSalon
   ) => {
     setDialogMode(mode);
-    setEditingService(service);
+    setEditingPromotion(promotion);
     setDialogOpen(true);
   };
 
-  const handleSave = (serviceData: Service) => {
-    if (dialogMode === "add") {
-      const newService = {
-        ...serviceData,
-        id: `promo_${Date.now()}`,
-      };
-      setPromotions((prev) => [newService, ...prev]);
+  const handleSave = async (promotionData: {
+    service_discount: number;
+    deal_discount: number;
+    package_discount: number;
+  }) => {
+    try {
+      if (dialogMode === "add") {
+        const newPromotion = await PromotionsApi.createDiscount(promotionData);
+        setPromotions((prev) => [newPromotion, ...prev]);
+        toast({
+          title: "Promotion Added",
+          description: "Discount has been successfully created.",
+          style: {
+            backgroundColor: "lightgreen",
+            color: "black",
+          }
+        });
+      } else if (editingPromotion) {
+        const updatedPromotion = await PromotionsApi.updateDiscount(
+          editingPromotion.id,
+          promotionData
+        );
+        if (updatedPromotion) {
+          setPromotions((prev) =>
+            prev.map((p) => (p.id === updatedPromotion.id ? updatedPromotion : p))
+          );
+          toast({
+            title: "Promotion Updated",
+            description: "Discount details have been updated.",
+            style: {
+              backgroundColor: "lightgreen",
+              color: "black",
+            }
+          });
+        }
+      }
+      setDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving promotion:", error);
       toast({
-        title: "Promotion Added",
-        description: `${newService.name} has been successfully created.`,
-      });
-    } else if (editingService) {
-      const updatedService = { ...serviceData, id: editingService.id };
-      setPromotions((prev) =>
-        prev.map((s) => (s.id === updatedService.id ? updatedService : s))
-      );
-      toast({
-        title: "Promotion Updated",
-        description: `${updatedService.name}'s details have been updated.`,
+        title: "Error",
+        description: "Failed to save promotion. Please try again.",
+        variant: "destructive",
       });
     }
   };
 
-  const handleDelete = (serviceId: string) => {
-    const serviceName = promotions.find((s) => s.id === serviceId)?.name || "The promotion";
-    setPromotions((prev) => prev.filter((s) => s.id !== serviceId));
-    toast({
-      title: "Promotion Deleted",
-      description: `${serviceName} has been removed.`,
-    });
+  const handleDelete = async (promotionId: string) => {
+    try {
+      await PromotionsApi.deleteDiscount(promotionId);
+      setPromotions((prev) => prev.filter((p) => p.id !== promotionId));
+      toast({
+        title: "Promotion Deleted",
+        description: "Discount has been removed.",
+        style: {
+          backgroundColor: "lightgreen",
+          color: "black",
+        }
+      });
+    } catch (error) {
+      console.error("Error deleting promotion:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete promotion. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const columns: ColumnDef<Service>[] = [
+  const columns: ColumnDef<DiscountWithSalon>[] = [
     {
-      accessorKey: "name",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Name
-            <CaretSortIcon className="ml-2 h-4 w-4" />
-          </Button>
-        );
-      },
-      cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => (
-        <div className="line-clamp-2 max-w-xs">{row.getValue("description")}</div>
-      ),
-    },
-     {
-      accessorKey: "price",
-      header: "Value",
+      accessorKey: "service_discount",
+      header: "Service Discount (%)",
       cell: ({ row }) => {
-        return <div className="font-medium">{row.getValue("price")}</div>;
+        const discount = parseFloat(row.getValue("service_discount"));
+        return <div className="font-medium">{discount}%</div>;
+      },
+    },
+    {
+      accessorKey: "deal_discount",
+      header: "Deal Discount (%)",
+      cell: ({ row }) => {
+        const discount = parseFloat(row.getValue("deal_discount"));
+        return <div className="font-medium">{discount}%</div>;
+      },
+    },
+    {
+      accessorKey: "package_discount",
+      header: "Package Discount (%)",
+      cell: ({ row }) => {
+        const discount = parseFloat(row.getValue("package_discount"));
+        return <div className="font-medium">{discount}%</div>;
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created At",
+      cell: ({ row }) => {
+        const date = new Date(row.getValue("created_at"));
+        return <div className="text-sm">{date.toLocaleDateString()}</div>;
       },
     },
     {
       id: "actions",
+      header: "Actions",
       enableHiding: false,
       cell: ({ row }) => {
         const promotion = row.original;
@@ -152,44 +194,40 @@ export function PromotionsList() {
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <p className="text-muted-foreground">Loading promotions...</p>
+      </div>
+    );
+  }
+
   return (
     <>
-    <div className="flex flex-col gap-8">
-      <div className="flex items-center justify-between">
-        <div className="text-left">
-          <h1 className="text-4xl font-headline font-bold">Promotions & Discounts</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your special offers and discounts.
-          </p>
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <div className="text-left">
+            <h1 className="text-4xl font-headline font-bold">Promotions & Discounts</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage your discount rates for services, deals, and packages.
+            </p>
+          </div>
+          <Button onClick={() => handleOpenDialog("add")}>
+            <PlusCircle className="mr-2" /> Add Discount
+          </Button>
         </div>
-        <Button onClick={() => handleOpenDialog("add")}>
-          <PlusCircle className="mr-2" /> Add Promotion
-        </Button>
+        
+        <DataTable 
+          columns={columns as any} 
+          data={promotions}
+        />
       </div>
-      
-       <div className="flex items-center justify-between">
-          <DebouncedInput
-            value={globalFilter ?? ""}
-            onValueChange={(value) => setGlobalFilter(String(value))}
-            className="max-w-sm"
-            placeholder="Search all columns..."
-          />
-      </div>
-      <DataTable 
-        columns={columns} 
-        data={promotions}
-        globalFilter={globalFilter}
-        onGlobalFilterChange={setGlobalFilter}
-      />
-    </div>
-    <ServiceFormDialog
+      <PromotionFormDialog
         isOpen={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}
-        category="Promotion"
-        service={editingService}
+        promotion={editingPromotion}
         onSave={handleSave}
-        individualServices={[]}
       />
     </>
   );

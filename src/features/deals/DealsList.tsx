@@ -57,12 +57,10 @@ export function DealsList() {
     try {
       setLoading(true);
       setError(null);
-      console.log("Loading deals with filters:", { searchQuery, categoryFilter });
       const response = await DealsApi.getDeals({
         search: searchQuery || undefined,
-        limit: 50
+        // limit: 50
       });
-      console.log("Deals API response:", response);
       setDeals(response.data);
     } catch (err) {
       console.error("Error loading deals:", err);
@@ -123,7 +121,6 @@ export function DealsList() {
     try {
       setSaving(true);
 
-      console.log("Deal data for create: ", dealData)
       if (dialogMode === "add") {
         const savedDeal = await DealsApi.createDeal(dealData);
         setDeals((prev) => [savedDeal, ...prev]);
@@ -209,8 +206,6 @@ export function DealsList() {
   };
 
   const isDealActive = (deal: DealWithSalon) => {
-    console.log("Deal: ", deal)
-    console.log("Valid from: ", new Date(deal.valid_from ?? ""))
     const now = new Date();
     const validFrom = deal.valid_from ? new Date(deal.valid_from) : null;
     const validTill = deal.valid_till ? new Date(deal.valid_till) : null;
@@ -284,15 +279,21 @@ export function DealsList() {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        console.log("Row: ", row)
         const deal = row.original;
         const isActive = isDealActive(deal);
-        console.log("Is active: ", isActive)
         return (
           <Badge variant={isActive ? "default" : "secondary"}>
             {isActive ? "Active" : "Inactive"}
           </Badge>
         );
+      },
+    },
+    {
+      accessorKey: "deal_discount",
+      header: "Deal Discount",
+      cell: ({ row }) => {
+        const deal = parseFloat(row.getValue("deal_discount"));
+        return <div className="font-medium pr-4">{deal ? `${deal}%` : 'N/A'}</div>;
       },
     },
     {
