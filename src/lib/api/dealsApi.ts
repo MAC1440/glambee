@@ -174,6 +174,61 @@ export class DealsApi {
   }
 
   /**
+   * Get discount from salon_discounts for a salon (most recently created or updated)
+   */
+  private static async getSalonDiscount(salonId: string): Promise<number | null> {
+    try {
+      const { data, error } = await supabase
+        .from('salon_discounts')
+        .select('deal_discount')
+        .eq('salon_id', salonId)
+        .order('updated_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Error fetching salon discount:', error);
+        return null;
+      }
+
+      return data?.deal_discount ?? null;
+    } catch (error) {
+      console.warn('Failed to fetch salon discount:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Sync discount from salon_discounts to a specific deal
+   */
+  private static async syncDealDiscount(dealId: string, salonId: string): Promise<SalonDeal | null> {
+    try {
+      const discount = await this.getSalonDiscount(salonId);
+      if (discount !== null) {
+        const { data, error } = await supabase
+          .from('salons_deals')
+          .update({ deal_discount: discount } as any)
+          .eq('id', dealId)
+          .select()
+          .single();
+
+        if (error) {
+          console.warn('Error syncing deal discount:', error);
+          return null;
+        }
+
+        return data;
+      }
+      
+      return null;
+    } catch (error) {
+      console.warn('Failed to sync deal discount:', error);
+      return null;
+    }
+  }
+
+  /**
    * Create a new deal
    */
   static async createDeal(dealData: Omit<SalonDealInsert, 'salon_id'>): Promise<SalonDeal> {
@@ -193,6 +248,18 @@ export class DealsApi {
         throw new Error(`Failed to create deal: ${error.message}`);
       }
 
+      // Sync discount from salon_discounts after creation
+      try {
+        const syncedDeal = await this.syncDealDiscount(data.id, salonId);
+        // Return the synced deal with updated discount if sync was successful
+        if (syncedDeal) {
+          return syncedDeal;
+        }
+      } catch (syncError) {
+        console.warn('Failed to sync discount after deal creation (deal created but discount sync failed):', syncError);
+        // Don't throw - deal was created successfully, discount sync is secondary
+      }
+
       return data;
     } catch (error) {
       console.error('Error creating deal:', error);
@@ -205,6 +272,14 @@ export class DealsApi {
    */
   static async updateDeal(id: string, updates: SalonDealUpdate): Promise<SalonDeal> {
     try {
+      // First, get the current deal to get salon_id
+      const currentDeal = await this.getDealById(id);
+      if (!currentDeal) {
+        throw new Error('Deal not found');
+      }
+
+      const salonId = currentDeal.salon_id;
+
       const { data, error } = await supabase
         .from('salons_deals')
         .update({
@@ -217,6 +292,18 @@ export class DealsApi {
 
       if (error) {
         throw new Error(`Failed to update deal: ${error.message}`);
+      }
+
+      // Sync discount from salon_discounts after update
+      try {
+        const syncedDeal = await this.syncDealDiscount(data.id, salonId);
+        // Return the synced deal with updated discount if sync was successful
+        if (syncedDeal) {
+          return syncedDeal;
+        }
+      } catch (syncError) {
+        console.warn('Failed to sync discount after deal update (deal updated but discount sync failed):', syncError);
+        // Don't throw - deal was updated successfully, discount sync is secondary
       }
 
       return data;
@@ -252,17 +339,13 @@ export class DealsApi {
    */
   static async getActiveDeals(salonId?: string): Promise<DealWithSalon[]> {
     try {
-      const { data, error } = await this.getDeals({
+      const response = await this.getDeals({
         salonId,
         isActive: true,
         limit: 100
       });
 
-      if (error) {
-        throw error;
-      }
-
-      return data;
+      return response.data;
     } catch (error) {
       console.error('Error fetching active deals:', error);
       throw error;
@@ -274,17 +357,13 @@ export class DealsApi {
    */
   static async getPopupDeals(salonId?: string): Promise<DealWithSalon[]> {
     try {
-      const { data, error } = await this.getDeals({
+      const response = await this.getDeals({
         salonId,
         hasPopup: true,
         limit: 100
       });
 
-      if (error) {
-        throw error;
-      }
-
-      return data;
+      return response.data;
     } catch (error) {
       console.error('Error fetching popup deals:', error);
       throw error;
@@ -325,8 +404,9 @@ export class DealsApi {
     id: string, 
     popupSettings: {
       popup_title?: string;
-      popup_color?: string;
-      popup_template?: string;
+      popup_price?: number | null;
+      popup_color?: string | null;
+      popup_template?: string | null;
     }
   ): Promise<SalonDeal> {
     try {

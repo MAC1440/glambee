@@ -70,12 +70,23 @@ const formSchema = z.object({
     }),
   dealpopup: z.preprocess(emptyToNull, z.boolean().default(false)),
   popup_title: z.preprocess(emptyToNull, z.string().nullable()),
+  popup_price: z.preprocess(emptyToNull,
+    z.number({ invalid_type_error: "Popup price must be a number." })
+      .positive("Popup price must be greater than zero.")
+      .max(999999.99, "Popup price must be less than $1,000,000.")
+      .nullable()
+  ),
   popup_color: z.preprocess(
     emptyToNull,
     z
       .string()
-      .regex(/^#[0-9A-Fa-f]{6}$/, "Please enter a valid hex color code (e.g., #FF0000).")
       .nullable()
+      .refine((val) => {
+        if (!val || val === "") return true; // Allow empty/null
+        return /^#[0-9A-Fa-f]{6}$/.test(val);
+      }, {
+        message: "Please enter a valid hex color code (e.g., #FF0000)."
+      })
   ),
   popup_template: z.preprocess(emptyToNull, z.string().nullable()),
 }).superRefine((data, ctx) => {
@@ -145,6 +156,7 @@ export function DealFormDialog({
       media_url: deal?.media_url || "",
       dealpopup: deal?.dealpopup || false,
       popup_title: deal?.popup_title || "",
+      popup_price: deal?.popup_price || null,
       popup_color: deal?.popup_color || "",
       popup_template: deal?.popup_template || "",
     },
@@ -162,6 +174,7 @@ export function DealFormDialog({
         media_url: deal?.media_url || "",
         dealpopup: deal?.dealpopup || false,
         popup_title: deal?.popup_title || "",
+        popup_price: deal?.popup_price || null,
         popup_color: deal?.popup_color || "",
         popup_template: deal?.popup_template || "",
       });
@@ -436,6 +449,56 @@ export function DealFormDialog({
                             {...field} 
                             value={field.value || ''}
                             disabled={saving} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="popup_price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Popup Price ($)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="e.g., 99.99"
+                            step="0.01"
+                            min="0"
+                            max="999999.99"
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === "") {
+                                field.onChange(null);
+                                return;
+                              }
+                              const numValue = parseFloat(value);
+                              if (!isNaN(numValue) && numValue >= 0 && numValue <= 999999.99) {
+                                field.onChange(numValue);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === '-') {
+                                e.preventDefault();
+                              }
+                            }}
+                            onPaste={(e) => {
+                              const pastedText = e.clipboardData.getData('text');
+                              const sanitizedText = pastedText.replace(/[^0-9.]/g, '');
+                              const numValue = parseFloat(sanitizedText);
+                              if (!isNaN(numValue) && numValue >= 0 && numValue <= 999999.99) {
+                                field.onChange(numValue);
+                              } else {
+                                field.onChange(null);
+                              }
+                              e.preventDefault();
+                            }}
+                            disabled={saving}
                           />
                         </FormControl>
                         <FormMessage />

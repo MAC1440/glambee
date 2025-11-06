@@ -275,19 +275,19 @@ export function DealsList() {
         );
       },
     },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const deal = row.original;
-        const isActive = isDealActive(deal);
-        return (
-          <Badge variant={isActive ? "default" : "secondary"}>
-            {isActive ? "Active" : "Inactive"}
-          </Badge>
-        );
-      },
-    },
+    // {
+    //   accessorKey: "status",
+    //   header: "Status",
+    //   cell: ({ row }) => {
+    //     const deal = row.original;
+    //     const isActive = isDealActive(deal);
+    //     return (
+    //       <Badge variant={isActive ? "default" : "secondary"}>
+    //         {isActive ? "Active" : "Inactive"}
+    //       </Badge>
+    //     );
+    //   },
+    // },
     {
       accessorKey: "deal_discount",
       header: "Deal Discount",

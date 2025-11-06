@@ -31,12 +31,14 @@ export interface DealFormData {
   media_url: string | null;
   dealpopup: boolean;
   popup_title: string | null;
+  popup_price: number | null;
   popup_color: string | null;
   popup_template: string | null;
 }
 
 export interface PopupSettings {
   popup_title: string;
-  popup_color: string;
-  popup_template: string;
+  popup_price?: number | null;
+  popup_color?: string | null;
+  popup_template?: string | null;
 }

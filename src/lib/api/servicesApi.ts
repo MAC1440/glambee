@@ -215,6 +215,62 @@ export class ServicesApi {
   }
 
   /**
+   * Get discount from salon_discounts for a salon (most recently created or updated)
+   */
+  private static async getSalonDiscount(salonId: string): Promise<number | null> {
+    try {
+      const { data, error } = await supabase
+        .from('salon_discounts')
+        .select('service_discount')
+        .eq('salon_id', salonId)
+        .order('updated_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Error fetching salon discount:', error);
+        return null;
+      }
+
+      return data?.service_discount ?? null;
+    } catch (error) {
+      console.warn('Failed to fetch salon discount:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Sync discount from salon_discounts to a specific service
+   */
+  private static async syncServiceDiscount(serviceId: string, salonId: string): Promise<SalonService | null> {
+    try {
+      const discount = await this.getSalonDiscount(salonId);
+      
+      if (discount !== null) {
+        const { data, error } = await supabase
+          .from('salons_services')
+          .update({ service_discount: discount } as any)
+          .eq('id', serviceId)
+          .select()
+          .single();
+
+        if (error) {
+          console.warn('Error syncing service discount:', error);
+          return null;
+        }
+
+        return data;
+      }
+      
+      return null;
+    } catch (error) {
+      console.warn('Failed to sync service discount:', error);
+      return null;
+    }
+  }
+
+  /**
    * Create a new service
    */
   static async createService(serviceData: SalonServiceInsert): Promise<ServiceWithStaff> {
@@ -224,6 +280,8 @@ export class ServicesApi {
         serviceData.salon_id = await this.getDefaultSalonId();
       }
       
+      const salonId = serviceData.salon_id;
+
       const { data: service, error } = await supabase
         .from('salons_services')
         .insert({
@@ -239,10 +297,23 @@ export class ServicesApi {
         throw error;
       }
 
-      const duration = this.parseTimeToMinutes(service.time);
+      // Sync discount from salon_discounts after creation
+      let finalService = service;
+      try {
+        const syncedService = await this.syncServiceDiscount(service.id, salonId);
+        // Use the synced service with updated discount if sync was successful
+        if (syncedService) {
+          finalService = syncedService;
+        }
+      } catch (syncError) {
+        console.warn('Failed to sync discount after service creation (service created but discount sync failed):', syncError);
+        // Don't throw - service was created successfully, discount sync is secondary
+      }
+
+      const duration = this.parseTimeToMinutes(finalService.time);
 
       return {
-        ...service,
+        ...finalService,
         staff: [],
         duration
       };
@@ -257,6 +328,14 @@ export class ServicesApi {
    */
   static async updateService(id: string, updates: SalonServiceUpdate): Promise<ServiceWithStaff | null> {
     try {
+      // First, get the current service to get salon_id
+      const currentService = await this.getServiceById(id);
+      if (!currentService) {
+        throw new Error('Service not found');
+      }
+
+      const salonId = currentService.salon_id;
+
       const { data: service, error } = await supabase
         .from('salons_services')
         .update({
@@ -272,10 +351,23 @@ export class ServicesApi {
         throw error;
       }
 
-      const duration = this.parseTimeToMinutes(service.time);
+      // Sync discount from salon_discounts after update
+      let finalService = service;
+      try {
+        const syncedService = await this.syncServiceDiscount(service.id, salonId);
+        // Use the synced service with updated discount if sync was successful
+        if (syncedService) {
+          finalService = syncedService;
+        }
+      } catch (syncError) {
+        console.warn('Failed to sync discount after service update (service updated but discount sync failed):', syncError);
+        // Don't throw - service was updated successfully, discount sync is secondary
+      }
+
+      const duration = this.parseTimeToMinutes(finalService.time);
 
       return {
-        ...service,
+        ...finalService,
         staff: [],
         duration
       };
