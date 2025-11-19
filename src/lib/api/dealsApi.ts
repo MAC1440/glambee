@@ -231,15 +231,16 @@ export class DealsApi {
   /**
    * Create a new deal
    */
-  static async createDeal(dealData: Omit<SalonDealInsert, 'salon_id'>): Promise<SalonDeal> {
+  static async createDeal(dealData: SalonDealInsert): Promise<SalonDeal> {
     try {
-      const salonId = await this.getDefaultSalonId();
+      let salonId: string;
+
+      salonId = dealData.salon_id || await this.getDefaultSalonId();
 
       const { data, error } = await supabase
         .from('salons_deals')
         .insert({
           ...dealData,
-          salon_id: salonId,
         })
         .select()
         .single();

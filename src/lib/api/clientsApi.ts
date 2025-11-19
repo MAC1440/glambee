@@ -28,6 +28,7 @@ export interface ClientFilters {
   activityStatus?: string;
   isTestUser?: boolean;
   hasSpinned?: boolean;
+  salonId?: string;
   limit?: number;
   offset?: number;
 }
@@ -61,6 +62,9 @@ export class ClientsApi {
         `, { count: 'exact' });
 
       // Apply filters
+      if (filters.salonId) {
+        query = query.eq('salon_id', filters.salonId);
+      }
       if (filters.search) {
         query = query.ilike('customer_name', `%${filters.search}%`);
       }
@@ -243,7 +247,7 @@ export class ClientsApi {
         .from('users')
         .select('id, email')
         .eq('email', formData.email)
-        .single();
+        .maybeSingle();
 
       if (existingEmailUser) {
         validationErrors.push('A user with this email address already exists');
@@ -254,7 +258,7 @@ export class ClientsApi {
         .from('users')
         .select('id, phone_number')
         .eq('phone_number', formData.phone)
-        .single();
+        .maybeSingle();
 
       if (existingPhoneUser) {
         validationErrors.push('A user with this phone number already exists');
@@ -269,11 +273,20 @@ export class ClientsApi {
         }
       }
 
-      // Step 3: Create auth user
+      // Step 3: Create auth user with email (phone signups are disabled)
+      // Use email for signup and generate a temporary password
+      const tempPassword = formData.phone || `temp_${Date.now()}`;
+      
       const result = await supabase.auth
         .signUp({
-          phone: formData.phone,
-          password: formData.phone,
+          email: formData.email,
+          password: tempPassword,
+          options: {
+            data: {
+              fullname: formData.name,
+              phone_number: formData.phone,
+            }
+          }
         })
         .then(async ({ data: authData, error: signUpError }) => {
           if (signUpError) throw signUpError;
@@ -295,13 +308,18 @@ export class ClientsApi {
 
           if (userError) throw userError;
 
-          // Step 5: Create related customer
+          // Step 5: Get salon_id from session or form data
+          const sessionData = localStorage.getItem("session");
+          const salonId = sessionData ? JSON.parse(sessionData).salonId : null;
+
+          // Step 6: Create related customer
           const { data: customerData, error: customerError } = await supabase
             .from("customers")
             .insert({
               auth_id: userData.id, // link to public.users.id
               name: formData.name,
               gender: formData.gender,
+              salon_id: salonId, // link to salons table
             })
             .select()
             .single();
@@ -537,16 +555,22 @@ export class ClientsApi {
   /**
    * Get customer statistics
    */
-  static async getCustomerStats(): Promise<{
+  static async getCustomerStats(salonId?: string): Promise<{
     totalClients: number;
     activeClients: number;
     newClientsThisMonth: number;
     testUsers: number;
   }> {
     try {
-      const { data: customers, error } = await supabase
+      let query = supabase
         .from('customers')
         .select('id, activity_status, is_test_user, created_at');
+      
+      if (salonId) {
+        query = query.eq('salon_id', salonId);
+      }
+      
+      const { data: customers, error } = await query;
 
       if (error) {
         console.error('Error fetching customer stats:', error);
@@ -575,9 +599,9 @@ export class ClientsApi {
   /**
      * Search customers by name
    */
-  static async searchCustomers(searchTerm: string): Promise<ClientWithDetails[]> {
+  static async searchCustomers(searchTerm: string, salonId?: string): Promise<ClientWithDetails[]> {
     try {
-      const { data: customers, error } = await supabase
+      let query = supabase
         .from('customers')
         .select(`
           *,
@@ -589,8 +613,13 @@ export class ClientsApi {
             created_at
           )
         `)
-        .ilike('customer_name', `%${searchTerm}%`)
-        .limit(10);
+        .ilike('customer_name', `%${searchTerm}%`);
+      
+      if (salonId) {
+        query = query.eq('salon_id', salonId);
+      }
+      
+      const { data: customers, error } = await query.limit(10);
 
       if (error) {
         console.error('Error searching customers:', error);

@@ -35,6 +35,8 @@ export function NewAppointment({
   const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
   console.log("Selected client: ", selectedClient)
   const [isLoading, setIsLoading] = useState(false);
+  const sessionData = localStorage.getItem("session");
+  console.log("Session appoint data: ", JSON.parse(sessionData || ''))
 
   // Fetch appointments on component mount if not provided
   useEffect(() => {
@@ -42,7 +44,10 @@ export function NewAppointment({
       const fetchAppointments = async () => {
         try {
           setIsLoading(true);
-          const response = await AppointmentsApi.getAppointments();
+          const salonId = sessionData ? JSON.parse(sessionData).salonId : null;
+          const response = await AppointmentsApi.getAppointments({
+            salonId: salonId,
+          });
           setAppointmentsList(response.data);
         } catch (error) {
           console.error("Error fetching appointments:", error);
@@ -57,7 +62,7 @@ export function NewAppointment({
       };
       fetchAppointments();
     }
-  }, [appointments.length, toast]);
+  }, [appointments.length, toast, sessionData]);
 
 
   const calendarEvents = useMemo(() => {
@@ -235,7 +240,10 @@ export function NewAppointment({
       }
       
       // Refresh appointments list
-      const response = await AppointmentsApi.getAppointments();
+      const salonId = sessionData ? JSON.parse(sessionData).salonId : null;
+      const response = await AppointmentsApi.getAppointments({
+        salonId: salonId,
+      });
       setAppointmentsList(response.data);
       
       // Check if any services are unassigned
@@ -323,7 +331,7 @@ export function NewAppointment({
         </div>
 
         <div className="space-y-4">
-          <ServiceSelection onAddToCart={handleAddServiceToList} buttonText="Add Service to List" />
+          <ServiceSelection onAddToCart={handleAddServiceToList} buttonText="Add Service to List" salonId={sessionData ? JSON.parse(sessionData).salonId : null}/>
         </div>
 
 

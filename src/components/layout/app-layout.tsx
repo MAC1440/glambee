@@ -66,29 +66,34 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/colla
 import { cn } from "@/lib/utils";
 import { AuthService } from "@/lib/supabase/auth-service";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissions, hasModuleAccess, ModuleKey, fetchAndUpdatePermissions } from "@/hooks/use-permissions";
 
-// Mock user type for prototype
+// User type that matches session data
 type User = {
   id: string;
   name: string;
   email: string;
-  avatar: string;
+  avatar?: string | null;
   role: 'SUPER_ADMIN' | 'SALON_ADMIN';
   salonId: string | null;
+  userType?: "salon" | "customer" | "staff" | "SUPER_ADMIN" | "SALON_ADMIN";
+  permissions?: any;
 };
 
 const navItems = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard", exact: true },
-  { href: "/staff/schedule", icon: Calendar, label: "Schedule" },
-  { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients" },
-  { href: "/services", icon: Scissors, label: "Services" },
-  { href: "/deals", icon: Package, label: "Deals" },
-  { href: "/promotions", icon: Tag, label: "Promotions" },
-  { href: "/inventory", icon: Boxes, label: "Inventory" },
-  { href: "/procurement", icon: ShoppingCart, label: "Procurement" },
-  { href: "/engage", icon: MessageSquare, label: "Engage" },
-  { href: "/hrm", icon: Briefcase, label: "Human Resources" },
-  { href: "/roles", icon: Shield, label: "Roles and Permissions" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", permission: "dashboard", exact: true },
+  { href: "/staff/schedule", icon: Calendar, label: "Schedule", permission: "schedule" },
+  { href: "/clients", icon: Users, label: "Clients", activeMatch: "/clients", permission: "clients" },
+  { href: "/services", icon: Scissors, label: "Services", permission: "services" },
+  { href: "/deals", icon: Package, label: "Deals", permission: "deals" },
+  { href: "/promotions", icon: Tag, label: "Promotions", permission: "promotions" },
+  { href: "/inventory", icon: Boxes, label: "Inventory", permission: "inventory" },
+  { href: "/procurement", icon: ShoppingCart, label: "Procurement", permission: "procurement" },
+  { href: "/engage", icon: MessageSquare, label: "Engage", permission: "engage" },
+  { href: "/hr", icon: Briefcase, label: "Human Resources", permission: "hr" },
+  // { href: "/hrm", icon: Briefcase, label: "Human Resources", permission: "hrm" },
+  { href: "/roles", icon: Shield, label: "Roles and Permissions", permission: "rolesPermissions" },
+  // { href: "/onboardRequests", icon: Shield, label: "Onboard Requests" },
   // { 
   //   label: "Human Resources", 
   //   icon: Briefcase,
@@ -101,7 +106,7 @@ const navItems = [
   //   ],
   //   roles: ["SUPER_ADMIN", "SALON_ADMIN"]
   // },
-  { href: "/branches", icon: Building, label: "Branches", roles: ["SUPER_ADMIN"]},
+  { href: "/branches", icon: Building, label: "Branches", roles: ["SUPER_ADMIN", "SALON_ADMIN"]},
 ];
 
 export function AppLayout({ children, user }: { children: React.ReactNode, user: User }) {
@@ -137,9 +142,21 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   };
 
   const isNavItemActive = (item: any) => {
-    if (item.exact) return pathname === item.href;
+    if (item.exact) {
+      // For exact match, check if pathname exactly matches or is root when href is dashboard
+      if (item.href === "/dashboard") {
+        return pathname === "/dashboard" || pathname === "/";
+      }
+      return pathname === item.href;
+    }
     if (item.activeMatch) return pathname.startsWith(item.activeMatch);
-    if (item.href) return pathname.startsWith(item.href);
+    if (item.href) {
+      // Special handling for dashboard - also match root path
+      if (item.href === "/dashboard") {
+        return pathname === "/dashboard" || pathname === "/";
+      }
+      return pathname.startsWith(item.href);
+    }
     if (item.subItems) {
       return item.subItems.some((sub: any) => pathname.startsWith(sub.href));
     }
@@ -148,14 +165,76 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   
   const userIdentifier = user?.email;
   const userInitial = userIdentifier ? userIdentifier.charAt(0).toUpperCase() : '?';
-  const visibleNavItems = navItems.map(item => {
+  const { isAdmin } = usePermissions();
+  const [userWithPermissions, setUserWithPermissions] = React.useState(user);
+  
+  // Update userWithPermissions when user prop changes
+  React.useEffect(() => {
+    setUserWithPermissions(user);
+  }, [user]);
+  
+  // Fetch permissions for staff members if not in session
+  React.useEffect(() => {
+    const loadPermissions = async () => {
+      // Only fetch for staff members who don't have permissions in session
+      if (user && !isAdmin && !user.permissions && user.id) {
+        try {
+          const permissions = await fetchAndUpdatePermissions(user.id);
+          if (permissions) {
+            // Update local user state with permissions
+            const updatedUser = { ...user, permissions };
+            setUserWithPermissions(updatedUser);
+          }
+        } catch (error) {
+          console.error("Error loading permissions:", error);
+        }
+      }
+    };
+    
+    loadPermissions();
+    
+    // Listen for session updates
+    const handleSessionUpdate = (e: CustomEvent) => {
+      if (e.detail) {
+        setUserWithPermissions(e.detail);
+      }
+    };
+    
+    window.addEventListener("sessionUpdated", handleSessionUpdate as EventListener);
+    return () => {
+      window.removeEventListener("sessionUpdated", handleSessionUpdate as EventListener);
+    };
+  }, [user, isAdmin]);
+  
+  const visibleNavItems = navItems?.filter((item: any) => {
+    // Check roles-based access (for backward compatibility)
+    console.log("Item: ", item)
+    if (item.roles) {
+      return item.roles.includes(user.role);
+    }
+    
+    // Check permission-based access
+    if (item.permission) {
+      // Admins always have access
+      if (isAdmin) {
+        return true;
+      }
+      // For staff, check module access (use userWithPermissions which has permissions loaded)
+      return hasModuleAccess(item.permission as ModuleKey, userWithPermissions as any);
+    }
+    
+    // Items without permission or roles are visible to all (like HRM, Settings, etc.)
+    return true;
+  }).map((item: any) => {
+    // Handle subItems filtering if needed
     if (item.label === 'Human Resources' && item.subItems) {
-      const visibleSubItems = item.subItems.filter(subItem => !subItem.roles || subItem.roles.includes(user.role));
+      const visibleSubItems = item.subItems.filter((subItem: any) => !subItem.roles || subItem.roles.includes(user.role));
       return { ...item, subItems: visibleSubItems };
     }
     return item;
-  }).filter(item => !item.roles || item.roles.includes(user.role));
+  });
   
+  console.log("Visible nav items: ", visibleNavItems)
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
@@ -171,7 +250,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {visibleNavItems.map((item, index) => (
+            {visibleNavItems?.map((item: any, index: number) => (
               item.subItems ? (
                 <Collapsible key={index} asChild>
                   <SidebarMenuItem>
@@ -190,7 +269,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
                     </CollapsibleTrigger>
                      <CollapsibleContent asChild>
                       <SidebarMenuSub>
-                        {item.subItems.map((subItem, subIndex) => (
+                        {item.subItems.map((subItem: any, subIndex: number) => (
                            <SidebarMenuItem key={subIndex}>
                               <SidebarMenuSubButton asChild isActive={isNavItemActive(subItem)}>
                                  <Link href={subItem.href}>{subItem.label}</Link>
@@ -223,20 +302,28 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                  asChild
-                  tooltip={{
-                    children: "Settings",
-                    side: "right",
-                  }}
-                >
-                <Link href="/settings">
-                  <Settings />
-                  <span>Settings</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {/* Show Settings only if user has access */}
+            {(() => {
+              // Admins always have access
+              if (isAdmin) return true;
+              // For staff, check if they have settings permission
+              return hasModuleAccess("settings" as ModuleKey, userWithPermissions as any);
+            })() && (
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                    asChild
+                    tooltip={{
+                      children: "Settings",
+                      side: "right",
+                    }}
+                  >
+                  <Link href="/settings">
+                    <Settings />
+                    <span>Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
@@ -297,7 +384,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
                   className="overflow-hidden rounded-full"
                 >
                   <Avatar>
-                    <AvatarImage src={user?.avatar} alt={userIdentifier} />
+                    <AvatarImage src={user?.avatar || undefined} alt={userIdentifier} />
                     <AvatarFallback>{userInitial}</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -315,11 +402,19 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
                     <UserIcon className="mr-2" /> Profile
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
-                    <Settings className="mr-2" /> Settings
-                  </Link>
-                </DropdownMenuItem>
+                {/* Show Settings only if user has access */}
+                {(() => {
+                  // Admins always have access
+                  if (isAdmin) return true;
+                  // For staff, check if they have settings permission
+                  return hasModuleAccess("settings" as ModuleKey, userWithPermissions as any);
+                })() && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">
+                      <Settings className="mr-2" /> Settings
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2" /> Logout

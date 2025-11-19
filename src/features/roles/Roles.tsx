@@ -11,8 +11,17 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RolePermissions } from "./RolePermissions";
 import { StaffRoles } from "./StaffRoles";
-
+import { usePermissions } from "@/hooks/use-permissions";
+import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 export function Roles() {
+  const {hasModuleAccess} = usePermissions();
+  const rolesModuleKey = "roles" as const;
+  const hasAccess = hasModuleAccess(rolesModuleKey);
+  console.log("Has access for roles: ", hasAccess)
+
+  if (hasAccess === false) {
+    return <UnauthorizedAccess moduleName="Roles" />;
+  }
   return (
     <div className="flex flex-col gap-8">
       <div className="text-left">

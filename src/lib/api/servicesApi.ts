@@ -447,7 +447,7 @@ export class ServicesApi {
   /**
    * Get staff for a specific service
    */
-  static async getStaffForService(serviceId: string): Promise<any[]> {
+  static async getStaffForService(serviceId: string, salonId?: string): Promise<any[]> {
     try {
       // First get the service to find its category
       const { data: service, error: serviceError } = await supabase
@@ -475,7 +475,8 @@ export class ServicesApi {
             role
           )
         `)
-        .eq('category_id', service.category_id);
+        .eq('category_id', service.category_id)
+        .eq('salon_id', salonId || '');
 
       if (error) {
         console.error('Error fetching staff for service:', error);

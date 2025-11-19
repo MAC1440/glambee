@@ -31,6 +31,7 @@ import { ProductFormDialog } from "./ProductFormDialog";
 import { IssueStockDialog } from "./IssueStockDialog";
 import { WastageDialog } from "./WastageDialog";
 import { addAuditLog } from "@/lib/inventory-audit-data";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export type InventoryItem = {
   id: string;
@@ -56,6 +57,10 @@ export function InventoryList() {
   const [issueDialogOpen, setIssueDialogOpen] = React.useState(false);
   const [wastageDialogOpen, setWastageDialogOpen] = React.useState(false);
   const [selectedItemForAction, setSelectedItemForAction] = React.useState<InventoryItem | null>(null);
+  
+  // Get permissions for inventory module
+  const { canCreate, canUpdate, canDelete, canRead } = usePermissions();
+  const inventoryModuleKey = "inventory" as const;
 
 
   const handleOpenProductDialog = (mode: "add" | "edit", item?: InventoryItem) => {
@@ -228,17 +233,48 @@ export function InventoryList() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleOpenProductDialog("edit", item)}>Edit</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setSelectedItemForAction(item); setIssueDialogOpen(true); }}>Issue to Staff</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { setSelectedItemForAction(item); setWastageDialogOpen(true); }}>Record Wastage</DropdownMenuItem>
-              <DropdownMenuSeparator />
-               <DropdownMenuItem asChild>
-                <Link href={`/inventory/audit?itemId=${item.id}`}>View History</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
-                Delete
-              </DropdownMenuItem>
+              {/* Show Edit only if user has update permission */}
+              {canUpdate(inventoryModuleKey) && (
+                <DropdownMenuItem onClick={() => handleOpenProductDialog("edit", item)}>
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {/* Show Issue to Staff only if user has update permission */}
+              {canUpdate(inventoryModuleKey) && (
+                <DropdownMenuItem onClick={() => { setSelectedItemForAction(item); setIssueDialogOpen(true); }}>
+                  Issue to Staff
+                </DropdownMenuItem>
+              )}
+              {/* Show Record Wastage only if user has update permission */}
+              {canUpdate(inventoryModuleKey) && (
+                <DropdownMenuItem onClick={() => { setSelectedItemForAction(item); setWastageDialogOpen(true); }}>
+                  Record Wastage
+                </DropdownMenuItem>
+              )}
+              {/* View History - read permission */}
+              {canRead(inventoryModuleKey) && (
+                <>
+                  {(canUpdate(inventoryModuleKey)) && <DropdownMenuSeparator />}
+                  <DropdownMenuItem asChild>
+                    <Link href={`/inventory/audit?itemId=${item.id}`}>View History</Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+              {/* Show Delete only if user has delete permission (admins only per requirements) */}
+              {canDelete(inventoryModuleKey) && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-red-600">
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+              {/* Show message if no actions available */}
+              {!canUpdate(inventoryModuleKey) && !canRead(inventoryModuleKey) && !canDelete(inventoryModuleKey) && (
+                <DropdownMenuItem disabled>
+                  No actions available
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -269,9 +305,11 @@ export function InventoryList() {
                     Receive Goods
                 </Link>
             </Button>
-            <Button onClick={() => handleOpenProductDialog('add')}>
-              <PlusCircle className="mr-2" /> Add Product
-            </Button>
+            {canCreate(inventoryModuleKey) && (
+              <Button onClick={() => handleOpenProductDialog('add')}>
+                <PlusCircle className="mr-2" /> Add Product
+              </Button>
+            )}
         </div>
       </div>
       
@@ -332,10 +370,8 @@ export function InventoryList() {
           </div>
       </div>
       <DataTable 
-        columns={columns} 
+        columns={columns as any} 
         data={items}
-        globalFilter={globalFilter}
-        onGlobalFilterChange={setGlobalFilter}
        />
     </div>
     <ProductFormDialog

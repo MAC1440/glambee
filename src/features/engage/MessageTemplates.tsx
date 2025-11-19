@@ -24,10 +24,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { messageTemplates as initialMessageTemplates } from "@/lib/placeholder-data";
 import { TemplateFormDialog } from "./TemplateFormDialog";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export type Template = {
     id: string;
@@ -42,6 +44,10 @@ export function MessageTemplates() {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
   const [editingTemplate, setEditingTemplate] = React.useState<Template | undefined>(undefined);
+  
+  // Get permissions for engage module
+  const { canCreate, canUpdate, canDelete, canRead } = usePermissions();
+  const engageModuleKey = "engage" as const;
 
   const handleOpenDialog = (mode: "add" | "edit", template?: Template) => {
     setDialogMode(mode);
@@ -74,9 +80,11 @@ export function MessageTemplates() {
     <>
       <div className="space-y-4">
         <div className="flex justify-end">
-          <Button onClick={() => handleOpenDialog("add")}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Create Template
-          </Button>
+          {canCreate(engageModuleKey) && (
+            <Button onClick={() => handleOpenDialog("add")}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Template
+            </Button>
+          )}
         </div>
         <Table>
           <TableHeader>
@@ -113,16 +121,34 @@ export function MessageTemplates() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleOpenDialog('edit', template)}>
-                        <Edit className="mr-2 h-4 w-4" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDelete(template.id)}
-                        className="text-red-600 focus:bg-red-50 focus:text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                      </DropdownMenuItem>
+                      {/* Show Edit only if user has update permission */}
+                      {canUpdate(engageModuleKey) && (
+                        <DropdownMenuItem onClick={() => handleOpenDialog('edit', template)}>
+                          <Edit className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                      )}
+                      {/* Show Duplicate only if user has create permission */}
+                      {canCreate(engageModuleKey) && (
+                        <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                      )}
+                      {/* Show Delete only if user has delete permission (admins only per requirements) */}
+                      {canDelete(engageModuleKey) && (
+                        <>
+                          {(canUpdate(engageModuleKey) || canCreate(engageModuleKey)) && <DropdownMenuSeparator />}
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(template.id)}
+                            className="text-red-600 focus:bg-red-50 focus:text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {/* Show message if no actions available */}
+                      {!canUpdate(engageModuleKey) && !canCreate(engageModuleKey) && !canDelete(engageModuleKey) && (
+                        <DropdownMenuItem disabled>
+                          No actions available
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

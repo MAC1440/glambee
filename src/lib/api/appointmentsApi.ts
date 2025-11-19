@@ -29,6 +29,7 @@ export interface AppointmentWithDetails extends Appointment {
 export interface AppointmentFilters {
     customerId?: string;
     staffId?: string;
+    salonId?: string;
     status?: 'upcoming' | 'past' | 'cancelled' | 'ongoing' | 'rejected' | 'accepted';
     dateFrom?: string;
     dateTo?: string;
@@ -55,6 +56,7 @@ export interface CreateAppointmentData {
     notes?: string;
     bookingType?: string | undefined;
     bookingApproach?: string | undefined;
+    salon_id?: string;
 }
 
 export class AppointmentsApi {
@@ -91,6 +93,9 @@ export class AppointmentsApi {
                 `, { count: 'exact' });
 
             // Apply filters
+            if (filters.salonId) {
+                query = query.eq('salon_id', filters.salonId);
+            }
             if (filters.customerId) {
                 query = query.eq('customer_id', filters.customerId);
             }
@@ -183,9 +188,9 @@ export class AppointmentsApi {
     /**
      * Get appointments for a specific customer
      */
-    static async getAppointmentsByCustomerId(customerId: string): Promise<AppointmentWithDetails[]> {
+    static async getAppointmentsByCustomerId(customerId: string, salonId: string): Promise<AppointmentWithDetails[]> {
         try {
-            const response = await this.getAppointments({ customerId });
+            const response = await this.getAppointments({ customerId, salonId: salonId });
             return response.data;
         } catch (error) {
             console.error('Failed to fetch customer appointments:', error);
@@ -295,8 +300,16 @@ export class AppointmentsApi {
      */
     static async createAppointment(appointmentData: CreateAppointmentData): Promise<AppointmentWithDetails> {
         try {
-            // Get default salon ID
-            const salonId = await this.getDefaultSalonId();
+            // Get salon ID from appointmentData or from session
+            let salonId = appointmentData.salon_id;
+            if (!salonId && typeof window !== 'undefined') {
+                const sessionData = localStorage.getItem("session");
+                salonId = sessionData ? JSON.parse(sessionData).salonId : null;
+            }
+            // Fallback to default salon ID if still not available
+            if (!salonId) {
+                salonId = await this.getDefaultSalonId();
+            }
 
             // First, get the customer details
             const { data: customer, error: customerError } = await supabase
@@ -375,7 +388,7 @@ export class AppointmentsApi {
             }
             
             // Return the created appointment with details
-            const response = await this.getAppointments({ customerId: appointmentData.customerId });
+            const response = await this.getAppointments({ customerId: appointmentData.customerId, salonId: salonId });
             const createdAppointment = response.data.find(apt => apt.id === appointment.id);
             
             return createdAppointment || {
@@ -425,7 +438,7 @@ export class AppointmentsApi {
             }
 
             // Return updated appointment with details
-            const response = await this.getAppointments();
+            const response = await this.getAppointments({ salonId: updates.salon_id });
             return response.data.find(apt => apt.id === id) || null;
         } catch (error) {
             console.error('Failed to update appointment:', error);

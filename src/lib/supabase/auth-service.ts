@@ -14,6 +14,7 @@ export interface AuthUser {
   user_type: 'salon' | 'customer';
   created_at: string;
   updated_at: string;
+  salon?: Salon | null;
 }
 
 export interface SignupResponse {
@@ -72,7 +73,8 @@ export class AuthService {
       return {
         success: true,
         message: `OTP sent successfully to ${phone}`,
-        data: data
+        // OTP response doesn't include user/session until verification
+        data: undefined
       };
     } catch (error) {
       console.error('Auth Service Error:', error);
@@ -115,7 +117,7 @@ export class AuthService {
 
       // Create or update user profile in the users table
       const userProfile = await this.createOrUpdateUserProfile(data.user, phone);
-      
+
       if (!userProfile.success) {
         return {
           success: false,
@@ -151,7 +153,7 @@ export class AuthService {
    * Create or update user profile in the users table
    */
   private static async createOrUpdateUserProfile(
-    authUser: any, 
+    authUser: any,
     phone: string
   ): Promise<{ success: boolean; data?: AuthUser; error?: string }> {
     try {
@@ -292,7 +294,7 @@ export class AuthService {
   static async getCurrentUser(): Promise<AuthUser | null> {
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
-      
+
       if (error || !user) {
         return null;
       }
@@ -321,7 +323,7 @@ export class AuthService {
   static async signOut(): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await supabase.auth.signOut();
-      
+
       if (error) {
         return {
           success: false,
@@ -354,7 +356,7 @@ export class AuthService {
     try {
       // Check if user exists
       const userExists = await this.checkUserExists(phone);
-      
+
       if (!userExists) {
         return {
           success: false,
@@ -368,6 +370,7 @@ export class AuthService {
         .select('*')
         .eq('phone_number', phone)
         .single();
+      console.log("Check data user: ", userData)
 
       if (error || !userData) {
         return {
@@ -376,9 +379,37 @@ export class AuthService {
         };
       }
 
+      // Get salon data by phone number if user_type is 'salon'
+      let salonData: Salon | null = null;
+      if (userData.user_type === 'salon') {
+        const { data: salon, error: salonError } = await supabase
+          .from('salons')
+          .select('*')
+          .eq('phone_number', phone)
+          .maybeSingle();
+
+        console.log("Check salonn: ", salon)
+        if (!salonError && salon) {
+          salonData = salon;
+        }
+      }
+
+      // Transform the data to match AuthUser interface
+      const authUser: AuthUser = {
+        id: userData.id,
+        email: userData.email,
+        phone_number: userData.phone_number,
+        fullname: userData.fullname,
+        avatar: userData.avatar,
+        user_type: userData.user_type as 'salon' | 'customer',
+        created_at: userData.created_at,
+        updated_at: userData.updated_at,
+        salon: salonData,
+      };
+
       return {
         success: true,
-        data: userData as AuthUser
+        data: authUser
       };
     } catch (error) {
       console.error('Direct Login Error:', error);
@@ -387,5 +418,268 @@ export class AuthService {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+
+  /**
+   * Sign in staff with email and password
+   * Validates that user exists in both auth.users and salons_staff tables
+   */
+  static async signInStaff(email: string, password: string): Promise<{
+    success: boolean;
+    data?: {
+      user: any;
+      session: any;
+      staffRecord: any;
+    };
+    error?: string;
+  }> {
+    try {
+      // Step 1: Authenticate with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      console.log("Email in auth-serice: ", email)
+      console.log("Password in auth-serice: ", password)
+      console.log("Auth error: ", authError)
+      console.log("Auth data: ", authData)
+
+      // If auth fails, user doesn't exist in auth.users
+      if (authError || !authData.user) {
+        return {
+          success: false,
+          error: authError?.message || "Invalid email or password. Please check your credentials.",
+        };
+      }
+
+      // Step 2: Check if staff record exists in salons_staff table
+      const { data: staffRecord, error: staffError } = await supabase
+        .from("salons_staff")
+        .select("*")
+        .eq("id", authData.user.id)
+        .maybeSingle();
+
+      // If staff record doesn't exist, return error
+      if (staffError || !staffRecord) {
+        return {
+          success: false,
+          error: "Staff record not found. Please contact your administrator to set up your account.",
+        };
+      }
+
+      // Both validations passed - user exists in auth and salons_staff
+      return {
+        success: true,
+        data: {
+          user: authData.user,
+          session: authData.session,
+          staffRecord: staffRecord,
+        },
+      };
+    } catch (error) {
+      console.error("Staff Sign In Error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "An unexpected error occurred",
+      };
+    }
+  }
+
+  /**
+   * Check if staff record exists
+   */
+  static async checkStaffRecordExists(authUserId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from("salons_staff")
+        .select("id")
+        .eq("id", authUserId)
+        .maybeSingle();
+
+      if (error && error.code !== "PGRST116") {
+        console.error("Error checking staff record:", error);
+        return false;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error("Error checking staff record:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Create staff record after profile completion
+   */
+  static async createStaffRecord(
+    authUserId: string,
+    profileData: {
+      name: string;
+      address: string;
+      phone: string;
+      salonId: string;
+    }
+  ): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      // Get auth user to get email
+      console.log("Profile data; ", profileData)
+      const { data: authUser, error: authUserError } = await supabase.auth.getUser();
+
+      if (authUserError || !authUser.user || authUser.user.id !== authUserId) {
+        return {
+          success: false,
+          error: "Authentication required. Please log in again.",
+        };
+      }
+
+      // Use salon_id from profileData (onboarding requests feature removed)
+      const salonId = profileData.salonId;
+
+      // Create staff record
+      const { data: staffRecord, error: staffError } = await supabase
+        .from("salons_staff")
+        .insert({
+          id: authUserId,
+          email: authUser.user.email,
+          name: profileData.name,
+          staff_address: profileData.address,
+          phone_number: profileData.phone,
+          salon_id: salonId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (staffError) {
+        return {
+          success: false,
+          error: `Failed to create staff record: ${staffError.message}`,
+        };
+      }
+
+      return {
+        success: true,
+        data: staffRecord,
+      };
+    } catch (error) {
+      console.error("Error creating staff record:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to create staff record",
+      };
+    }
+  }
+
+  /**
+   * Get onboarding request by auth user ID
+   * NOTE: Onboarding requests feature removed - this function is kept for backward compatibility but returns null
+   */
+  static async getOnboardingRequestByAuthUser(authUserId: string): Promise<any | null> {
+    // Onboarding requests feature removed - always return null
+    return null;
+  }
+
+  /**
+   * Create auth user with email and temporary password for staff onboarding
+   * This is called when admin approves an onboarding request
+   * Uses server-side API route with service role key (bypasses email confirmation)
+   */
+  static async createStaffAuthUser(
+    email: string,
+    temporaryPassword: string
+  ): Promise<{ success: boolean; data?: { userId: string; email: string; emailSent?: boolean, userData: { user: any, session: any } }; error?: string; warning?: string }> {
+    try {
+      // Call server-side API route that uses service role key
+      const response = await fetch("/api/onboarding/create-auth-user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password: temporaryPassword,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error cases gracefully
+        if (response.status === 409) {
+          return {
+            success: false,
+            error: result.error || "A user with this email already exists",
+          };
+        }
+
+        if (response.status === 500 && result.error?.includes("not configured")) {
+          return {
+            success: false,
+            error: "Server configuration error: Service role key not found. Please add SUPABASE_SERVICE_ROLE_KEY to your .env.local file.",
+          };
+        }
+
+        return {
+          success: false,
+          error: result.error || "Failed to create auth user",
+        };
+      }
+
+      if (result.success && result.data?.userId) {
+        // User created successfully with service role key (email auto-confirmed)
+        return {
+          success: true,
+          data: {
+            userId: result.data.userId,
+            email: result.data.email || email,
+            emailSent: true, // Email is auto-confirmed via admin API
+            userData: {
+              user: { id: result.data.userId, email: result.data.email },
+              session: null, // No session needed, user can login directly
+            },
+          },
+        };
+      }
+
+      // Fallback error
+      return {
+        success: false,
+        error: "Failed to create auth user - no user data returned",
+      };
+    } catch (error) {
+      console.error("Error creating staff auth user:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "An unexpected error occurred",
+      };
+    }
+  }
+
+  /**
+   * Generate a secure temporary password
+   */
+  static generateTemporaryPassword(): string {
+    // Generate a random password with letters, numbers, and special characters
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+    console.log("Before password:: ", password)
+    // Ensure at least one of each type
+    password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 26)]; // Uppercase
+    password += "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)]; // Lowercase
+    password += "0123456789"[Math.floor(Math.random() * 10)]; // Number
+    password += "!@#$%^&*"[Math.floor(Math.random() * 8)]; // Special char
+
+    // Fill the rest randomly
+    for (let i = password.length; i < length; i++) {
+      password += charset[Math.floor(Math.random() * charset.length)];
+    }
+    console.log("After loop password: ", password)
+
+    // Shuffle the password
+    const newPassword = password.split('').sort(() => Math.random() - 0.5).join('');
+    console.log("Final password: ", newPassword)
+    return newPassword
   }
 }

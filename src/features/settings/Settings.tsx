@@ -13,12 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Sun, Moon, Laptop, Upload } from "lucide-react";
-
+import { usePermissions } from "@/hooks/use-permissions";
+import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 export function Settings() {
   const { setTheme } = useTheme();
   const { toast } = useToast();
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-
+  const { hasModuleAccess } = usePermissions();
+  const hasAccess = hasModuleAccess("settings");
+  console.log("Has settings access: ", hasAccess)
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -46,6 +49,10 @@ export function Settings() {
       });
     }
   };
+
+  if (hasAccess === false) {
+    return <UnauthorizedAccess moduleName="Settings" />;
+  }
 
   return (
     <div className="flex flex-col gap-8">

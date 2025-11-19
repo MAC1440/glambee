@@ -718,11 +718,15 @@ export const allPermissions = {
   schedule: 'Schedule',
   clients: 'Clients',
   services: 'Services',
+  deals: 'Deals',
+  promotions: 'Promotions',
   inventory: 'Inventory',
-  billing: 'Billing',
+  procurement: 'Procurement',
+  engage: 'Engage',
+  // billing: 'Billing',
   hr: 'Human Resources',
   settings: 'Settings',
-  reports: 'Reports',
+  // reports: 'Reports',
 };
 
 export const rolesAndPermissions: Role[] = [

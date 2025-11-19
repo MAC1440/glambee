@@ -41,6 +41,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export type StaffMember = {
   id: string;
@@ -69,6 +70,10 @@ export function Staff() {
     undefined
   );
   const { toast } = useToast();
+  
+  // Get permissions for staff module
+  const { canCreate, canUpdate, canDelete, canRead } = usePermissions();
+  const staffModuleKey = "staff" as const;
 
   const getDepartmentColor = (department: string) => {
     switch (department.toLowerCase()) {
@@ -138,10 +143,12 @@ export function Staff() {
               View and manage your team members.
             </p>
           </div>
-          <Button onClick={() => handleOpenDialog("add")}>
-            <PlusCircle className="mr-2" />
-            Add Staff Member
-          </Button>
+          {canCreate(staffModuleKey) && (
+            <Button onClick={() => handleOpenDialog("add")}>
+              <PlusCircle className="mr-2" />
+              Add Staff Member
+            </Button>
+          )}
         </div>
 
         <AlertDialog>
@@ -208,21 +215,36 @@ export function Staff() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                               <DropdownMenuItem asChild>
-                                <Link href={`/staff/${member.id}`}>
-                                  <NotebookPen className="mr-2 h-4 w-4" /> View Details
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleOpenDialog("edit", member)}
-                              >
-                                <Edit className="mr-2 h-4 w-4" /> Edit
-                              </DropdownMenuItem>
-                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem className="text-red-500 focus:text-red-500">
-                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              {/* View Details - read permission */}
+                              {canRead(staffModuleKey) && (
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/staff/${member.id}`}>
+                                    <NotebookPen className="mr-2 h-4 w-4" /> View Details
+                                  </Link>
                                 </DropdownMenuItem>
-                              </AlertDialogTrigger>
+                              )}
+                              {/* Show Edit only if user has update permission */}
+                              {canUpdate(staffModuleKey) && (
+                                <DropdownMenuItem
+                                  onClick={() => handleOpenDialog("edit", member)}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" /> Edit
+                                </DropdownMenuItem>
+                              )}
+                              {/* Show Delete only if user has delete permission (admins only per requirements) */}
+                              {canDelete(staffModuleKey) && (
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem className="text-red-500 focus:text-red-500">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                              )}
+                              {/* Show message if no actions available */}
+                              {!canRead(staffModuleKey) && !canUpdate(staffModuleKey) && !canDelete(staffModuleKey) && (
+                                <DropdownMenuItem disabled>
+                                  No actions available
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
 

@@ -41,6 +41,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ServicesApi } from "@/lib/api/servicesApi";
+import { usePermissions } from "@/hooks/use-permissions";
+import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 
 export type ServiceRecipeItem = {
   itemId: string;
@@ -60,6 +62,7 @@ export function ServicesList() {
   const [editingService, setEditingService] = React.useState<
     Service | undefined
   >(undefined);
+  console.log("Edditing service: ", editingService)
   const [saving, setSaving] = React.useState(false);
 
   const [globalFilter, setGlobalFilter] = React.useState("");
@@ -68,6 +71,16 @@ export function ServicesList() {
   
   // Ref for the DataTable to access TanStack table instance
   const tableRef = React.useRef<any>(null);
+  const sessionData = localStorage.getItem("session");
+  console.log("Session data: ", JSON.parse(sessionData || ''))
+  
+  // Get permissions for services module
+  const { canCreate, canUpdate, canDelete, canRead, hasModuleAccess } = usePermissions();
+  const servicesModuleKey = "services" as const;
+
+  // Check if user has access to services module
+  const hasAccess = hasModuleAccess(servicesModuleKey);
+  console.log("Has access: ", hasAccess)
 
   // Fetch categories from Supabase
   const fetchCategoriesData = React.useCallback(async () => {
@@ -88,7 +101,7 @@ export function ServicesList() {
       setLoading(true);
       setError(null);
 
-      const response = await ServicesApi.getServices();
+      const response = await ServicesApi.getServices({salonId: JSON.parse(sessionData || '').salonId});
 
       setServices(response.data || []);
     } catch (err) {
@@ -165,7 +178,7 @@ export function ServicesList() {
           gender: serviceData.gender,
           has_range: serviceData.has_range || false,
           starting_from: serviceData.has_range ? serviceData.starting_from : null,
-          salon_id: '', // Will be set by the API's getDefaultSalonId() method
+          salon_id: JSON.parse(sessionData || '').salonId, // Will be set by the API's getDefaultSalonId() method
         });
 
         setServices((prev) => [savedService, ...prev]);
@@ -326,18 +339,32 @@ export function ServicesList() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => handleOpenDialog("edit", service)}
-              >
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => handleDelete(service.id)}
-                className="text-red-600"
-              >
-                Delete
-              </DropdownMenuItem>
+              {/* Show Edit only if user has update permission */}
+              {canUpdate(servicesModuleKey) && (
+                <DropdownMenuItem
+                  onClick={() => handleOpenDialog("edit", service)}
+                >
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {/* Show Delete only if user has delete permission (admins only per requirements) */}
+              {canDelete(servicesModuleKey) && (
+                <>
+                  {canUpdate(servicesModuleKey) && <DropdownMenuSeparator />}
+                  <DropdownMenuItem
+                    onClick={() => handleDelete(service.id)}
+                    className="text-red-600"
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+              {/* Show message if no actions available */}
+              {!canUpdate(servicesModuleKey) && !canDelete(servicesModuleKey) && (
+                <DropdownMenuItem disabled>
+                  No actions available
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -366,6 +393,10 @@ export function ServicesList() {
         </div>
       </div>
     );
+  }
+
+  if (hasAccess === false) {
+    return <UnauthorizedAccess moduleName="Services" />;
   }
 
   if (error) {
@@ -403,9 +434,11 @@ export function ServicesList() {
               Manage your individual salon services.
             </p>
           </div>
-          <Button onClick={() => handleOpenDialog("add")}>
-            <PlusCircle className="mr-2" /> Add Service
-          </Button>
+          {canCreate(servicesModuleKey) && (
+            <Button onClick={() => handleOpenDialog("add")}>
+              <PlusCircle className="mr-2" /> Add Service
+            </Button>
+          )}
         </div>
 
         <div className="flex items-center justify-between">

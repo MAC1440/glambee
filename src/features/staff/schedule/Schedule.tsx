@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AppointmentsApi, type AppointmentWithDetails } from "@/lib/api/appointmentsApi";
 import { StaffApi, type StaffWithCategories } from "@/lib/api/staffApi";
+import { usePermissions } from "@/hooks/use-permissions";
+import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 
 export function Schedule() {
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
@@ -43,6 +45,14 @@ export function Schedule() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // You can adjust this
+  const sessionData = localStorage.getItem("session");
+  console.log("Session schedule data: ", JSON.parse(sessionData || ''))
+  
+  // Get permissions for schedule/appointments module
+  const { canCreate, hasModuleAccess } = usePermissions();
+  const scheduleModuleKey = "schedule" as const;
+  const hasAccess = hasModuleAccess(scheduleModuleKey);
+  console.log("Has access for schedule: ", hasAccess)
 
 
   // Fetch appointments and staff data
@@ -54,8 +64,8 @@ export function Schedule() {
         
         // Fetch appointments and staff in parallel
         const [appointmentsResponse, staffResponse] = await Promise.all([
-          AppointmentsApi.getAppointments(),
-          StaffApi.getStaff()
+          AppointmentsApi.getAppointments({salonId: JSON.parse(sessionData || '').salonId}),
+          StaffApi.getStaff({salonId: JSON.parse(sessionData || '').salonId})
         ]);
         
         setAppointments(appointmentsResponse.data || []);
@@ -266,6 +276,10 @@ export function Schedule() {
     );
   }
 
+  if (hasAccess === false) {
+    return <UnauthorizedAccess moduleName="Schedule" />;
+  }
+
   return (
     <div className="flex flex-col gap-8">
        <Tabs defaultValue="calendar">
@@ -308,12 +322,14 @@ export function Schedule() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-               <Button asChild>
-                <Link href="/appointments">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Appointment
-                </Link>
-              </Button>
+                {canCreate(scheduleModuleKey) && (
+                <Button asChild>
+                  <Link href="/appointments">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Appointment
+                  </Link>
+                </Button>
+              )}
             </div>
         </div>
 

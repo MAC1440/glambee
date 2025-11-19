@@ -27,7 +27,8 @@ import { isThisMonth, isThisWeek, isToday, format, parseISO } from "date-fns";
 import { AppointmentsApi, type AppointmentWithDetails } from "@/lib/api/appointmentsApi";
 import { StaffApi, type StaffWithCategories } from "@/lib/api/staffApi";
 import { Button } from "@/components/ui/button";
-
+import { usePermissions } from "@/hooks/use-permissions";
+import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 export function Dashboard() {
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
@@ -35,6 +36,87 @@ export function Dashboard() {
   const [staff, setStaff] = useState<StaffWithCategories[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const sessionData = localStorage.getItem("session");
+  console.log("Session data: ", JSON.parse(sessionData || ''))
+  const { hasModuleAccess, canCreate, canRead, canUpdate, canDelete } = usePermissions();
+  const dashboardModuleKey = "dashboard" as const;
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  // const hasAccess = hasModuleAccess(dashboardModuleKey);
+  console.log("Has access for dashboard: ", hasAccess)
+  // console.log("Can create: ", canCreate(dashboardModuleKey))
+  // console.log("Can read: ", canRead(dashboardModuleKey))
+  // console.log("Can update: ", canUpdate(dashboardModuleKey))
+  // console.log("Can delete: ", canDelete(dashboardModuleKey))
+  useEffect(() => {
+    console.log("In dash effect....")
+    const checkAccess = async () => {
+      // First check synchronously (if permissions are in session)
+      const syncAccess = hasModuleAccess(dashboardModuleKey);
+      console.log("Synced access: ", syncAccess)
+      if (syncAccess) {
+        setHasAccess(true);
+        return;
+      }
+      
+      // If no permissions in session, fetch them
+      const sessionData = localStorage.getItem("session");
+      if (!sessionData) {
+        setHasAccess(false);
+        return;
+      }
+      console.log("Session data: ", sessionData)
+      
+      try {
+        const session = JSON.parse(sessionData);
+        const userId = session.id;
+        console.log("User ID: ", userId)
+        // If user is admin, they have access
+        if (session.role === "SUPER_ADMIN" || session.role === "SALON_ADMIN" || session.userType === "salon" || session.userType === "SUPER_ADMIN" || session.userType === "SALON_ADMIN") {
+          setHasAccess(true);
+          return;
+        }
+        
+        // Fetch permissions for staff
+        if (userId) {
+          const { fetchAndUpdatePermissions } = await import("@/hooks/use-permissions");
+          const permissions = await fetchAndUpdatePermissions(userId);
+          console.log("Permissions: ", permissions)
+          if (permissions) {
+            // Check if user has access to deals module
+            const modulePermissions = permissions[dashboardModuleKey];
+            console.log("Module permissions: ", modulePermissions)
+            const access = modulePermissions && (
+              modulePermissions.read === true ||
+              modulePermissions.create === true ||
+              modulePermissions.update === true ||
+              modulePermissions.delete === true
+            );
+            setHasAccess(access || false);
+          } else {
+            setHasAccess(false);
+          }
+        } else {
+          setHasAccess(false);
+        }
+      } catch (error) {
+        console.error("Error checking module access:", error);
+        setHasAccess(false);
+      }
+    };
+    
+    checkAccess();
+    
+    // Listen for session updates
+    const handleSessionUpdate = () => {
+      const syncAccess = hasModuleAccess(dashboardModuleKey);
+      setHasAccess(syncAccess);
+    };
+    
+    window.addEventListener("sessionUpdated", handleSessionUpdate);
+    return () => {
+      window.removeEventListener("sessionUpdated", handleSessionUpdate);
+    };
+  }, [dashboardModuleKey, hasModuleAccess]);
 
   // Fetch appointments and staff data
   useEffect(() => {
@@ -45,8 +127,8 @@ export function Dashboard() {
         
         // Fetch appointments and staff in parallel
         const [appointmentsResponse, staffResponse] = await Promise.all([
-          AppointmentsApi.getAppointments(),
-          StaffApi.getStaff()
+          AppointmentsApi.getAppointments({salonId: JSON.parse(sessionData || '').salonId}),
+          StaffApi.getStaff({salonId: JSON.parse(sessionData || '').salonId})
         ]);
         
         setAppointments(appointmentsResponse.data || []);
@@ -208,6 +290,10 @@ export function Dashboard() {
         </div>
       </div>
     );
+  }
+
+  if (hasAccess === false) {
+    return <UnauthorizedAccess moduleName="Dashboard" />;
   }
 
   return (

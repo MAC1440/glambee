@@ -12,9 +12,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { SupplierFormDialog } from "./SupplierFormDialog";
+import { usePermissions } from "@/hooks/use-permissions";
 
 
 type Supplier = { id: string; name: string; contactPerson?: string; email?: string; phone?: string; };
@@ -33,6 +35,10 @@ export function SupplierManagement() {
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
     const [editingSupplier, setEditingSupplier] = React.useState<Supplier | undefined>(undefined);
+    
+    // Get permissions for procurement module
+    const { canCreate, canUpdate, canDelete, canRead } = usePermissions();
+    const procurementModuleKey = "procurement" as const;
 
     const handleOpenDialog = (mode: "add" | "edit", supplier?: Supplier) => {
         setDialogMode(mode);
@@ -71,8 +77,27 @@ export function SupplierManagement() {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleOpenDialog('edit', supplier)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                    {/* Show Edit only if user has update permission */}
+                    {canUpdate(procurementModuleKey) && (
+                        <DropdownMenuItem onClick={() => handleOpenDialog('edit', supplier)}>
+                            Edit
+                        </DropdownMenuItem>
+                    )}
+                    {/* Show Delete only if user has delete permission (admins only per requirements) */}
+                    {canDelete(procurementModuleKey) && (
+                        <>
+                            {canUpdate(procurementModuleKey) && <DropdownMenuSeparator />}
+                            <DropdownMenuItem className="text-red-600">
+                                Delete
+                            </DropdownMenuItem>
+                        </>
+                    )}
+                    {/* Show message if no actions available */}
+                    {!canUpdate(procurementModuleKey) && !canDelete(procurementModuleKey) && (
+                        <DropdownMenuItem disabled>
+                            No actions available
+                        </DropdownMenuItem>
+                    )}
                 </DropdownMenuContent>
                 </DropdownMenu>
             </div>
@@ -85,9 +110,13 @@ export function SupplierManagement() {
         <>
         <div className="space-y-4">
         <div className="flex justify-end">
-            <Button onClick={() => handleOpenDialog('add')}><PlusCircle className="mr-2 h-4 w-4" /> Add Supplier</Button>
+            {canCreate(procurementModuleKey) && (
+                <Button onClick={() => handleOpenDialog('add')}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Supplier
+                </Button>
+            )}
         </div>
-        <DataTable columns={columns} data={suppliers} />
+        <DataTable columns={columns as any} data={suppliers} />
         </div>
         <SupplierFormDialog 
             isOpen={dialogOpen}

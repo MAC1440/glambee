@@ -40,6 +40,7 @@ export class StaffApi {
       const limit = filters.limit || 50;
       const offset = filters.offset || 0;
 
+      console.log("Salon id for api: ", filters.salonId)
       let query = supabase
         .from('salons_staff')
         .select('*', { count: 'exact' });
@@ -322,15 +323,21 @@ export class StaffApi {
    * Get all staff with their assigned roles
    * Returns all staff members regardless of whether they have role assignments
    */
-  static async getStaffWithRoles(salonId?: string): Promise<StaffWithCategories[]> {
+  static async getStaffWithRoles(filters: StaffFilters = {}): Promise<StaffWithCategories[]> {
     try {
       // Fetch staff separately - always fetch all staff
       let staffQuery = supabase
         .from('salons_staff')
         .select('*');
 
-      if (salonId) {
-        staffQuery = staffQuery.eq('salon_id', salonId);
+      if (filters.salonId) {
+        staffQuery = staffQuery.eq('salon_id', filters.salonId);
+      }
+      if (filters.role) {
+        staffQuery = staffQuery.eq('role', filters.role);
+      }
+      if (filters.search) {
+        staffQuery = staffQuery.ilike('name', `%${filters.search}%`);
       }
 
       const { data: staff, error: staffError } = await staffQuery.order('name', { ascending: true });

@@ -17,10 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShieldCheck, PlusCircle, Trash2, X } from "lucide-react";
-import { NewRoleDialog } from "./NewRoleDialog";
+import { ShieldCheck, Trash2, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { RolesApi, Role, type RolePermissions } from "@/lib/api/rolesApi";
+import { RolesApi, type RolePermissions } from "@/lib/api/rolesApi";
+import { StaffApi, StaffWithCategories } from "@/lib/api/staffApi";
+import { SalonsApi } from "@/lib/api/salonsApi";
+import { supabase } from "@/lib/supabase/client";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,10 +33,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-// Extended Role type that includes description and permissions (not in DB yet)
-export type ExtendedRole = Role & {
-  description?: string;
+import { Input } from "@/components/ui/input";
+import { hasModuleAccess, usePermissions } from "@/hooks/use-permissions";
+import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
+// Extended Staff type that includes permissions
+export type ExtendedStaff = StaffWithCategories & {
   permissions?: {
     [key: string]: Partial<PermissionSet>;
   };
@@ -42,47 +45,76 @@ export type ExtendedRole = Role & {
 
 type PermissionType = keyof PermissionSet;
 const permissionTypes: { key: PermissionType; label: string }[] = [
-  { key: 'create', label: 'Create' },
-  { key: 'read', label: 'Read' },
-  { key: 'update', label: 'Update' },
-  { key: 'delete', label: 'Delete' },
+    { key: 'create', label: 'Create' },
+    { key: 'read', label: 'Read' },
+    { key: 'update', label: 'Update' },
+    { key: 'delete', label: 'Delete' },
 ];
 
 export function RolePermissions() {
   const { toast } = useToast();
-  const [rolesData, setRolesData] = useState<ExtendedRole[]>([]);
-  // console.log("Roles data: ", rolesData)
-  const [selectedRole, setSelectedRole] = useState<ExtendedRole | null>(null);
-  const [isNewRoleDialogOpen, setIsNewRoleDialogOpen] = useState(false);
+  const [staffData, setStaffData] = useState<ExtendedStaff[]>([]);
+  const [selectedStaff, setSelectedStaff] = useState<ExtendedStaff | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [roleToDelete, setRoleToDelete] = useState<ExtendedRole | null>(null);
+  const [staffToDelete, setStaffToDelete] = useState<ExtendedStaff | null>(null);
+  const [email, setEmail] = useState<string>("");
+  const [salonId, setSalonId] = useState<string | undefined>(undefined);
+  const sessionData = localStorage.getItem("session");
+  console.log("Session role permissions data: ", JSON.parse(sessionData || ''))
 
-  // Fetch roles from API
+  
+  // Get permissions for roles module
+  const { canUpdate, canDelete, hasModuleAccess } = usePermissions();
+  const rolesModuleKey = "rolesPermissions" as const;
+  const hasAccess = hasModuleAccess(rolesModuleKey);
+  console.log("Has access for roles permissions: ", hasAccess)
+
+  // Fetch staff members and default salon ID
   useEffect(() => {
-    const loadRoles = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        const apiRoles = await RolesApi.getRoles();
+        
+        // Get default salon ID
+        // let defaultSalonId: string | undefined;
+        // try {
+        //   const { data: existingSalon } = await supabase
+        //     .from('salons')
+        //     .select('id')
+        //     .limit(1)
+        //     .maybeSingle();
+          
+        //   if (existingSalon) {
+        //     defaultSalonId = existingSalon.id;
+        //     setSalonId(defaultSalonId);
+        //   }
+        // } catch (error) {
+        //   console.warn('Error fetching default salon:', error);
+        // }
 
-        // Fetch permissions for each role
-        const extendedRoles: ExtendedRole[] = await Promise.all(
-          apiRoles.map(async (role) => {
-            const permissions = await RolesApi.getRolePermissions(role.id);
+        // Fetch staff members for the salon
+        const staffResponse = await StaffApi.getStaff({ salonId: JSON.parse(sessionData || '').salonId});
+        console.log("Staff response: ", staffResponse)
+        // const staffResponse = await StaffApi.getStaff({ salonId: defaultSalonId });
+
+        // Fetch permissions for each staff member
+        const extendedStaff: ExtendedStaff[] = await Promise.all(
+          staffResponse.data.map(async (staff) => {
+            const permissions = await RolesApi.getStaffPermissions(staff.id);
             return {
-              ...role,
-              description: (role as any).description || "", // Use description from DB or empty string
+              ...staff,
               permissions: permissions || {}, // Load from DB or use empty object
             };
           })
         );
 
-        setRolesData(extendedRoles);
+        setStaffData(extendedStaff);
       } catch (error) {
-        console.error("Error loading roles:", error);
+        console.error("Error loading staff:", error);
         toast({
           title: "Error",
-          description: "Failed to load roles. Please try again.",
+          description: "Failed to load staff members. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -90,23 +122,23 @@ export function RolePermissions() {
       }
     };
 
-    loadRoles();
+    loadData();
   }, [toast]);
 
   const handlePermissionChange = (
     moduleKey: string,
     permissionType: PermissionType
   ) => {
-    if (!selectedRole) return;
+    if (!selectedStaff) return;
 
-    setSelectedRole((prevRole) => {
-      if (!prevRole) return prevRole;
+    setSelectedStaff((prevStaff) => {
+      if (!prevStaff) return prevStaff;
 
-      const newPermissions = JSON.parse(JSON.stringify(prevRole.permissions || {}));
+      const newPermissions = JSON.parse(JSON.stringify(prevStaff.permissions || {}));
       if (!newPermissions[moduleKey]) {
         newPermissions[moduleKey] = { create: false, read: false, update: false, delete: false };
       }
-
+      
       const currentPermissions = newPermissions[moduleKey];
       const isChecked = !currentPermissions[permissionType];
       currentPermissions[permissionType] = isChecked;
@@ -115,7 +147,7 @@ export function RolePermissions() {
       if ((permissionType === 'create' || permissionType === 'update' || permissionType === 'delete') && isChecked) {
         currentPermissions.read = true;
       }
-
+      
       // Auto-uncheck higher permissions if 'read' is unchecked
       if (permissionType === 'read' && !isChecked) {
         currentPermissions.update = false;
@@ -123,168 +155,164 @@ export function RolePermissions() {
         currentPermissions.create = false;
       }
 
-      return { ...prevRole, permissions: newPermissions };
+      return { ...prevStaff, permissions: newPermissions };
     });
   };
-
-  const handleSelectRole = async (roleId: string) => {
-    const role = rolesData.find(r => r.id === roleId);
-    if (role) {
-      // Load permissions from database for the selected role
+  
+  const handleSelectStaff = async (staffId: string) => {
+    const staff = staffData.find(s => s.id === staffId);
+    if (staff) {
+      // Load permissions from database for the selected staff member
       try {
-        const permissions = await RolesApi.getRolePermissions(roleId);
-        setSelectedRole({
-          ...role,
+        const permissions = await RolesApi.getStaffPermissions(staffId);
+        setSelectedStaff({
+          ...staff,
           permissions: permissions || {},
         });
       } catch (error) {
         console.error("Error loading permissions:", error);
         // If error, use cached permissions
-        setSelectedRole(role);
+        setSelectedStaff(staff);
       }
     }
   };
 
   const handleSaveChanges = async () => {
-    if (!selectedRole) return;
+    if (!selectedStaff) return;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !email.trim()) {
+      toast({
+        title: "Email Required",
+        description: "Please enter an email address to send permissions notification.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!emailRegex.test(email.trim())) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address (e.g., example@domain.com).",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      // Update role name and description in database
-      const updatedRole = await RolesApi.updateRole(selectedRole.id, {
-        name: selectedRole.name,
-        description: selectedRole.description || null,
-      });
+      // Save permissions to database for the staff member
+      await RolesApi.saveStaffPermissions(selectedStaff.id, selectedStaff.permissions || {});
 
-      if (!updatedRole) {
-        throw new Error("Failed to update role");
+      // Get salon owner name and email from session and salon data
+      const session = sessionData ? JSON.parse(sessionData) : null;
+      const salonOwnerName = session?.name || "Salon Owner";
+      const currentSalonId = session?.salonId || salonId;
+
+      if (!currentSalonId) {
+        toast({
+          title: "Error",
+          description: "Salon ID not found. Please refresh the page.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      // Save permissions to database
-      await RolesApi.saveRolePermissions(selectedRole.id, selectedRole.permissions || {});
+      // Fetch salon data to get salon owner email
+      let salonOwnerEmail: string | null = null;
+      try {
+        const salonData = await SalonsApi.getSalonById(currentSalonId);
+        salonOwnerEmail = salonData?.email || null;
+      } catch (error) {
+        console.warn("Failed to fetch salon email:", error);
+        // Continue without salon email - will use fallback
+      }
 
-      // Update local state with the updated role from DB
-      setRolesData((prevData) =>
-        prevData.map((role) =>
-          role.id === selectedRole.id
+      // Generate CRM link with salon ID parameter
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+      const crmLink = `${baseUrl}/auth?salonId=${currentSalonId}&staffEmail=${email}`;
+
+      // Send email with permissions
+      const emailResponse = await fetch("/api/email/send-permissions-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          staffName: selectedStaff.name || "Staff Member",
+          salonOwnerName: salonOwnerName,
+          salonOwnerEmail: salonOwnerEmail, // Pass salon owner email
+          permissions: selectedStaff.permissions || {},
+          salonId: currentSalonId,
+          crmLink: crmLink,
+        }),
+      });
+
+      const emailResult = await emailResponse.json();
+
+      if (!emailResponse.ok) {
+        throw new Error(emailResult.error || "Failed to send email");
+      }
+
+      // Update local state
+      setStaffData((prevData) =>
+        prevData.map((staff) =>
+          staff.id === selectedStaff.id
             ? {
-              ...selectedRole,
-              description: (updatedRole as any).description || selectedRole.description || ""
+              ...selectedStaff,
+              permissions: selectedStaff.permissions || {}
             }
-            : role
+            : staff
         )
       );
 
       toast({
-        title: "Role Updated",
-        description: `The ${selectedRole.name} role and its permissions have been saved.`,
+        title: "Permissions Updated & Email Sent",
+        description: `Permissions for ${selectedStaff.name} have been saved and email sent to ${email}.`,
         style: {
           backgroundColor: "lightgreen",
           color: "black",
         }
       });
+
+      // Clear email field
+      setEmail("");
     } catch (error) {
-      console.error("Error updating role:", error);
-      toast({
+      console.error("Error updating permissions:", error);
+    toast({
         title: "Error",
-        description: "Failed to update role. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update permissions. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const handleSaveNewRole = async (newRoleData: { name: string; description?: string | null; }, isEditing: boolean) => {
+
+  const handleDeletePermissions = async () => {
+    if (!staffToDelete) return;
+
     try {
-      if (isEditing && selectedRole) {
-        // Update existing role
-        const updatedRole = await RolesApi.updateRole(selectedRole.id, {
-          name: newRoleData.name,
-          description: newRoleData.description || null,
-        });
+      // Delete permissions for the staff member
+      await RolesApi.deleteStaffPermissions(staffToDelete.id);
 
-        if (!updatedRole) {
-          throw new Error("Failed to update role");
-        }
+      // Update local state - remove permissions
+      setStaffData((prevData) =>
+        prevData.map((staff) =>
+          staff.id === staffToDelete.id
+            ? { ...staff, permissions: {} }
+            : staff
+        )
+      );
 
-        // Update local state
-        const updatedExtendedRole: ExtendedRole = {
-          ...updatedRole,
-          description: (updatedRole as any).description || newRoleData.description || "",
-          permissions: selectedRole.permissions || {},
-        };
-
-        setRolesData((prevData) =>
-          prevData.map((role) =>
-            role.id === selectedRole.id ? updatedExtendedRole : role
-          )
-        );
-
-        // Update selected role
-        setSelectedRole(updatedExtendedRole);
-
-        toast({
-          title: "Role Updated",
-          description: `The "${updatedRole.name}" role has been updated.`,
-          style: {
-            backgroundColor: "lightgreen",
-            color: "black",
-          }
-        });
-      } else {
-        // Create new role
-        const createdRole = await RolesApi.createRole({
-          name: newRoleData.name,
-          description: newRoleData.description || null,
-        });
-
-        // Create extended role with description and permissions
-        const newRole: ExtendedRole = {
-          ...createdRole,
-          description: (createdRole as any).description || newRoleData.description || "",
-          permissions: {},
-        };
-
-        // Create empty permissions record in database
-        await RolesApi.saveRolePermissions(createdRole.id, {});
-
-        setRolesData((prev) => [...prev, newRole]);
-        setSelectedRole(newRole);
-
-        toast({
-          title: "Role Created",
-          description: `The "${newRole.name}" role has been created.`,
-          style: {
-            backgroundColor: "lightgreen",
-            color: "black",
-          }
-        });
+      // Clear selected staff if it was the deleted one
+      if (selectedStaff?.id === staffToDelete.id) {
+        setSelectedStaff(null);
       }
-    } catch (error) {
-      console.error("Error saving role:", error);
-      toast({
-        title: "Error",
-        description: isEditing ? "Failed to update role. Please try again." : "Failed to create role. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteRole = async () => {
-    if (!roleToDelete) return;
-
-    try {
-      // Delete the role (this will also clean up permissions, staff assignments, and salons_staff.role)
-      await RolesApi.deleteRole(roleToDelete.id);
-
-      // Remove from local state
-      const updatedRoles = rolesData.filter((r) => r.id !== roleToDelete.id);
-      setRolesData(updatedRoles);
-
-      // Clear selected role
-      setSelectedRole(null);
 
       toast({
-        title: "Role Deleted",
-        description: `The "${roleToDelete.name}" role has been deleted.`,
+        title: "Permissions Deleted",
+        description: `Permissions for "${staffToDelete.name}" have been removed.`,
         style: {
           backgroundColor: "lightgreen",
           color: "black",
@@ -292,27 +320,20 @@ export function RolePermissions() {
       });
 
       setDeleteDialogOpen(false);
-      setRoleToDelete(null);
+      setStaffToDelete(null);
     } catch (error: any) {
-      console.error("Error deleting role:", error);
-
-      let errorMessage = "Failed to delete role. ";
-      if (error?.message?.includes('foreign key') || error?.code === '23503') {
-        errorMessage += "This role may be assigned to staff members and cannot be deleted.";
-      } else {
-        errorMessage += "Please try again.";
-      }
+      console.error("Error deleting permissions:", error);
 
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "Failed to delete permissions. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const openDeleteDialog = (role: ExtendedRole) => {
-    setRoleToDelete(role);
+  const openDeleteDialog = (staff: ExtendedStaff) => {
+    setStaffToDelete(staff);
     setDeleteDialogOpen(true);
   };
 
@@ -320,182 +341,171 @@ export function RolePermissions() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <p className="text-muted-foreground">Loading roles...</p>
+        <p className="text-muted-foreground">Loading staff members...</p>
       </div>
     );
   }
 
-  if (rolesData.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 space-y-4">
-        <p className="text-muted-foreground">No roles found. Create your first role to get started.</p>
-        <Button onClick={() => setIsNewRoleDialogOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Create Role
-        </Button>
-      </div>
-    );
+  // if (staffData.length === 0) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center py-8 space-y-4">
+  //       <p className="text-muted-foreground">No staff members found. Add staff members to assign permissions.</p>
+  //     </div>
+  //   );
+  // }
+
+  if (hasAccess === false) {
+    return <UnauthorizedAccess moduleName="Role Permissions" />;
   }
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-lg">Select a Role</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => {
-                setSelectedRole(null);
-                setIsNewRoleDialogOpen(true);
-              }}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Role
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <Select
-                onValueChange={handleSelectRole}
-                value={selectedRole?.id || ""}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a role to manage" />
-                </SelectTrigger>
-                <SelectContent>
-                  {rolesData.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="md:col-span-1 space-y-4">
+        <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-lg">Select a Staff Member</h3>
+        </div>
+       
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Select
+                  onValueChange={handleSelectStaff}
+                  value={selectedStaff?.id || ""}
+                >
+          <SelectTrigger>
+                    <SelectValue placeholder="Select a staff member to manage permissions" />
+          </SelectTrigger>
+          <SelectContent>
+                    {staffData.map((staff) => (
+                      <SelectItem key={staff.id} value={staff.id}>
+                        {staff.name || "Unnamed Staff"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+              </div>
+              {selectedStaff && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setSelectedStaff(null)}
+                  title="Clear selection"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-            {selectedRole && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9"
-                onClick={() => setSelectedRole(null)}
-                title="Clear selection"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+            {selectedStaff && (
+              <div className="border rounded-lg p-4 shadow-sm">
+                <h3 className="font-semibold text-base mb-4">Selected Staff</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                  <div>
+                    <p className="font-medium text-lg">{selectedStaff.name || "Unnamed Staff"}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {selectedStaff.phone_number || "No phone number"}
+                    </p>
+                    {selectedStaff.role && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Role: {selectedStaff.role}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    {canDelete(rolesModuleKey) && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => openDeleteDialog(selectedStaff)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Clear Permissions
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
-          </div>
-          {selectedRole && (
-            <div className="border rounded-lg p-4 shadow-sm">
-              <h3 className="font-semibold text-base mb-4">Selected Role</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                <div>
-                  <p className="font-medium text-lg">{selectedRole.name}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedRole.description || "No description provided."}
-                  </p>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    // variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setIsNewRoleDialogOpen(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => openDeleteDialog(selectedRole)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
-        </div>
-
-        <div className="md:col-span-2">
-          {selectedRole ? (
-            <>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-lg">
-                  Permissions for {selectedRole.name}
-                </h3>
-                <Button onClick={handleSaveChanges}>Save Changes</Button>
-              </div>
-
-              <ScrollArea className="h-96 border rounded-md">
-                <div className="space-y-1 p-4">
-                  {Object.entries(allPermissions).map(([moduleKey, moduleName]) => (
-                    <div key={moduleKey} className="rounded-md border p-4">
-                      <h4 className="font-medium text-base mb-3 flex items-center gap-2">
-                        <ShieldCheck className="h-5 w-5 text-primary" />
-                        {moduleName}
-                      </h4>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pl-7">
-                        {permissionTypes.map(pt => {
-                          const isChecked = selectedRole.permissions?.[moduleKey]?.[pt.key] || false;
-                          let isDisabled = false;
-                          // if (pt.key === 'read') {
-                          //   const hasUpdate = selectedRole.permissions?.[moduleKey]?.update || false;
-                          //   const hasDelete = selectedRole.permissions?.[moduleKey]?.delete || false;
-                          //   if (hasUpdate || hasDelete) isDisabled = true;
-                          // }
-
-                          return (
-                            <div key={pt.key} className="flex items-center gap-2">
-                              <Checkbox
-                                id={`${moduleKey}-${pt.key}`}
-                                checked={isChecked}
-                                // disabled={isDisabled}
-                                onCheckedChange={() => handlePermissionChange(moduleKey, pt.key)}
-                              />
-                              <Label htmlFor={`${moduleKey}-${pt.key}`} className="text-sm font-normal">
-                                {pt.label}
-                              </Label>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </>
-          ) : (
-            <div className="flex items-center justify-center py-8">
-              <p className="text-muted-foreground">Please select a role to manage permissions.</p>
-            </div>
-          )}
-        </div>
       </div>
 
-      <NewRoleDialog
-        isOpen={isNewRoleDialogOpen}
-        onOpenChange={setIsNewRoleDialogOpen}
-        onSave={handleSaveNewRole}
-        editingRole={selectedRole}
-      />
+      <div className="md:col-span-2">
+            {selectedStaff ? (
+              <>
+        <div className="flex justify-between items-center mb-4">
+             <h3 className="font-semibold text-lg">
+                    Permissions for {selectedStaff.name || "Staff Member"}
+            </h3>
+                  {/* <Button onClick={handleSaveChanges}>Save Changes</Button> */}
+        </div>
+       
+        <ScrollArea className="h-96 border rounded-md">
+          <div className="space-y-1 p-4">
+            {Object.entries(allPermissions).map(([moduleKey, moduleName]) => (
+              <div key={moduleKey} className="rounded-md border p-4">
+                <h4 className="font-medium text-base mb-3 flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  {moduleName}
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pl-7">
+                  {permissionTypes.map(pt => {
+                            const isChecked = selectedStaff.permissions?.[moduleKey]?.[pt.key] || false;
+
+                    return (
+                        <div key={pt.key} className="flex items-center gap-2">
+                            <Checkbox
+                                id={`${moduleKey}-${pt.key}`}
+                                checked={isChecked}
+                                  // disabled={isDisabled}
+                                onCheckedChange={() => handlePermissionChange(moduleKey, pt.key)}
+                            />
+                            <Label htmlFor={`${moduleKey}-${pt.key}`} className="text-sm font-normal">
+                                {pt.label}
+                            </Label>
+                        </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+              </>
+            ) : (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-muted-foreground">Please select a staff member to manage permissions.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/** Email input field centered between Select a Staff Member and Permissions sections */}
+        {selectedStaff && (
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2 w-full max-w-md">
+              <Input type="email" placeholder="Enter email" className="flex-1" value={email} onChange={(e) => setEmail(e.target.value)} />
+              {canUpdate(rolesModuleKey) && (
+                <Button onClick={handleSaveChanges}>Save Changes</Button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Role</AlertDialogTitle>
+            <AlertDialogTitle>Clear Permissions</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the "{roleToDelete?.name}" role?
-              This action cannot be undone. If this role is assigned to staff members,
-              you must remove those assignments first.
+              Are you sure you want to clear all permissions for "{staffToDelete?.name}"?
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteRole} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+            <AlertDialogAction onClick={handleDeletePermissions} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Clear Permissions
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/ui/data-table";
 import { PromotionsApi, DiscountWithSalon } from "@/lib/api/promotionsApi";
 import { PromotionFormDialog } from "./PromotionFormDialog";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export function PromotionsList() {
   const { toast } = useToast();
@@ -30,13 +31,19 @@ export function PromotionsList() {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
   const [editingPromotion, setEditingPromotion] = React.useState<DiscountWithSalon | undefined>(undefined);
+  const sessionData = localStorage.getItem("session");
+  console.log("Session data: ", JSON.parse(sessionData || ''))
+  
+  // Get permissions for promotions module
+  const { canCreate, canUpdate, canDelete, canRead } = usePermissions();
+  const promotionsModuleKey = "promotions" as const;
 
   // Fetch promotions on mount
   React.useEffect(() => {
     const loadPromotions = async () => {
       try {
         setLoading(true);
-        const response = await PromotionsApi.getDiscounts();
+        const response = await PromotionsApi.getDiscounts({salonId: JSON.parse(sessionData || '').salonId});
         setPromotions(response.data);
       } catch (error) {
         console.error("Error loading promotions:", error);
@@ -66,10 +73,11 @@ export function PromotionsList() {
     service_discount: number;
     deal_discount: number;
     package_discount: number;
+    salon_id?: string;
   }) => {
     try {
       if (dialogMode === "add") {
-        const newPromotion = await PromotionsApi.createDiscount(promotionData);
+        const newPromotion = await PromotionsApi.createDiscount({...promotionData, salon_id: JSON.parse(sessionData || '').salonId});
         setPromotions((prev) => [newPromotion, ...prev]);
         toast({
           title: "Promotion Added",
@@ -180,13 +188,27 @@ export function PromotionsList() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleOpenDialog("edit", promotion)}>
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleDelete(promotion.id)} className="text-red-600">
-                Delete
-              </DropdownMenuItem>
+              {/* Show Edit only if user has update permission */}
+              {canUpdate(promotionsModuleKey) && (
+                <DropdownMenuItem onClick={() => handleOpenDialog("edit", promotion)}>
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {/* Show Delete only if user has delete permission (admins only per requirements) */}
+              {canDelete(promotionsModuleKey) && (
+                <>
+                  {canUpdate(promotionsModuleKey) && <DropdownMenuSeparator />}
+                  <DropdownMenuItem onClick={() => handleDelete(promotion.id)} className="text-red-600">
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+              {/* Show message if no actions available */}
+              {!canUpdate(promotionsModuleKey) && !canDelete(promotionsModuleKey) && (
+                <DropdownMenuItem disabled>
+                  No actions available
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -212,9 +234,11 @@ export function PromotionsList() {
               Manage your discount rates for services, deals, and packages.
             </p>
           </div>
-          <Button onClick={() => handleOpenDialog("add")}>
-            <PlusCircle className="mr-2" /> Add Discount
-          </Button>
+          {canCreate(promotionsModuleKey) && (
+            <Button onClick={() => handleOpenDialog("add")}>
+              <PlusCircle className="mr-2" /> Add Discount
+            </Button>
+          )}
         </div>
         
         <DataTable 

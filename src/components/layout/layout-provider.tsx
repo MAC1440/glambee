@@ -22,6 +22,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  console.log("Check user: ", user)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,6 +72,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       // If no user and not on an auth route, redirect to auth immediately
       router.replace("/auth");
     } else if (user && isAuthRoute) {
+      console.log("In else if....")
       // If user is logged in and tries to access auth routes, redirect to dashboard immediately
       router.replace("/dashboard");
     }

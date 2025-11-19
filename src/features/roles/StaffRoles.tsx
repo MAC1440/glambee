@@ -22,14 +22,21 @@ import { useToast } from "@/hooks/use-toast";
 import { StaffApi, StaffWithCategories } from "@/lib/api/staffApi";
 import { RolesApi, Role } from "@/lib/api/rolesApi";
 import { supabase } from "@/lib/supabase/client";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export function StaffRoles() {
   const [staff, setStaff] = useState<StaffWithCategories[]>([]);
-  // console.log("Staffs: ", staff)
+  console.log("Staffs: ", staff)
   const [roles, setRoles] = useState<Role[]>([]);
   // console.log("Roles: ", roles)
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const sessionData = localStorage.getItem("session");
+  console.log("Session roles data: ", JSON.parse(sessionData || ''))
+  
+  // Get permissions for roles module
+  const { canUpdate } = usePermissions();
+  const rolesModuleKey = "roles" as const;
 
   // Fetch staff with roles and available roles
   useEffect(() => {
@@ -66,7 +73,7 @@ export function StaffRoles() {
         // Fetch staff with their assigned roles
         // If salonId is undefined, it will fetch ALL staff regardless of salon_id
         // console.log('Fetching staff with roles...');
-        const staffData = await StaffApi.getStaffWithRoles(salonId);
+        const staffData = await StaffApi.getStaffWithRoles({salonId: JSON.parse(sessionData || '').salonId});
         setStaff(staffData);
         // console.log(`Loaded ${staffData.length} staff members`);
       } catch (error) {
@@ -167,21 +174,27 @@ export function StaffRoles() {
               </div>
             </TableCell>
             <TableCell>
-              <Select
-                value={member.assignedRole?.id || ""}
-                onValueChange={(roleId) => handleRoleChange(member.id, roleId)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {canUpdate(rolesModuleKey) ? (
+                <Select
+                  value={member.assignedRole?.id || ""}
+                  onValueChange={(roleId) => handleRoleChange(member.id, roleId)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-sm text-muted-foreground">
+                  {member.assignedRole?.name || "No role assigned"}
+                </div>
+              )}
             </TableCell>
           </TableRow>
         ))}

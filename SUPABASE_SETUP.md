@@ -7,11 +7,17 @@ Create a `.env.local` file in your project root with the following variables:
 ```env
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_KEY=your_supabase_anon_key
 
-# Optional: For server-side operations
+# Required: For server-side operations (creating auth users)
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Email Service (Resend) - Required for sending permissions emails
+RESEND_API_KEY=re_your_resend_api_key_here
+RESEND_FROM_EMAIL=onboarding@resend.dev
 ```
+
+**See `.env.local.example` for a complete template with descriptions.**
 
 ## Supabase Project Setup
 

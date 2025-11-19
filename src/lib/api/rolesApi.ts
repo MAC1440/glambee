@@ -22,7 +22,7 @@ export type RolePermissions = {
 // Type for staff_role_permissions table (will be updated after regenerating types)
 export interface RolePermission {
   id: string;
-  role_id: string;
+  staff_id: string; // Changed from role_id to staff_id
   permissions: RolePermissions;
   created_at: string | null;
   updated_at: string | null;
@@ -229,19 +229,19 @@ export class RolesApi {
   }
 
   /**
-   * Get permissions for a role
+   * Get permissions for a staff member
    */
-  static async getRolePermissions(roleId: string): Promise<RolePermissions | null> {
+  static async getStaffPermissions(staffId: string): Promise<RolePermissions | null> {
     try {
       // Table will exist after regenerating types - using any for now
       const { data, error } = await (supabase as any)
         .from('staff_role_permissions')
         .select('permissions')
-        .eq('role_id', roleId)
+        .eq('staff_id', staffId)
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching role permissions:', error);
+        console.error('Error fetching staff permissions:', error);
         throw error;
       }
 
@@ -251,9 +251,19 @@ export class RolesApi {
 
       return (data as any).permissions as RolePermissions;
     } catch (error) {
-      console.error('Failed to fetch role permissions:', error);
+      console.error('Failed to fetch staff permissions:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get permissions for a role (deprecated - kept for backward compatibility)
+   * @deprecated Use getStaffPermissions instead
+   */
+  static async getRolePermissions(roleId: string): Promise<RolePermissions | null> {
+    // This method is deprecated but kept for backward compatibility
+    // In the new flow, permissions are assigned to staff members, not roles
+    return null;
   }
 
   /**
@@ -275,16 +285,16 @@ export class RolesApi {
   }
 
   /**
-   * Save or update permissions for a role
+   * Save or update permissions for a staff member
    */
-  static async saveRolePermissions(roleId: string, permissions: RolePermissions): Promise<RolePermission> {
+  static async saveStaffPermissions(staffId: string, permissions: RolePermissions): Promise<RolePermission> {
     try {
-      // Check if permissions already exist for this role
+      // Check if permissions already exist for this staff member
       // Table will exist after regenerating types - using any for now
       const { data: existing } = await (supabase as any)
         .from('staff_role_permissions')
         .select('id')
-        .eq('role_id', roleId)
+        .eq('staff_id', staffId)
         .maybeSingle();
 
       if (existing) {
@@ -296,12 +306,12 @@ export class RolesApi {
             permissions: permissions as any, // JSONB type
             updated_at: new Date().toISOString()
           })
-          .eq('role_id', roleId)
+          .eq('staff_id', staffId)
           .select()
           .single();
 
         if (error) {
-          console.error('Error updating role permissions:', error);
+          console.error('Error updating staff permissions:', error);
           throw error;
         }
 
@@ -312,7 +322,7 @@ export class RolesApi {
         const { data, error } = await (supabase as any)
           .from('staff_role_permissions')
           .insert({
-            role_id: roleId,
+            staff_id: staffId,
             permissions: permissions as any, // JSONB type
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -321,39 +331,59 @@ export class RolesApi {
           .single();
 
         if (error) {
-          console.error('Error creating role permissions:', error);
+          console.error('Error creating staff permissions:', error);
           throw error;
         }
 
         return data as unknown as RolePermission;
       }
     } catch (error) {
-      console.error('Failed to save role permissions:', error);
+      console.error('Failed to save staff permissions:', error);
       throw error;
     }
   }
 
   /**
-   * Delete permissions for a role
+   * Save or update permissions for a role (deprecated - kept for backward compatibility)
+   * @deprecated Use saveStaffPermissions instead
    */
-  static async deleteRolePermissions(roleId: string): Promise<boolean> {
+  static async saveRolePermissions(roleId: string, permissions: RolePermissions): Promise<RolePermission> {
+    // This method is deprecated but kept for backward compatibility
+    // In the new flow, permissions are assigned to staff members, not roles
+    throw new Error('saveRolePermissions is deprecated. Use saveStaffPermissions instead.');
+  }
+
+  /**
+   * Delete permissions for a staff member
+   */
+  static async deleteStaffPermissions(staffId: string): Promise<boolean> {
     try {
       // Table will exist after regenerating types - using any for now
       const { error } = await (supabase as any)
         .from('staff_role_permissions')
         .delete()
-        .eq('role_id', roleId);
+        .eq('staff_id', staffId);
 
       if (error) {
-        console.error('Error deleting role permissions:', error);
+        console.error('Error deleting staff permissions:', error);
         throw error;
       }
 
       return true;
     } catch (error) {
-      console.error('Failed to delete role permissions:', error);
+      console.error('Failed to delete staff permissions:', error);
       throw error;
     }
+  }
+
+  /**
+   * Delete permissions for a role (deprecated - kept for backward compatibility)
+   * @deprecated Use deleteStaffPermissions instead
+   */
+  static async deleteRolePermissions(roleId: string): Promise<boolean> {
+    // This method is deprecated but kept for backward compatibility
+    // In the new flow, permissions are assigned to staff members, not roles
+    return true;
   }
 
   /**

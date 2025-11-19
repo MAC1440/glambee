@@ -28,7 +28,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Client, ClientFormData } from "./ClientForm";
 import { DebouncedInput } from "@/components/ui/debounced-input";
 import { ClientsApi } from "@/lib/api/clientsApi";
-
+import { usePermissions } from "@/hooks/use-permissions";
+import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 const getTagColor = (tag: string) => {
   switch (tag.toLowerCase()) {
     case "vip":
@@ -55,11 +56,21 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
     const [isFormLoading, setIsFormLoading] = useState(false);
     const { toast } = useToast();
     const [globalFilter, setGlobalFilter] = useState('');
+    const sessionData = localStorage.getItem("session");
+    
+    // Get permissions for clients module
+    const { canCreate, canUpdate, canDelete, canRead, hasModuleAccess } = usePermissions();
+    const clientsModuleKey = "clients" as const;
+    const hasAccess = hasModuleAccess(clientsModuleKey);
+    console.log("Has access for clients: ", hasAccess)
 
     const fetchClients = async () => {
       try {
         setIsLoading(true);
-        const response = await ClientsApi.getCustomers();
+        const salonId = sessionData ? JSON.parse(sessionData).salonId : null;
+        const response = await ClientsApi.getCustomers({
+          salonId: salonId,
+        });
         // API now returns PaginatedResponse, extract data array
         setCustomers(response.data || []);
       } catch (error) {
@@ -72,7 +83,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
 
     useEffect(() => {
       fetchClients();
-    }, [])
+    }, [sessionData])
 
     // Process customers data - API now returns data with stats already calculated
     const clients = customers?.map(customer => {
@@ -137,6 +148,10 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
     }
   };
 
+  if (hasAccess === false) {
+    return <UnauthorizedAccess moduleName="Clients" />;
+  }
+
 
   return (
     <>
@@ -148,7 +163,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
             {isSelectMode ? 'Choose a client to start a new booking.' : 'View and manage your clients.'}
           </p>
         </div>
-        {!isSelectMode && (
+        {!isSelectMode && canCreate(clientsModuleKey) && (
              <Button onClick={() => setIsFormOpen(true)}>
                 <PlusCircle className="mr-2" />
                 Add Client
@@ -285,7 +300,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                             }
                           </p>
                         </div>
-                        {!isSelectMode && !globalFilter && (
+                        {!isSelectMode && !globalFilter && canCreate(clientsModuleKey) && (
                           <Button onClick={() => setIsFormOpen(true)}>
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Add First Client
