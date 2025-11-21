@@ -41,7 +41,8 @@ export type Client = {
 
 const formSchema = z.object({
   name: z.string()
-    .min(2, { message: "Name must be at least 2 characters." })
+    .min(5, { message: "Name must be at least 5 characters." })
+    .max(30, { message: "Name must not exceed 30 characters." })
     .refine((val) => val.trim().length > 0, {
       message: "Name cannot be only whitespace."
     })
@@ -50,8 +51,8 @@ const formSchema = z.object({
     }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string()
-    .min(10, { message: "Please enter a valid phone number." })
-    .max(15, { message: "Phone number is too long." })
+    .min(10, { message: "Phone number must be at least 10 digits." })
+    .max(15, { message: "Phone number can't be longer than 15 digits." })
     .regex(/^\+[0-9]+$/, { message: "Phone number must start with + and contain only numbers." }),
   gender: z.string({ required_error: "Please select a gender." }),
   // dob: z.date({

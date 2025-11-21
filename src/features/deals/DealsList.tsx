@@ -42,6 +42,16 @@ import { DealsApi } from "@/lib/api/dealsApi";
 import { usePermissions } from "@/hooks/use-permissions";
 import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 import { RolesApi } from "@/lib/api/rolesApi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function DealsList() {
   const [deals, setDeals] = React.useState<DealWithSalon[]>([]);
@@ -53,6 +63,8 @@ export function DealsList() {
   const [editingDeal, setEditingDeal] = React.useState<DealWithSalon | null>(null);
   const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
   const [saving, setSaving] = React.useState(false);
+  const [dealToDelete, setDealToDelete] = React.useState<DealWithSalon | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const tableRef = React.useRef<any>(null);
   const { toast } = useToast();
   const sessionData = localStorage.getItem("session");
@@ -273,11 +285,20 @@ export function DealsList() {
     }
   };
 
-  const handleDelete = async (dealId: string) => {
+  const handleDeleteClick = (deal: DealWithSalon) => {
+    setDealToDelete(deal);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!dealToDelete) return;
+
     try {
-      const dealName = deals.find((d) => d.id === dealId)?.title || "The deal";
-      await DealsApi.deleteDeal(dealId);
-      setDeals((prev) => prev.filter((d) => d.id !== dealId));
+      const dealName = dealToDelete.title || "The deal";
+      await DealsApi.deleteDeal(dealToDelete.id);
+      setDeals((prev) => prev.filter((d) => d.id !== dealToDelete.id));
+      setDeleteDialogOpen(false);
+      setDealToDelete(null);
       toast({
         title: "✅ Deal Deleted",
         description: `${dealName} has been removed.`,
@@ -293,6 +314,8 @@ export function DealsList() {
         description: "Failed to delete deal. Please try again.",
         variant: "destructive",
       });
+      setDeleteDialogOpen(false);
+      setDealToDelete(null);
     }
   };
 
@@ -332,10 +355,10 @@ export function DealsList() {
         const deal = row.original;
         return (
           <div className="flex items-center gap-2">
+            {deal?.media_url && (
+              <img src={deal.media_url} alt={deal.title} className="h-6 w-6 rounded-md" />
+            )}
             <div className="capitalize">{row.getValue("title")}</div>
-            {/* {deal.media_url && (
-              <Image className="h-4 w-4 text-muted-foreground" />
-            )} */}
           </div>
         );
       },
@@ -454,7 +477,7 @@ export function DealsList() {
                 <>
                   {canUpdate(dealsModuleKey) && <DropdownMenuSeparator />}
                   <DropdownMenuItem
-                    onClick={() => handleDelete(deal.id)}
+                    onClick={() => handleDeleteClick(deal)}
                     className="text-red-600"
                   >
                     Delete
@@ -579,6 +602,33 @@ export function DealsList() {
         onSave={handleSave}
         saving={saving}
       />
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{dealToDelete?.title || 'this deal'}" from your deals. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setDealToDelete(null);
+              }}
+              className="bg-gray-100 hover:bg-gray-300 text-gray-900 border-gray-300"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

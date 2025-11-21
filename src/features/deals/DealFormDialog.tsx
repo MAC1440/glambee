@@ -24,6 +24,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { DealWithSalon, DealFormData } from "@/types/deal";
+import { uploadImageToStorage } from "@/lib/utils/image-upload";
+import { useToast } from "@/hooks/use-toast";
+import { X } from "lucide-react";
 
 // Helper: convert empty string to null for optional inputs
 const emptyToNull = (value: unknown) => (value === "" ? null : value);
@@ -55,19 +58,8 @@ const formSchema = z.object({
   valid_till: z.preprocess(emptyToNull, z.string().nullable()),
   media_url: z.preprocess(
     emptyToNull,
-    z
-      .string()
-      .url("Please enter a valid URL.")
-      .nullable()
-  )
-    .refine((val) => {
-      if (!val) return true;
-      // Check if URL ends with common image extensions
-      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-      return imageExtensions.some(ext => val.toLowerCase().endsWith(ext));
-    }, {
-      message: "Please enter a valid image URL (jpg, jpeg, png, gif, webp, svg)."
-    }),
+    z.string().nullable()
+  ),
   dealpopup: z.preprocess(emptyToNull, z.boolean().default(false)),
   popup_title: z.preprocess(emptyToNull, z.string().nullable()),
   popup_price: z.preprocess(emptyToNull,
@@ -142,6 +134,11 @@ export function DealFormDialog({
   onSave,
   saving = false,
 }: ServiceFormDialogProps) {
+  const { toast } = useToast();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: "onChange",
@@ -156,7 +153,7 @@ export function DealFormDialog({
       media_url: deal?.media_url || "",
       dealpopup: deal?.dealpopup || false,
       popup_title: deal?.popup_title || "",
-      popup_price: deal?.popup_price || null,
+      popup_price: (deal as any)?.popup_price || null,
       popup_color: deal?.popup_color || "",
       popup_template: deal?.popup_template || "",
     },
@@ -174,15 +171,95 @@ export function DealFormDialog({
         media_url: deal?.media_url || "",
         dealpopup: deal?.dealpopup || false,
         popup_title: deal?.popup_title || "",
-        popup_price: deal?.popup_price || null,
+        popup_price: (deal as any)?.popup_price || null,
         popup_color: deal?.popup_color || "",
         popup_template: deal?.popup_template || "",
       });
+      // Reset image state
+      setImageFile(null);
+      setImagePreview(deal?.media_url || null);
     }
   }, [isOpen, deal, form]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    onSave(values as DealFormData);
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        toast({
+          title: "File too large",
+          description: "Image size must be less than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    form.setValue("media_url", null);
+    // Reset file input
+    const fileInput = document.getElementById("deal-image-upload") as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      // If a new image file is selected, upload it first
+      if (imageFile) {
+        setUploadingImage(true);
+        try {
+          const uploadedUrl = await uploadImageToStorage(imageFile, "salons-media", "images");
+          values.media_url = uploadedUrl;
+        } catch (error) {
+          toast({
+            title: "Image upload failed",
+            description: error instanceof Error ? error.message : "Failed to upload image. Please try again.",
+            variant: "destructive",
+          });
+          setUploadingImage(false);
+          return;
+        }
+        setUploadingImage(false);
+      } else if (!imagePreview && !values.media_url) {
+        // If no image file and no existing URL, set to null
+        values.media_url = null;
+      }
+      // If imagePreview exists but no new file, keep existing media_url (already in values)
+
+      onSave(values as DealFormData);
+    } catch (error) {
+      console.error("Error in onSubmit:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while saving the deal.",
+        variant: "destructive",
+      });
+    }
   };
 
   const title = mode === "add" ? "Add New Deal" : `Edit ${deal?.title}`;
@@ -396,17 +473,86 @@ export function DealFormDialog({
                 name="media_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Media URL (Optional)</FormLabel>
+                    <FormLabel>Deal Image (Optional)</FormLabel>
                     <FormControl>
-                      <Input
-                        type="url"
-                        placeholder="https://example.com/image.jpg"
-                        {...field}
-                        value={field.value || ''}
-                        disabled={saving}
-                      />
+                      <div className="space-y-4">
+                        {imagePreview ? (
+                          <div className="relative w-full">
+                            <div className="relative border rounded-lg overflow-hidden bg-muted">
+                              <img
+                                src={imagePreview}
+                                alt="Deal preview"
+                                className="w-full h-48 object-cover"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2"
+                                onClick={handleRemoveImage}
+                                disabled={saving || uploadingImage}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            {imageFile && (
+                              <p className="text-sm text-muted-foreground mt-2">
+                                New image selected: {imageFile.name}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center w-full">
+                            <label
+                              htmlFor="deal-image-upload"
+                              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-muted hover:bg-muted/80 transition-colors"
+                            >
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg
+                                  className="w-8 h-8 mb-2 text-muted-foreground"
+                                  aria-hidden="true"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 20 16"
+                                >
+                                  <path
+                                    stroke="currentColor"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021c.255.1.506.214.74.33a4.5 4.5 0 0 1 1.67 2.17 4.5 4.5 0 0 1 1.67-2.17c.234-.116.485-.23.74-.33a5.5 5.5 0 0 0 10.793 0A5.5 5.5 0 0 0 13 2H3a3 3 0 0 0 0 6h3v8a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V8Z"
+                                  />
+                                </svg>
+                                <p className="mb-2 text-sm text-muted-foreground">
+                                  <span className="font-semibold">Click to upload</span> or drag and drop
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  PNG, JPG, GIF, WEBP (MAX. 5MB)
+                                </p>
+                              </div>
+                              <input
+                                id="deal-image-upload"
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                disabled={saving || uploadingImage}
+                              />
+                            </label>
+                          </div>
+                        )}
+                        {uploadingImage && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                            Uploading image...
+                          </div>
+                        )}
+                      </div>
                     </FormControl>
                     <FormMessage />
+                    <p className="text-xs text-muted-foreground">
+                      Upload an image to display with this deal. Supported formats: JPG, PNG, GIF, WEBP (max 5MB).
+                    </p>
                   </FormItem>
                 )}
               />
@@ -574,7 +720,7 @@ export function DealFormDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={saving || !form.formState.isValid}>
+              <Button type="submit" disabled={saving || uploadingImage || !form.formState.isValid}>
                 {saving ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

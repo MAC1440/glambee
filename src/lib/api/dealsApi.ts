@@ -233,19 +233,69 @@ export class DealsApi {
    */
   static async createDeal(dealData: SalonDealInsert): Promise<SalonDeal> {
     try {
+      // Ensure we have a valid session and refresh if needed
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        // Try to refresh the session
+        const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+        console.log("Refreshed session in creation of deal: ", refreshedSession)
+        console.log("Refresh error in creation of deal: ", refreshError)
+        
+        if (refreshError || !refreshedSession) {
+          throw new Error(`Authentication required: ${sessionError?.message || refreshError?.message || 'No active session'}`);
+        }
+      }
+
       let salonId: string;
 
       salonId = dealData.salon_id || await this.getDefaultSalonId();
 
+      if (!salonId) {
+        throw new Error('Salon ID is required to create a deal');
+      }
+
+      // Ensure salon_id is set
+      const dealDataWithSalon = {
+        ...dealData,
+        salon_id: salonId,
+      };
+
+      console.log('Creating deal with data:', { ...dealDataWithSalon, media_url: dealDataWithSalon.media_url ? '[URL]' : null });
+
       const { data, error } = await supabase
         .from('salons_deals')
-        .insert({
-          ...dealData,
-        })
+        .insert(dealDataWithSalon)
         .select()
         .single();
 
       if (error) {
+        console.error('Deal creation error:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
+        
+        // Provide more detailed error message for RLS issues
+        if (error.code === '42501' || error.message?.includes('row-level security') || error.message?.includes('RLS')) {
+          const currentSession = await supabase.auth.getSession();
+          console.error('Current session:', {
+            userId: currentSession.data.session?.user?.id,
+            email: currentSession.data.session?.user?.email,
+            salonId: salonId,
+          });
+          
+          throw new Error(
+            `Permission denied: Row-level security policy violation. ` +
+            `Please ensure:\n` +
+            `1. You are logged in with a valid session\n` +
+            `2. Your user account has access to salon ID: ${salonId}\n` +
+            `3. The RLS policy allows your user role to create deals\n\n` +
+            `Error: ${error.message}`
+          );
+        }
         throw new Error(`Failed to create deal: ${error.message}`);
       }
 
@@ -319,15 +369,20 @@ export class DealsApi {
    */
   static async deleteDeal(id: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      // Use .select() to return the deleted record, which changes status from 204 to 200
+      // This makes the response clearer in devtools and confirms the deletion
+      const { data, error } = await supabase
         .from('salons_deals')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) {
         throw new Error(`Failed to delete deal: ${error.message}`);
       }
 
+      // If data is returned, deletion was successful
       return true;
     } catch (error) {
       console.error('Error deleting deal:', error);
