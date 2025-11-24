@@ -10,6 +10,97 @@ import { useEffect, useState } from "react";
 import { fetchAndUpdatePermissions, ModuleKey } from "@/hooks/use-permissions";
 import { UnauthorizedAccess } from "../ui/unauthorized-access";
 
+// List of valid base routes in the application
+const VALID_BASE_ROUTES = [
+  "/",
+  "/dashboard",
+  "/appointments",
+  "/clients",
+  "/services",
+  "/deals",
+  "/promotions",
+  "/inventory",
+  "/procurement",
+  "/engage",
+  "/hr",
+  "/hrm",
+  "/roles",
+  "/billing",
+  "/staff",
+  "/branches",
+  "/salons",
+  "/settings",
+  "/profile",
+  "/login",
+  "/demo-signup",
+  "/test-supabase",
+  "/onboardRequests",
+  "/checkout",
+];
+
+// Valid nested routes (routes with sub-paths)
+const VALID_NESTED_ROUTES = [
+  "/staff/schedule",
+  "/staff/[id]",
+  "/clients/[email]",
+  "/checkout/[email]",
+  "/inventory/audit",
+  "/inventory/grn",
+  "/hr/attendance",
+  "/hr/payroll",
+  "/hr/performance",
+  "/procurement/po",
+  "/procurement/po/new",
+];
+
+// Check if a route is valid
+const isValidRoute = (pathname: string): boolean => {
+  // Auth routes are always valid
+  if (pathname.startsWith("/auth")) {
+    return true;
+  }
+  
+  // API routes are always valid
+  if (pathname.startsWith("/api")) {
+    return true;
+  }
+  
+  // Check exact matches in base routes
+  if (VALID_BASE_ROUTES.includes(pathname)) {
+    return true;
+  }
+  
+  // Check exact matches in nested routes
+  if (VALID_NESTED_ROUTES.includes(pathname)) {
+    return true;
+  }
+  
+  // Check dynamic routes (e.g., /clients/[email], /staff/[id], /checkout/[email])
+  const pathSegments = pathname.split("/").filter(Boolean);
+  
+  if (pathSegments.length === 2) {
+    const basePath = `/${pathSegments[0]}`;
+    // Check if base path is valid for dynamic routes
+    if (basePath === "/clients" || basePath === "/staff" || basePath === "/checkout") {
+      return true;
+    }
+  }
+  
+  // Check nested dynamic routes (e.g., /procurement/po/new)
+  if (pathSegments.length >= 2) {
+    const basePath = `/${pathSegments[0]}`;
+    if (VALID_BASE_ROUTES.includes(basePath)) {
+      // Check if it matches a nested route pattern
+      const nestedPath = `/${pathSegments.slice(0, 2).join("/")}`;
+      if (VALID_NESTED_ROUTES.some(route => route.startsWith(nestedPath))) {
+        return true;
+      }
+    }
+  }
+  
+  return false;
+};
+
 // This is a mock user type for the prototype
 type User = {
   id: string;
@@ -85,7 +176,8 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const perms = await fetchAndUpdatePermissions(user.id);
-        setPermissions(perms);
+        // Always set permissions, even if empty (to reflect cleared permissions)
+        setPermissions(perms || {});
       } catch (err) {
         console.error("Failed to fetch permissions", err);
         setPermissions(null);
@@ -99,7 +191,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     if (!permissions) return false;
     if ((permissions as any).allAccess) return true; // Admin
   
-    // Replace this with your actual permission shape & check logic
+    // Check if permissions object is empty (permissions were cleared)
+    if (typeof permissions === 'object' && Object.keys(permissions).length === 0) {
+      return false;
+    }
+  
     const modulePermissions = permissions[moduleKey];
     if (!modulePermissions) return false;
   
@@ -144,12 +240,21 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       return;
     }
   
-    // New permission check here:
+    // Permission check - only for valid routes
     if (user && !isAuthRoute && permissions) {
+      // First check if route is valid
+      if (!isValidRoute(pathname)) {
+        // Invalid route - let Next.js handle 404, don't show unauthorized modal
+        setShowUnauthorizedModal(false);
+        setUnauthorizedModule(null);
+        return;
+      }
+      
+      // Route is valid, now check permissions
       const moduleKey = pathname.split("/")[1]; // e.g. "/dashboard" => "dashboard"
       const access = hasModuleAccess(moduleKey);
       if (!access) {
-        // Instead of redirect, show modal
+        // Valid route but no permission - show unauthorized modal
         setUnauthorizedModule(moduleKey);
         setShowUnauthorizedModal(true);
       } else {

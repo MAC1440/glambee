@@ -166,23 +166,25 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: Se
             onValueChange={(value) => handleServiceChange(value)}
             value={selectedServiceId || ""}
           >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                   <SelectValue placeholder="Search for a service or deal..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="w-[var(--radix-select-trigger-width)] max-h-[300px]">
                   {groupedOptions.length > 0 ? (
                     groupedOptions.map(group => (
-                        <div key={group.label} className="p-2">
-                            <p className="text-xs text-muted-foreground px-2 font-semibold">{group.label}</p>
-                             {group.options.map(option => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
+                      <div key={group.label}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          {group.label}
                         </div>
+                        {group.options.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </div>
                     ))
                   ) : (
-                    <div className="p-2 text-center text-muted-foreground">
+                    <div className="p-4 text-center text-sm text-muted-foreground">
                       No services available
                     </div>
                   )}
@@ -206,10 +208,10 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: Se
               onValueChange={(value) => setSelectedArtist(artistOptions.find(a => a.value === value) || null)}
               value={selectedArtist?.value || ""}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select an artist..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="w-[var(--radix-select-trigger-width)] max-h-[200px]">
                 {artistOptions.map(option => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}

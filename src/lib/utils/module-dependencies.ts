@@ -38,32 +38,32 @@ export const moduleDependencies: ModuleDependency[] = [
   {
     module: "appointments",
     dependsOn: ["clients"],
-    reason: "Appointments require selecting clients to book appointments. Without client permissions, staff cannot create or manage appointments."
+    reason: "Without client permissions, staff will not be able to:\n• Select clients when booking appointments\n• View client information in appointment details\n• Search for existing clients\n• Create new client records during booking\n• Access client appointment history"
   },
   {
     module: "schedule",
     dependsOn: ["clients"],
-    reason: "Schedule management requires client access to view and manage appointments. Without client permissions, staff cannot see client information in the schedule."
+    reason: "Without client permissions, staff will not be able to:\n• View client names in appointments\n• Search or filter appointments by client\n• See client contact information\n• Create appointments for clients\n• Access client history from schedule view"
   },
   {
     module: "appointments",
     dependsOn: ["services"],
-    reason: "Appointments require selecting services to book. Without service permissions, staff cannot add services to appointments."
+    reason: "Without service permissions, staff will not be able to:\n• Add services to appointments\n• View available services for booking\n• See service pricing and duration\n• Select service types during booking\n• Calculate appointment duration based on services"
   },
   {
     module: "schedule",
     dependsOn: ["services"],
-    reason: "Schedule management requires service access to view and manage service bookings. Without service permissions, staff cannot see service details in the schedule."
+    reason: "Without service permissions, staff will not be able to:\n• View service names in appointments\n• See service duration and pricing\n• Add services to appointments\n• Filter appointments by service type\n• Access service details from schedule view"
   },
   {
     module: "billing",
     dependsOn: ["clients", "appointments"],
-    reason: "Billing requires access to clients and appointments to generate invoices. Without these permissions, staff cannot create bills for clients or appointments."
+    reason: "Without client and appointment permissions, staff will not be able to:\n• Select clients for billing\n• Link bills to appointments\n• View client billing history\n• Generate invoices for appointments\n• Access appointment details for billing"
   },
   {
     module: "engage",
     dependsOn: ["clients"],
-    reason: "Engage features require client access to send messages and campaigns. Without client permissions, staff cannot select clients for engagement activities."
+    reason: "Without client permissions, staff will not be able to:\n• Select clients for messaging campaigns\n• Send messages to specific clients\n• View client contact information\n• Filter clients for engagement activities\n• Create targeted client campaigns"
   }
 ];
 
@@ -112,7 +112,8 @@ export function checkModuleDependencies(
     // If any dependencies are missing, show warning with details
     if (missingModules.length > 0) {
       const missingModuleNames = missingModules.map(m => getModuleName(m)).join(", ");
-      warnings.push(`${dependency.reason} Missing permissions for: ${missingModuleNames}`);
+      warnings.push(`${dependency.reason}`);
+      // warnings.push(`${dependency.reason} Missing permissions for: ${missingModuleNames}`);
     }
   }
 

@@ -78,6 +78,7 @@ export function isAdmin(user: UserSession | null): boolean {
  * Check if user has permission for a module
  * Admins always have access to all modules
  * For staff, checks permissions from session (returns false if not in session - component should fetch)
+ * Also checks if permissions need to be refreshed based on timestamp
  */
 export function hasModuleAccess(moduleKey: ModuleKey, user: UserSession | null = null): boolean {
   const currentUser = user || getCurrentUser();
@@ -88,7 +89,18 @@ export function hasModuleAccess(moduleKey: ModuleKey, user: UserSession | null =
   if (isAdmin(currentUser)) return true;
   
   // Staff members need explicit permission
-  if (!currentUser.permissions) return false;
+  if (!currentUser.permissions) {
+    // If permissions object exists but is empty, user has no access
+    if (currentUser.permissions === null || (typeof currentUser.permissions === 'object' && Object.keys(currentUser.permissions).length === 0)) {
+      return false;
+    }
+    return false;
+  }
+  
+  // Check if permissions were cleared (empty object means no permissions)
+  if (typeof currentUser.permissions === 'object' && Object.keys(currentUser.permissions).length === 0) {
+    return false;
+  }
   
   const modulePermissions = currentUser.permissions[moduleKey];
   console.log("Module permissions: ", modulePermissions)
@@ -109,20 +121,20 @@ export async function fetchAndUpdatePermissions(userId: string): Promise<RolePer
   try {
     const permissions = await RolesApi.getStaffPermissions(userId);
     
-    if (permissions) {
-      // Update session with permissions
-      try {
-        const sessionData = localStorage.getItem("session");
-        if (sessionData) {
-          const session = JSON.parse(sessionData);
-          session.permissions = permissions;
-          localStorage.setItem("session", JSON.stringify(session));
-          // Dispatch event to notify components of session update
-          window.dispatchEvent(new CustomEvent("sessionUpdated", { detail: session }));
-        }
-      } catch (e) {
-        console.warn("Failed to update session with permissions:", e);
+    // Update session with permissions (even if empty/null, to reflect cleared permissions)
+    try {
+      const sessionData = localStorage.getItem("session");
+      if (sessionData) {
+        const session = JSON.parse(sessionData);
+        // Always update permissions, even if null/empty (to reflect cleared permissions)
+        session.permissions = permissions || {};
+        session.permissions_updated_at = new Date().toISOString();
+        localStorage.setItem("session", JSON.stringify(session));
+        // Dispatch event to notify components of session update
+        window.dispatchEvent(new CustomEvent("sessionUpdated", { detail: session }));
       }
+    } catch (e) {
+      console.warn("Failed to update session with permissions:", e);
     }
     
     return permissions;

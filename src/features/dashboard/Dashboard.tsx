@@ -40,8 +40,8 @@ export function Dashboard() {
   console.log("Session data: ", JSON.parse(sessionData || ''))
   const { hasModuleAccess, canCreate, canRead, canUpdate, canDelete } = usePermissions();
   const dashboardModuleKey = "dashboard" as const;
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  // const hasAccess = hasModuleAccess(dashboardModuleKey);
+  // const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const hasAccess = hasModuleAccess(dashboardModuleKey);
   console.log("Has access for dashboard: ", hasAccess)
   // console.log("Can create: ", canCreate(dashboardModuleKey))
   // console.log("Can read: ", canRead(dashboardModuleKey))

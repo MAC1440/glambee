@@ -61,11 +61,6 @@ export async function POST(request: NextRequest) {
     
     <p>You have been granted access to the CRM system by <strong>${salonOwnerName}</strong>.</p>
     
-    <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-      <h3 style="color: #2c3e50; margin-top: 0;">Your Permissions:</h3>
-      <pre style="white-space: pre-wrap; font-family: Arial, sans-serif; margin: 0;">${permissionsList || "• No specific permissions assigned"}</pre>
-    </div>
-    
     <div style="text-align: center; margin: 30px 0;">
       <a href="${crmLink}" 
          style="background-color: #22c55e; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">

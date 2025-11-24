@@ -38,6 +38,7 @@ import { hasModuleAccess, usePermissions } from "@/hooks/use-permissions";
 import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 import { checkModuleDependencies, ModuleKey as DependencyModuleKey } from "@/lib/utils/module-dependencies";
 import { DependencyWarningDialog } from "@/components/ui/dependency-warning-dialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 // Extended Staff type that includes permissions
 export type ExtendedStaff = StaffWithCategories & {
   permissions?: {
@@ -66,6 +67,7 @@ export function RolePermissions() {
   const [pendingModuleKey, setPendingModuleKey] = useState<string | null>(null);
   const [pendingPermissionType, setPendingPermissionType] = useState<PermissionType | null>(null);
   const [warningMessages, setWarningMessages] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
   const sessionData = localStorage.getItem("session");
   console.log("Session role permissions data: ", JSON.parse(sessionData || ''))
 
@@ -161,6 +163,7 @@ export function RolePermissions() {
         moduleKey as DependencyModuleKey,
         tempPermissions
       );
+      console.log("Dependency chheck: ", dependencyCheck)
       
       if (dependencyCheck.hasWarning) {
         // Store pending change and show warning
@@ -251,7 +254,7 @@ export function RolePermissions() {
   };
 
   const handleSaveChanges = async () => {
-    if (!selectedStaff) return;
+    if (!selectedStaff || saving) return;
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -274,6 +277,7 @@ export function RolePermissions() {
     }
 
     try {
+      setSaving(true);
       // Save permissions to database for the staff member
       await RolesApi.saveStaffPermissions(selectedStaff.id, selectedStaff.permissions || {});
 
@@ -340,6 +344,30 @@ export function RolePermissions() {
         )
       );
 
+      // If the affected staff member is currently logged in, update their session
+      try {
+        const currentSessionData = localStorage.getItem("session");
+        if (currentSessionData) {
+          const currentSession = JSON.parse(currentSessionData);
+          
+          // Check if the affected staff member is the currently logged-in user
+          if (currentSession.id === selectedStaff.id) {
+            // Update session with new permissions
+            currentSession.permissions = selectedStaff.permissions || {};
+            currentSession.permissions_updated_at = new Date().toISOString();
+            localStorage.setItem("session", JSON.stringify(currentSession));
+            
+            // Dispatch session update event to refresh UI
+            window.dispatchEvent(new CustomEvent("sessionUpdated", { detail: currentSession }));
+            
+            console.log("Updated session for affected staff member:", selectedStaff.id);
+          }
+        }
+      } catch (sessionError) {
+        console.warn("Failed to update session for affected staff member:", sessionError);
+        // Don't fail the whole operation if session update fails
+      }
+
       toast({
         title: "Permissions Updated & Email Sent",
         description: `Permissions for ${selectedStaff.name} have been saved and email sent to ${email}.`,
@@ -353,11 +381,13 @@ export function RolePermissions() {
       setEmail("");
     } catch (error) {
       console.error("Error updating permissions:", error);
-    toast({
+      toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update permissions. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -381,6 +411,31 @@ export function RolePermissions() {
       // Clear selected staff if it was the deleted one
       if (selectedStaff?.id === staffToDelete.id) {
         setSelectedStaff(null);
+      }
+
+      // If the affected staff member is currently logged in, update their session
+      try {
+        const currentSessionData = localStorage.getItem("session");
+        if (currentSessionData) {
+          const currentSession = JSON.parse(currentSessionData);
+          
+          // Check if the affected staff member is the currently logged-in user
+          if (currentSession.id === staffToDelete.id) {
+            // Update session to remove permissions
+            currentSession.permissions = {};
+            // Add a timestamp to force refresh on next check
+            currentSession.permissions_updated_at = new Date().toISOString();
+            localStorage.setItem("session", JSON.stringify(currentSession));
+            
+            // Dispatch session update event to refresh UI
+            window.dispatchEvent(new CustomEvent("sessionUpdated", { detail: currentSession }));
+            
+            console.log("Updated session for affected staff member:", staffToDelete.id);
+          }
+        }
+      } catch (sessionError) {
+        console.warn("Failed to update session for affected staff member:", sessionError);
+        // Don't fail the whole operation if session update fails
       }
 
       toast({
@@ -557,9 +612,25 @@ export function RolePermissions() {
         {selectedStaff && (
           <div className="flex items-center justify-center">
             <div className="flex items-center gap-2 w-full max-w-md">
-              <Input type="email" placeholder="Enter email" className="flex-1" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input 
+                type="email" 
+                placeholder="Enter email" 
+                className="flex-1" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={saving}
+              />
               {canUpdate(rolesModuleKey) && (
-                <Button onClick={handleSaveChanges}>Save Changes</Button>
+                <Button onClick={handleSaveChanges} disabled={saving}>
+                  {saving ? (
+                    <>
+                      <LoadingSpinner size="sm" className="mr-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
               )}
             </div>
           </div>

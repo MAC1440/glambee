@@ -45,11 +45,36 @@ export function DependencyWarningDialog({
               <p className="font-medium">
                 You are assigning permissions for <strong>{moduleName}</strong>, but the following dependencies are missing:
               </p>
-              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-                {warnings.map((warning, index) => (
-                  <li key={index}>{warning}</li>
-                ))}
-              </ul>
+              <div className="space-y-2">
+                {warnings.map((warning, index) => {
+                  // Check if warning contains bullet points (starts with "Without" and has \n)
+                  const hasBulletPoints = warning.includes('\n•');
+                  if (hasBulletPoints) {
+                    // Split by \n and render as bullet list
+                    const lines = warning.split('\n').filter(Boolean);
+                    const firstLine = lines[0]; // The main message
+                    const bulletPoints = lines.slice(1); // The bullet points
+                    
+                    return (
+                      <div key={index} className="text-sm text-muted-foreground space-y-1">
+                        <p className="font-medium text-foreground mb-1">{firstLine}</p>
+                        <ul className="list-disc list-inside space-y-1 ml-2">
+                          {bulletPoints.map((bullet, bulletIndex) => (
+                            <li key={bulletIndex}>{bullet.replace('•', '').trim()}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  }
+                  
+                  // Regular warning without bullet points
+                  return (
+                    <p key={index} className="text-sm text-muted-foreground">
+                      {warning}
+                    </p>
+                  );
+                })}
+              </div>
               <p className="text-sm font-medium text-foreground pt-2">
                 Staff members may not be able to use all features of this module without the required permissions.
               </p>
