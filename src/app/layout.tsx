@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { StoreProvider } from "@/lib/StoreProvider";
 import { LayoutProvider } from "@/components/layout/layout-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PermissionRefresher } from "@/features/auth/PermissionRefetcher";
 
 export const metadata: Metadata = {
   title: "GlamBee",
@@ -41,6 +42,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <PermissionRefresher />
           <StoreProvider>
             <LayoutProvider>{children}</LayoutProvider>
             <Toaster />

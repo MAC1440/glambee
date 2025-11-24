@@ -79,72 +79,7 @@ export function DealsList() {
   const [hasAccess, setHasAccess] = React.useState<boolean | null>(null);
   
   // Check if user has access to deals module (with async permission fetch if needed)
-  React.useEffect(() => {
-    const checkAccess = async () => {
-      // First check synchronously (if permissions are in session)
-      const syncAccess = hasModuleAccess(dealsModuleKey);
-      if (syncAccess) {
-        setHasAccess(true);
-        return;
-      }
-      
-      // If no permissions in session, fetch them
-      const sessionData = localStorage.getItem("session");
-      if (!sessionData) {
-        setHasAccess(false);
-        return;
-      }
-      
-      try {
-        const session = JSON.parse(sessionData);
-        const userId = session.id;
-        
-        // If user is admin, they have access
-        if (session.role === "SUPER_ADMIN" || session.role === "SALON_ADMIN" || session.userType === "salon" || session.userType === "SUPER_ADMIN" || session.userType === "SALON_ADMIN") {
-          setHasAccess(true);
-          return;
-        }
-        
-        // Fetch permissions for staff
-        if (userId) {
-          const { fetchAndUpdatePermissions } = await import("@/hooks/use-permissions");
-          const permissions = await fetchAndUpdatePermissions(userId);
-          
-          if (permissions) {
-            // Check if user has access to deals module
-            const modulePermissions = permissions[dealsModuleKey];
-            const access = modulePermissions && (
-              modulePermissions.read === true ||
-              modulePermissions.create === true ||
-              modulePermissions.update === true ||
-              modulePermissions.delete === true
-            );
-            setHasAccess(access || false);
-          } else {
-            setHasAccess(false);
-          }
-        } else {
-          setHasAccess(false);
-        }
-      } catch (error) {
-        console.error("Error checking module access:", error);
-        setHasAccess(false);
-      }
-    };
-    
-    checkAccess();
-    
-    // Listen for session updates
-    const handleSessionUpdate = () => {
-      const syncAccess = hasModuleAccess(dealsModuleKey);
-      setHasAccess(syncAccess);
-    };
-    
-    window.addEventListener("sessionUpdated", handleSessionUpdate);
-    return () => {
-      window.removeEventListener("sessionUpdated", handleSessionUpdate);
-    };
-  }, [dealsModuleKey, hasModuleAccess]);
+  // s, [dealsModuleKey, hasModuleAccess]);
 
   const fetchDeals = React.useCallback(async () => {
     try {
@@ -509,9 +444,9 @@ export function DealsList() {
   //   );
   // }
   
-  if (hasAccess === false) {
-    return <UnauthorizedAccess moduleName="Deals" />;
-  }
+  // if (hasAccess === false) {
+  //   return <UnauthorizedAccess moduleName="Deals" />;
+  // }
 
   if (loading) {
     return (

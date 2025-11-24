@@ -19,9 +19,9 @@ export function Roles() {
   const hasAccess = hasModuleAccess(rolesModuleKey);
   console.log("Has access for roles: ", hasAccess)
 
-  if (hasAccess === false) {
-    return <UnauthorizedAccess moduleName="Roles" />;
-  }
+  // if (hasAccess === false) {
+  //   return <UnauthorizedAccess moduleName="Roles" />;
+  // }
   return (
     <div className="flex flex-col gap-8">
       <div className="text-left">

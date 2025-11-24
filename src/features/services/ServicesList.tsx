@@ -395,9 +395,9 @@ export function ServicesList() {
     );
   }
 
-  if (hasAccess === false) {
-    return <UnauthorizedAccess moduleName="Services" />;
-  }
+  // if (hasAccess === false) {
+  //   return <UnauthorizedAccess moduleName="Services" />;
+  // }
 
   if (error) {
     return (

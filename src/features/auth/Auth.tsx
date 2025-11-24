@@ -520,6 +520,9 @@ export function Auth() {
       {showPasswordModal && (
         <PasswordUpdateModal
           open={showPasswordModal}
+          onOpenChange={(open) => {
+            setShowPasswordModal(open);
+          }}
           onComplete={async () => {
             setShowPasswordModal(false);
             setIsLoading(true);

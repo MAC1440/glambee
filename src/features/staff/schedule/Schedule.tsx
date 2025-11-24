@@ -276,9 +276,9 @@ export function Schedule() {
     );
   }
 
-  if (hasAccess === false) {
-    return <UnauthorizedAccess moduleName="Schedule" />;
-  }
+  // if (hasAccess === false) {
+  //   return <UnauthorizedAccess moduleName="Schedule" />;
+  // }
 
   return (
     <div className="flex flex-col gap-8">

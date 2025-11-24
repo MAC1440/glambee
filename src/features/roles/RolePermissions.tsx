@@ -36,6 +36,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { hasModuleAccess, usePermissions } from "@/hooks/use-permissions";
 import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
+import { checkModuleDependencies, ModuleKey as DependencyModuleKey } from "@/lib/utils/module-dependencies";
+import { DependencyWarningDialog } from "@/components/ui/dependency-warning-dialog";
 // Extended Staff type that includes permissions
 export type ExtendedStaff = StaffWithCategories & {
   permissions?: {
@@ -60,6 +62,10 @@ export function RolePermissions() {
   const [staffToDelete, setStaffToDelete] = useState<ExtendedStaff | null>(null);
   const [email, setEmail] = useState<string>("");
   const [salonId, setSalonId] = useState<string | undefined>(undefined);
+  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+  const [pendingModuleKey, setPendingModuleKey] = useState<string | null>(null);
+  const [pendingPermissionType, setPendingPermissionType] = useState<PermissionType | null>(null);
+  const [warningMessages, setWarningMessages] = useState<string[]>([]);
   const sessionData = localStorage.getItem("session");
   console.log("Session role permissions data: ", JSON.parse(sessionData || ''))
 
@@ -131,6 +137,52 @@ export function RolePermissions() {
   ) => {
     if (!selectedStaff) return;
 
+    const newPermissions = JSON.parse(JSON.stringify(selectedStaff.permissions || {}));
+    if (!newPermissions[moduleKey]) {
+      newPermissions[moduleKey] = { create: false, read: false, update: false, delete: false };
+    }
+    
+    const currentPermissions = newPermissions[moduleKey];
+    const isChecked = !currentPermissions[permissionType];
+    
+    // If we're checking a permission (not unchecking), check for dependencies
+    if (isChecked) {
+      // Temporarily apply the change to check dependencies
+      const tempPermissions = { ...newPermissions };
+      tempPermissions[moduleKey] = { ...currentPermissions, [permissionType]: true };
+      
+      // Auto-check 'read' if 'create', 'update', or 'delete' is checked (for dependency check)
+      if ((permissionType === 'create' || permissionType === 'update' || permissionType === 'delete')) {
+        tempPermissions[moduleKey].read = true;
+      }
+      
+      // Check for dependencies
+      const dependencyCheck = checkModuleDependencies(
+        moduleKey as DependencyModuleKey,
+        tempPermissions
+      );
+      
+      if (dependencyCheck.hasWarning) {
+        // Store pending change and show warning
+        setPendingModuleKey(moduleKey);
+        setPendingPermissionType(permissionType);
+        setWarningMessages(dependencyCheck.warnings);
+        setWarningDialogOpen(true);
+        return; // Don't apply change yet
+      }
+    }
+
+    // Apply the change directly if no warnings
+    applyPermissionChange(moduleKey, permissionType, isChecked);
+  };
+
+  const applyPermissionChange = (
+    moduleKey: string,
+    permissionType: PermissionType,
+    isChecked: boolean
+  ) => {
+    if (!selectedStaff) return;
+
     setSelectedStaff((prevStaff) => {
       if (!prevStaff) return prevStaff;
 
@@ -140,7 +192,6 @@ export function RolePermissions() {
       }
       
       const currentPermissions = newPermissions[moduleKey];
-      const isChecked = !currentPermissions[permissionType];
       currentPermissions[permissionType] = isChecked;
 
       // Auto-check 'read' if 'create', 'update', or 'delete' is checked
@@ -157,6 +208,28 @@ export function RolePermissions() {
 
       return { ...prevStaff, permissions: newPermissions };
     });
+  };
+  
+  const handleWarningContinue = () => {
+    if (pendingModuleKey && pendingPermissionType !== null) {
+      // Apply the pending permission change
+      const isChecked = true; // We only show warning when checking, not unchecking
+      applyPermissionChange(pendingModuleKey, pendingPermissionType, isChecked);
+    }
+    
+    // Close dialog and reset pending state
+    setWarningDialogOpen(false);
+    setPendingModuleKey(null);
+    setPendingPermissionType(null);
+    setWarningMessages([]);
+  };
+
+  const handleWarningCancel = () => {
+    // Don't apply the change, just close the dialog
+    setWarningDialogOpen(false);
+    setPendingModuleKey(null);
+    setPendingPermissionType(null);
+    setWarningMessages([]);
   };
   
   const handleSelectStaff = async (staffId: string) => {
@@ -354,9 +427,9 @@ export function RolePermissions() {
   //   );
   // }
 
-  if (hasAccess === false) {
-    return <UnauthorizedAccess moduleName="Role Permissions" />;
-  }
+  // if (hasAccess === false) {
+  //   return <UnauthorizedAccess moduleName="Role Permissions" />;
+  // }
 
   return (
     <>
@@ -510,6 +583,17 @@ export function RolePermissions() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {pendingModuleKey && (
+        <DependencyWarningDialog
+          open={warningDialogOpen}
+          onOpenChange={setWarningDialogOpen}
+          moduleKey={pendingModuleKey as DependencyModuleKey}
+          warnings={warningMessages}
+          onContinue={handleWarningContinue}
+          onCancel={handleWarningCancel}
+        />
+      )}
     </>
   );
 }

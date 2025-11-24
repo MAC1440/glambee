@@ -148,9 +148,9 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
     }
   };
 
-  if (hasAccess === false) {
-    return <UnauthorizedAccess moduleName="Clients" />;
-  }
+  // if (hasAccess === false) {
+  //   return <UnauthorizedAccess moduleName="Clients" />;
+  // }
 
 
   return (

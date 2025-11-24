@@ -47,76 +47,76 @@ export function Dashboard() {
   // console.log("Can read: ", canRead(dashboardModuleKey))
   // console.log("Can update: ", canUpdate(dashboardModuleKey))
   // console.log("Can delete: ", canDelete(dashboardModuleKey))
-  useEffect(() => {
-    console.log("In dash effect....")
-    const checkAccess = async () => {
-      // First check synchronously (if permissions are in session)
-      const syncAccess = hasModuleAccess(dashboardModuleKey);
-      console.log("Synced access: ", syncAccess)
-      if (syncAccess) {
-        setHasAccess(true);
-        return;
-      }
-      
-      // If no permissions in session, fetch them
-      const sessionData = localStorage.getItem("session");
-      if (!sessionData) {
-        setHasAccess(false);
-        return;
-      }
-      console.log("Session data: ", sessionData)
-      
-      try {
-        const session = JSON.parse(sessionData);
-        const userId = session.id;
-        console.log("User ID: ", userId)
-        // If user is admin, they have access
-        if (session.role === "SUPER_ADMIN" || session.role === "SALON_ADMIN" || session.userType === "salon" || session.userType === "SUPER_ADMIN" || session.userType === "SALON_ADMIN") {
-          setHasAccess(true);
-          return;
-        }
-        
-        // Fetch permissions for staff
-        if (userId) {
-          const { fetchAndUpdatePermissions } = await import("@/hooks/use-permissions");
-          const permissions = await fetchAndUpdatePermissions(userId);
-          console.log("Permissions: ", permissions)
-          if (permissions) {
-            // Check if user has access to deals module
-            const modulePermissions = permissions[dashboardModuleKey];
-            console.log("Module permissions: ", modulePermissions)
-            const access = modulePermissions && (
-              modulePermissions.read === true ||
-              modulePermissions.create === true ||
-              modulePermissions.update === true ||
-              modulePermissions.delete === true
-            );
-            setHasAccess(access || false);
-          } else {
-            setHasAccess(false);
-          }
-        } else {
-          setHasAccess(false);
-        }
-      } catch (error) {
-        console.error("Error checking module access:", error);
-        setHasAccess(false);
-      }
-    };
-    
-    checkAccess();
-    
-    // Listen for session updates
-    const handleSessionUpdate = () => {
-      const syncAccess = hasModuleAccess(dashboardModuleKey);
-      setHasAccess(syncAccess);
-    };
-    
-    window.addEventListener("sessionUpdated", handleSessionUpdate);
-    return () => {
-      window.removeEventListener("sessionUpdated", handleSessionUpdate);
-    };
-  }, [dashboardModuleKey, hasModuleAccess]);
+  // useEffect(() => {
+  //   console.log("In dash effect....")
+  //   const checkAccess = async () => {
+  //     // First check synchronously (if permissions are in session)
+  //     const syncAccess = hasModuleAccess(dashboardModuleKey);
+  //     console.log("Synced access: ", syncAccess)
+  //     if (syncAccess) {
+  //       setHasAccess(true);
+  //       return;
+  //     }
+
+  //     // If no permissions in session, fetch them
+  //     const sessionData = localStorage.getItem("session");
+  //     if (!sessionData) {
+  //       setHasAccess(false);
+  //       return;
+  //     }
+  //     console.log("Session data: ", sessionData)
+
+  //     try {
+  //       const session = JSON.parse(sessionData);
+  //       const userId = session.id;
+  //       console.log("User ID: ", userId)
+  //       // If user is admin, they have access
+  //       if (session.role === "SUPER_ADMIN" || session.role === "SALON_ADMIN" || session.userType === "salon" || session.userType === "SUPER_ADMIN" || session.userType === "SALON_ADMIN") {
+  //         setHasAccess(true);
+  //         return;
+  //       }
+
+  //       // Fetch permissions for staff
+  //       if (userId) {
+  //         const { fetchAndUpdatePermissions } = await import("@/hooks/use-permissions");
+  //         const permissions = await fetchAndUpdatePermissions(userId);
+  //         console.log("Permissions: ", permissions)
+  //         if (permissions) {
+  //           // Check if user has access to deals module
+  //           const modulePermissions = permissions[dashboardModuleKey];
+  //           console.log("Module permissions: ", modulePermissions)
+  //           const access = modulePermissions && (
+  //             modulePermissions.read === true ||
+  //             modulePermissions.create === true ||
+  //             modulePermissions.update === true ||
+  //             modulePermissions.delete === true
+  //           );
+  //           setHasAccess(access || false);
+  //         } else {
+  //           setHasAccess(false);
+  //         }
+  //       } else {
+  //         setHasAccess(false);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error checking module access:", error);
+  //       setHasAccess(false);
+  //     }
+  //   };
+
+  //   checkAccess();
+
+  //   // Listen for session updates
+  //   const handleSessionUpdate = () => {
+  //     const syncAccess = hasModuleAccess(dashboardModuleKey);
+  //     setHasAccess(syncAccess);
+  //   };
+
+  //   window.addEventListener("sessionUpdated", handleSessionUpdate);
+  //   return () => {
+  //     window.removeEventListener("sessionUpdated", handleSessionUpdate);
+  //   };
+  // }, [dashboardModuleKey, hasModuleAccess]);
 
   // Fetch appointments and staff data
   useEffect(() => {
@@ -124,13 +124,13 @@ export function Dashboard() {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // Fetch appointments and staff in parallel
         const [appointmentsResponse, staffResponse] = await Promise.all([
-          AppointmentsApi.getAppointments({salonId: JSON.parse(sessionData || '').salonId}),
-          StaffApi.getStaff({salonId: JSON.parse(sessionData || '').salonId})
+          AppointmentsApi.getAppointments({ salonId: JSON.parse(sessionData || '').salonId }),
+          StaffApi.getStaff({ salonId: JSON.parse(sessionData || '').salonId })
         ]);
-        
+
         setAppointments(appointmentsResponse.data || []);
         setStaff(staffResponse.data || []);
       } catch (err) {
@@ -164,7 +164,7 @@ export function Dashboard() {
     if (period === "month") return isThisMonth(apt.start);
     return false;
   });
-  
+
   // Convert ScheduleAppointment to Appointment for consistency and to add price
   const convertedFilteredAppointments = filteredAppointments.map(apt => {
     // Get price from the original appointment data
@@ -172,19 +172,19 @@ export function Dashboard() {
     const price = originalAppointment?.bill || 0;
 
     return {
-        id: apt.id,
-        salonId: originalAppointment?.salon_id || 'salon_01',
-        customer: {
-            id: originalAppointment?.customer?.id || `cust_${apt.customerName}`,
-            phone: originalAppointment?.customer?.phone_number || '',
-            name: apt.customerName,
-            email: originalAppointment?.customer?.email || `${apt.customerName.toLowerCase().replace(' ', '.')}@example.com`
-        },
-        service: apt.service,
-        staff: originalAppointment?.staff?.name || 'Unknown',
-        date: format(apt.start, 'yyyy-MM-dd'),
-        time: format(apt.start, 'p'),
-        price: price,
+      id: apt.id,
+      salonId: originalAppointment?.salon_id || 'salon_01',
+      customer: {
+        id: originalAppointment?.customer?.id || `cust_${apt.customerName}`,
+        phone: originalAppointment?.customer?.phone_number || '',
+        name: apt.customerName,
+        email: originalAppointment?.customer?.email || `${apt.customerName.toLowerCase().replace(' ', '.')}@example.com`
+      },
+      service: apt.service,
+      staff: originalAppointment?.staff?.name || 'Unknown',
+      date: format(apt.start, 'yyyy-MM-dd'),
+      time: format(apt.start, 'p'),
+      price: price,
     }
   });
 
@@ -201,7 +201,7 @@ export function Dashboard() {
 
   // Calculate period-specific revenue
   const periodRevenue = convertedFilteredAppointments.reduce((sum, apt) => sum + apt.price, 0);
-  
+
   // Calculate new clients dynamically
   const newClients = useMemo(() => {
     const startDate = new Date();
@@ -216,33 +216,33 @@ export function Dashboard() {
         startDate.setMonth(startDate.getMonth() - 1);
         break;
     }
-    
+
     // Count unique customers who have appointments in the period
     const periodCustomers = new Set();
     convertedFilteredAppointments.forEach(apt => {
       periodCustomers.add(apt.customer.id);
     });
-    
+
     return periodCustomers.size;
   }, [convertedFilteredAppointments, period]);
 
   // Calculate recurring clients percentage
   const recurringClientsPercentage = useMemo(() => {
     if (convertedFilteredAppointments.length === 0) return 0;
-    
+
     // Count customers with more than one appointment
     const customerAppointmentCounts = new Map();
     convertedFilteredAppointments.forEach(apt => {
       const count = customerAppointmentCounts.get(apt.customer.id) || 0;
       customerAppointmentCounts.set(apt.customer.id, count + 1);
     });
-    
+
     const totalCustomers = customerAppointmentCounts.size;
     const recurringCustomers = Array.from(customerAppointmentCounts.values()).filter(count => count > 1).length;
-    
+
     return totalCustomers > 0 ? Math.round((recurringCustomers / totalCustomers) * 100) : 0;
   }, [convertedFilteredAppointments]);
-  
+
   const getCardTitle = () => {
     switch (period) {
       case "today": return "Today's Appointments";
@@ -292,77 +292,77 @@ export function Dashboard() {
     );
   }
 
-  if (hasAccess === false) {
-    return <UnauthorizedAccess moduleName="Dashboard" />;
-  }
+  // if (hasAccess === false) {
+  //   return <UnauthorizedAccess moduleName="Dashboard" />;
+  // }
 
   return (
     <div className="flex flex-col gap-8">
-       <Tabs defaultValue="today" onValueChange={(value) => setPeriod(value as any)}>
+      <Tabs defaultValue="today" onValueChange={(value) => setPeriod(value as any)}>
         <div className="flex justify-end">
-            <TabsList>
-                <TabsTrigger value="today">Today</TabsTrigger>
-                <TabsTrigger value="week">This Week</TabsTrigger>
-                <TabsTrigger value="month">This Month</TabsTrigger>
-            </TabsList>
+          <TabsList>
+            <TabsTrigger value="today">Today</TabsTrigger>
+            <TabsTrigger value="week">This Week</TabsTrigger>
+            <TabsTrigger value="month">This Month</TabsTrigger>
+          </TabsList>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium">
                 Total Revenue
-                </CardTitle>
-                <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+              <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
-                <p className="text-xs text-muted-foreground">
+              <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
                 Total revenue from all appointments
-                </p>
+              </p>
             </CardContent>
-            </Card>
-            <Card>
+          </Card>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium">
                 Appointments
-                </CardTitle>
-                <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+              </CardTitle>
+              <CalendarCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{convertedFilteredAppointments.length}</div>
-                <p className="text-xs text-muted-foreground">
+              <div className="text-2xl font-bold">{convertedFilteredAppointments.length}</div>
+              <p className="text-xs text-muted-foreground">
                 In this period
-                </p>
+              </p>
             </CardContent>
-            </Card>
-            <Card>
+          </Card>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">New Clients</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">New Clients</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{newClients}</div>
-                <p className="text-xs text-muted-foreground">
+              <div className="text-2xl font-bold">{newClients}</div>
+              <p className="text-xs text-muted-foreground">
                 Unique clients in this period
-                </p>
+              </p>
             </CardContent>
-            </Card>
-            <Card>
+          </Card>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Recurring Clients</CardTitle>
-                <Repeat className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Recurring Clients</CardTitle>
+              <Repeat className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{recurringClientsPercentage}%</div>
-                <p className="text-xs text-muted-foreground">
+              <div className="text-2xl font-bold">{recurringClientsPercentage}%</div>
+              <p className="text-xs text-muted-foreground">
                 Of clients have more than one appointment
-                </p>
+              </p>
             </CardContent>
-            </Card>
+          </Card>
         </div>
       </Tabs>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card>
           <AppointmentsTable
@@ -380,7 +380,7 @@ export function Dashboard() {
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
             <CardDescription>
-             {getRevenueDescription()}
+              {getRevenueDescription()}
             </CardDescription>
           </CardHeader>
           <CardContent>

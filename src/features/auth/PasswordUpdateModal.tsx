@@ -19,12 +19,14 @@ import { AlertCircle } from "lucide-react";
 
 interface PasswordUpdateModalProps {
   open: boolean;
+  onOpenChange: (open: boolean) => void;
   onComplete: () => void;
   userEmail: string;
 }
 
 export function PasswordUpdateModal({
   open,
+  onOpenChange,
   onComplete,
   userEmail,
 }: PasswordUpdateModalProps) {
@@ -35,6 +37,27 @@ export function PasswordUpdateModal({
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Reset all form states
+  const resetForm = () => {
+    setNewPassword("");
+    setConfirmPassword("");
+    setError(null);
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setIsLoading(false);
+  };
+
+  // Handle modal close
+  const handleClose = () => {
+    // Don't allow closing while password is being updated
+    if (isLoading) {
+      return;
+    }
+    
+    resetForm();
+    onOpenChange(false);
+  };
 
   const validatePassword = (password: string): { isValid: boolean; error?: string } => {
     if (password.length < 8) {
@@ -131,9 +154,7 @@ export function PasswordUpdateModal({
       });
 
       // Clear form
-      setNewPassword("");
-      setConfirmPassword("");
-      setError(null);
+      resetForm();
 
       // Call completion handler
       onComplete();
@@ -151,8 +172,22 @@ export function PasswordUpdateModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent 
+        className="sm:max-w-md" 
+        onPointerDownOutside={(e) => {
+          // Prevent closing by clicking outside while loading
+          if (isLoading) {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing with Escape key while loading
+          if (isLoading) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Update Your Password</DialogTitle>
           <DialogDescription>
