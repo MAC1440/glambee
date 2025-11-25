@@ -43,6 +43,7 @@ import type { ClientFormData } from "./ClientForm";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, X, Edit2 } from "lucide-react";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export function ClientDetail({ clientId }: { clientId: string }) {
   const [client, setClient] = useState<ClientWithDetails | null>(null);
@@ -55,6 +56,8 @@ export function ClientDetail({ clientId }: { clientId: string }) {
   const { toast } = useToast();
   const sessionData = localStorage.getItem("session");
   const salonId = sessionData ? JSON.parse(sessionData).salonId : null;
+  const { canCreate, canUpdate } = usePermissions();
+  const clientsModuleKey = "clients" as const;
 
   // Fetch staff options
   useEffect(() => {
@@ -272,16 +275,20 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </Link>
         </Button>
         <div className="flex items-center gap-2">
+        {(canCreate(clientsModuleKey) || canUpdate(clientsModuleKey)) && (
           <Button variant="outline" asChild>
              <Link href={`/checkout/${client?.id}`}>
               <DollarSign className="mr-2 h-4 w-4" />
               Add Payment
             </Link>
           </Button>
+        )}
+        {(canCreate(clientsModuleKey) || canUpdate(clientsModuleKey)) && (
           <Button variant="outline" onClick={() => setIsFormOpen(true)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit Client
           </Button>
+          )}
           <Button asChild>
             <Link href={`/appointments?clientId=${client?.id}`}>
               <CalendarPlus className="mr-2 h-4 w-4" />

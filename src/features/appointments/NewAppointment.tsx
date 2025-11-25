@@ -24,19 +24,22 @@ type Client = ClientWithDetails;
 export function NewAppointment({
   appointments,
   preselectedClient,
+  setPreselectedClient,
 }: {
   appointments: AppointmentWithDetails[];
-  preselectedClient?: Client;
+  preselectedClient?: Client | null;
+  setPreselectedClient: (client: Client | null) => void;
 }) {
   const { toast } = useToast();
   const [appointmentsList, setAppointmentsList] = useState<AppointmentWithDetails[]>(appointments);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
-  console.log("Selected client: ", selectedClient)
+  // const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
+  // console.log("Selected client: ", preselectedClient)
   const [isLoading, setIsLoading] = useState(false);
   const sessionData = localStorage.getItem("session");
   console.log("Session appoint data: ", JSON.parse(sessionData || ''))
+  console.log("Preselected client in new appointment file: ", preselectedClient)
 
   // Fetch appointments on component mount if not provided
   useEffect(() => {
@@ -72,15 +75,15 @@ export function NewAppointment({
 
     // Filter appointments by selected client if one is selected
     let confirmedAppointments = appointmentsList;
-    if (selectedClient) {
-      confirmedAppointments = appointmentsList.filter(apt => apt.customer_id === selectedClient.id);
+    if (preselectedClient) {
+      confirmedAppointments = appointmentsList.filter(apt => apt.customer_id === preselectedClient.id);
     }
-    
+
     // Further filter by selected artists if any are chosen
     if (selectedArtistIds.size > 0) {
       confirmedAppointments = confirmedAppointments.filter(apt => selectedArtistIds.has(apt.staff_id || ''));
     }
-    
+
     const confirmedEvents = confirmedAppointments.map((apt) => ({
       title: `${apt.services?.[0]?.name || 'Service'} - ${apt.customer?.name || apt.customer_name || 'Unknown'}`,
       start: apt.start_time ? new Date(apt.start_time) : new Date(apt.date),
@@ -102,7 +105,7 @@ export function NewAppointment({
           end: appointmentEnd,
           resource: {
             id: `temp_${index}`,
-            customerName: selectedClient?.name || 'New Client',
+            customerName: preselectedClient?.name || 'New Client',
             service: item.service.name,
             staffId: item.artist?.value || '',
             isTemporary: true,
@@ -111,13 +114,13 @@ export function NewAppointment({
       });
       return [...confirmedEvents, ...temporaryEvents];
     }
-    
+
     return confirmedEvents;
-  }, [appointmentsList, servicesToBook, selectedSlot, selectedClient]);
+  }, [appointmentsList, servicesToBook, selectedSlot, preselectedClient]);
 
   const handleAddServiceToList = (item: CartItem) => {
     setServicesToBook(prev => [...prev, item]);
-     toast({
+    toast({
       title: "Service Added",
       description: `${item.service.name} was added to the booking list.`,
     });
@@ -127,9 +130,9 @@ export function NewAppointment({
     const item = servicesToBook[index];
     setServicesToBook(prev => prev.filter((_, i) => i !== index));
     toast({
-        title: "Service Removed",
-        description: `${item.service.name} has been removed from the list.`,
-        variant: "destructive"
+      title: "Service Removed",
+      description: `${item.service.name} has been removed from the list.`,
+      variant: "destructive"
     });
   }
 
@@ -170,7 +173,7 @@ export function NewAppointment({
       });
       return;
     }
-    if (!selectedClient) {
+    if (!preselectedClient) {
       toast({
         title: "No Client Selected",
         description: "Please select a client before booking.",
@@ -178,55 +181,55 @@ export function NewAppointment({
       });
       return;
     }
-    
+
     let allArtistsAssigned = true;
     const appointmentsToCreate: CreateAppointmentData[] = [];
 
     // Group services by staff member (allow null for unassigned services)
     const servicesByStaff = new Map<string | null, CartItem[]>();
-    
+
     servicesToBook.forEach(item => {
-        let staffId: string | null = null;
-        
-        if (item.artist) {
-            staffId = item.artist.value;
-        } else {
-            // No artist selected - will be assigned to null staff
-            staffId = null;
-        }
-        
-        if (!servicesByStaff.has(staffId)) {
-            servicesByStaff.set(staffId, []);
-        }
-        servicesByStaff.get(staffId)!.push(item);
+      let staffId: string | null = null;
+
+      if (item.artist) {
+        staffId = item.artist.value;
+      } else {
+        // No artist selected - will be assigned to null staff
+        staffId = null;
+      }
+
+      if (!servicesByStaff.has(staffId)) {
+        servicesByStaff.set(staffId, []);
+      }
+      servicesByStaff.get(staffId)!.push(item);
     });
 
     // Create appointment data for each staff member
     let cumulativeEndTime = new Date(selectedSlot.start);
     for (const [staffId, services] of servicesByStaff) {
-        const appointmentStart = new Date(cumulativeEndTime);
-        let appointmentEnd = new Date(appointmentStart);
-        
-        // Calculate total duration for this staff member
-        const totalDuration = services.reduce((sum, service) => sum + (service.service.duration || 30), 0);
-        appointmentEnd.setMinutes(appointmentEnd.getMinutes() + totalDuration);
-        
-        appointmentsToCreate.push({
-            customerId: selectedClient.id,
-            staffId: staffId, // Pass null if no artist selected
-            services: services.map(service => ({
-                serviceId: service.service.id,
-                price: typeof service.service.price === 'string' ? parseFloat(service.service.price) : service.service.price
-            })),
-            startTime: appointmentStart.toISOString(),
-            endTime: appointmentEnd.toISOString(),
-            date: appointmentStart.toISOString().split('T')[0],
-            notes: `Appointment for ${selectedClient.name}`,
-            bookingType: undefined,
-            bookingApproach: undefined
-        });
-        
-        cumulativeEndTime = appointmentEnd;
+      const appointmentStart = new Date(cumulativeEndTime);
+      let appointmentEnd = new Date(appointmentStart);
+
+      // Calculate total duration for this staff member
+      const totalDuration = services.reduce((sum, service) => sum + (service.service.duration || 30), 0);
+      appointmentEnd.setMinutes(appointmentEnd.getMinutes() + totalDuration);
+
+      appointmentsToCreate.push({
+        customerId: preselectedClient.id,
+        staffId: staffId, // Pass null if no artist selected
+        services: services.map(service => ({
+          serviceId: service.service.id,
+          price: typeof service.service.price === 'string' ? parseFloat(service.service.price) : service.service.price
+        })),
+        startTime: appointmentStart.toISOString(),
+        endTime: appointmentEnd.toISOString(),
+        date: appointmentStart.toISOString().split('T')[0],
+        notes: `Appointment for ${preselectedClient.name}`,
+        bookingType: undefined,
+        bookingApproach: undefined
+      });
+
+      cumulativeEndTime = appointmentEnd;
     }
 
     try {
@@ -238,21 +241,21 @@ export function NewAppointment({
         const createdAppointment = await AppointmentsApi.createAppointment(appointmentData);
         createdAppointments.push(createdAppointment);
       }
-      
+
       // Refresh appointments list
       const salonId = sessionData ? JSON.parse(sessionData).salonId : null;
       const response = await AppointmentsApi.getAppointments({
         salonId: salonId,
       });
       setAppointmentsList(response.data);
-      
+
       // Check if any services are unassigned
       const hasUnassignedServices = servicesToBook.some(item => !item.artist);
       const staffMessage = hasUnassignedServices ? " (some services unassigned)" : "";
-      
+
       toast({
         title: "✅ Appointments Booked!",
-        description: `${servicesToBook.length} service(s) for ${selectedClient.name} have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
+        description: `${servicesToBook.length} service(s) for ${preselectedClient.name} have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
         className: "border-green-500 bg-green-50 text-green-900",
       });
 
@@ -269,7 +272,7 @@ export function NewAppointment({
       setIsLoading(false);
     }
   };
-  
+
   const servicesWithTime = useMemo(() => {
     if (!selectedSlot) return servicesToBook.map(item => ({ ...item, time: null }));
 
@@ -279,7 +282,7 @@ export function NewAppointment({
       const appointmentStart = new Date(cumulativeEndTime);
       const appointmentEnd = new Date(appointmentStart.getTime() + serviceDuration * 60000);
       cumulativeEndTime = appointmentEnd;
-      
+
       return {
         ...item,
         time: {
@@ -289,8 +292,8 @@ export function NewAppointment({
       };
     });
   }, [servicesToBook, selectedSlot]);
-  
-  if (!selectedClient) {
+
+  if (!preselectedClient) {
     return (
       <div className="flex flex-col gap-8">
         {/* <div className="text-center">
@@ -299,7 +302,7 @@ export function NewAppointment({
             Choose a client to start booking an appointment.
           </p>
         </div> */}
-        <ClientsList onClientSelect={(client) => setSelectedClient(client as unknown as ClientWithDetails)} isSelectMode={true} />
+        <ClientsList onClientSelect={(client) => setPreselectedClient(client)} isSelectMode={true} />
       </div>
     );
   }
@@ -309,118 +312,118 @@ export function NewAppointment({
       {/* Left Column: Booking Form in appointment */}
       <div className="lg:col-span-1 flex flex-col gap-8">
         <div>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-4xl font-headline font-bold">Book Appointment</h1>
-                    <p className="text-muted-foreground mt-2 flex items-center gap-2">
-                        <User className="h-4 w-4" /> Booking for {selectedClient.name}
-                    </p>
-                </div>
-                 <Button asChild variant="outline" onClick={() => setSelectedClient(null)}>
-                  <Link href="/appointments">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Change Client
-                  </Link>
-                </Button>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-headline font-bold">Book Appointment</h1>
+              <p className="text-muted-foreground mt-2 flex items-center gap-2">
+                <User className="h-4 w-4" /> Booking for {preselectedClient.name}
+              </p>
             </div>
-             <p className="text-muted-foreground mt-2">
-            {selectedSlot 
-                ? `Selected slot starts at: ${format(selectedSlot.start, 'Pp')}` 
-                : "Select a time on the calendar to book."
+            <Button asChild variant="outline">
+              <Link href="/appointments">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Change Client
+              </Link>
+            </Button>
+          </div>
+          <p className="text-muted-foreground mt-2">
+            {selectedSlot
+              ? `Selected slot starts at: ${format(selectedSlot.start, 'Pp')}`
+              : "Select a time on the calendar to book."
             }
-            </p>
+          </p>
         </div>
 
         <div className="space-y-4">
-          <ServiceSelection onAddToCart={handleAddServiceToList} buttonText="Add Service to List" salonId={sessionData ? JSON.parse(sessionData).salonId : null}/>
+          <ServiceSelection onAddToCart={handleAddServiceToList} buttonText="Add Service to List" salonId={sessionData ? JSON.parse(sessionData).salonId : null} />
         </div>
 
 
         {servicesToBook.length > 0 && (
-             <Card>
-                <CardHeader>
-                    <CardTitle>Services to Book</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    {servicesWithTime.map((item, index) => (
-                        <div key={index} className="flex justify-between items-start text-sm p-2 rounded-md bg-muted/50">
-                            <div>
-                                <p className="font-medium">{item.service.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {item.artist?.label || 'Unassigned'}
-                                </p>
-                                <div className="text-xs text-muted-foreground flex items-center gap-4 mt-1">
-                                    <p className="flex items-center gap-1">
-                                        <CalendarIcon className="h-3 w-3" />
-                                        {item.time ? format(item.time.start, 'MMM d, yyyy') : 'Select a date'}
-                                    </p>
-                                    <p className="flex items-center gap-1">
-                                        <Clock className="h-3 w-3" />
-                                        {item.time ? `${format(item.time.start, 'p')} - ${format(item.time.end, 'p')}` : 'Select a start time'}
-                                    </p>
-                                </div>
-                            </div>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFromList(index)}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                    <Separator className="my-4" />
-                     <Button 
-                        className="w-full" 
-                        onClick={handleBookAllAppointments} 
-                        disabled={!selectedSlot || isLoading}
-                    >
-                        {isLoading ? "Booking..." : `Book All (${servicesToBook.length}) Appointments`}
-                    </Button>
-                </CardContent>
-             </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Services to Book</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {servicesWithTime.map((item, index) => (
+                <div key={index} className="flex justify-between items-start text-sm p-2 rounded-md bg-muted/50">
+                  <div>
+                    <p className="font-medium">{item.service.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.artist?.label || 'Unassigned'}
+                    </p>
+                    <div className="text-xs text-muted-foreground flex items-center gap-4 mt-1">
+                      <p className="flex items-center gap-1">
+                        <CalendarIcon className="h-3 w-3" />
+                        {item.time ? format(item.time.start, 'MMM d, yyyy') : 'Select a date'}
+                      </p>
+                      <p className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {item.time ? `${format(item.time.start, 'p')} - ${format(item.time.end, 'p')}` : 'Select a start time'}
+                      </p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveFromList(index)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Separator className="my-4" />
+              <Button
+                className="w-full"
+                onClick={handleBookAllAppointments}
+                disabled={!selectedSlot || isLoading}
+              >
+                {isLoading ? "Booking..." : `Book All (${servicesToBook.length}) Appointments`}
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </div>
 
       {/* Right Column: Calendar and Time Selection */}
       <div className="lg:col-span-2">
         <Tabs defaultValue="schedule">
-            <TabsList>
-                <TabsTrigger value="time">Select Time</TabsTrigger>
-                <TabsTrigger value="schedule">Full Schedule</TabsTrigger>
-            </TabsList>
-            <TabsContent value="time" className="mt-4">
-                 <TimeSelection onSelectTime={handleSlotSelect} />
-            </TabsContent>
-            <TabsContent value="schedule" className="mt-4">
-                <Alert className="mb-4">
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>Pro Tip!</AlertTitle>
-                  <AlertDescription>
-                    {selectedClient 
-                      ? `You can click and drag on any open time slot in the calendar to select it for ${selectedClient.name}'s new appointment.`
-                      : "You can click and drag on any open time slot in the calendar to select it for a new appointment."
-                    }
-                  </AlertDescription>
-                </Alert>
-                <Card className="h-full">
-                    <CardHeader>
-                      <CardTitle>
-                        {selectedClient 
-                          ? `${selectedClient.name}'s Appointments` 
-                          : "All Appointments"
-                        }
-                      </CardTitle>
-                      <CardDescription>
-                        {selectedClient 
-                          ? `Showing existing appointments for ${selectedClient.name}` 
-                          : "Showing all appointments in the system"
-                        }
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-2 md:p-4 h-full">
-                        <CalendarView 
-                            events={calendarEvents}
-                            onSelectSlot={handleSlotSelect}
-                        />
-                    </CardContent>
-                </Card>
-            </TabsContent>
+          <TabsList>
+            <TabsTrigger value="time">Select Time</TabsTrigger>
+            <TabsTrigger value="schedule">Full Schedule</TabsTrigger>
+          </TabsList>
+          <TabsContent value="time" className="mt-4">
+            <TimeSelection onSelectTime={handleSlotSelect} />
+          </TabsContent>
+          <TabsContent value="schedule" className="mt-4">
+            <Alert className="mb-4">
+              <Info className="h-4 w-4" />
+              <AlertTitle>Pro Tip!</AlertTitle>
+              <AlertDescription>
+                {preselectedClient
+                  ? `You can click and drag on any open time slot in the calendar to select it for ${preselectedClient.name}'s new appointment.`
+                  : "You can click and drag on any open time slot in the calendar to select it for a new appointment."
+                }
+              </AlertDescription>
+            </Alert>
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle>
+                  {preselectedClient
+                    ? `${preselectedClient.name}'s Appointments`
+                    : "All Appointments"
+                  }
+                </CardTitle>
+                <CardDescription>
+                  {preselectedClient
+                    ? `Showing existing appointments for ${preselectedClient.name}`
+                    : "Showing all appointments in the system"
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-2 md:p-4 h-full">
+                <CalendarView
+                  events={calendarEvents}
+                  onSelectSlot={handleSlotSelect}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

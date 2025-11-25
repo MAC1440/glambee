@@ -11,7 +11,7 @@ function AppointmentsPageContent() {
   const clientId = searchParams?.get("clientId") as string | undefined;
   
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [preselectedClient, setPreselectedClient] = useState<any>(undefined);
+  const [preselectedClient, setPreselectedClient] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -31,6 +31,9 @@ function AppointmentsPageContent() {
         if (clientId) {
           const client = await ClientsApi.getCustomerById(clientId);
           setPreselectedClient(client);
+        }
+        else {
+          setPreselectedClient(null);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -56,6 +59,7 @@ function AppointmentsPageContent() {
     <NewAppointment
       appointments={appointments}
       preselectedClient={preselectedClient}
+      setPreselectedClient={setPreselectedClient}
     />
   );
 }

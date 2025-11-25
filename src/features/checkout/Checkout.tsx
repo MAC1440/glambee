@@ -19,6 +19,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 import { ServiceSelection, type CartItem } from "./ServiceSelection";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/use-permissions";
+import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 
 type Customer = {
   id: string;
@@ -33,6 +35,10 @@ export function Checkout({ client }: { client: Customer | undefined }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discountAmount, setDiscountAmount] = useState(0);
   const { toast } = useToast();
+  const { canCreate, canUpdate } = usePermissions();
+  const clientsModuleKey = "clients" as const;
+  const hasAccess = canCreate(clientsModuleKey) || canUpdate(clientsModuleKey);
+  console.log("Has access for checkout: ", hasAccess)
 
   if (!client) {
     return (
@@ -111,7 +117,9 @@ export function Checkout({ client }: { client: Customer | undefined }) {
     }
   };
 
-
+  if (!hasAccess) {
+    return <UnauthorizedAccess moduleName="Checkout" />;
+  }
   return (
     <div className="flex flex-col gap-4 h-[calc(100vh-4rem)]">
       <div className="flex items-center gap-4">

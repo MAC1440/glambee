@@ -59,25 +59,25 @@ const isValidRoute = (pathname: string): boolean => {
   if (pathname.startsWith("/auth")) {
     return true;
   }
-  
+
   // API routes are always valid
   if (pathname.startsWith("/api")) {
     return true;
   }
-  
+
   // Check exact matches in base routes
   if (VALID_BASE_ROUTES.includes(pathname)) {
     return true;
   }
-  
+
   // Check exact matches in nested routes
   if (VALID_NESTED_ROUTES.includes(pathname)) {
     return true;
   }
-  
+
   // Check dynamic routes (e.g., /clients/[email], /staff/[id], /checkout/[email])
   const pathSegments = pathname.split("/").filter(Boolean);
-  
+
   if (pathSegments.length === 2) {
     const basePath = `/${pathSegments[0]}`;
     // Check if base path is valid for dynamic routes
@@ -85,7 +85,7 @@ const isValidRoute = (pathname: string): boolean => {
       return true;
     }
   }
-  
+
   // Check nested dynamic routes (e.g., /procurement/po/new)
   if (pathSegments.length >= 2) {
     const basePath = `/${pathSegments[0]}`;
@@ -97,7 +97,7 @@ const isValidRoute = (pathname: string): boolean => {
       }
     }
   }
-  
+
   return false;
 };
 
@@ -118,6 +118,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   console.log("Check user: ", user)
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<Record<string, any> | null>(null);
+  console.log("Check permissions: ", permissions)
   const [showUnauthorizedModal, setShowUnauthorizedModal] = useState(false);
   const [unauthorizedModule, setUnauthorizedModule] = useState<string | null>(null);
   console.log("Check unauthorized module: ", unauthorizedModule)
@@ -190,23 +191,33 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const hasModuleAccess = (moduleKey: string): boolean => {
     if (!permissions) return false;
     if ((permissions as any).allAccess) return true; // Admin
-  
-    // Check if permissions object is empty (permissions were cleared)
-    if (typeof permissions === 'object' && Object.keys(permissions).length === 0) {
+
+    // If permissions object is empty (meaning cleared)
+    if (typeof permissions === "object" && Object.keys(permissions).length === 0) {
       return false;
     }
-  
-    const modulePermissions = permissions[moduleKey];
+
+    // Handle the /staff/schedule special route
+    let resolvedKey = moduleKey;
+    if (pathname === "/staff/schedule" && moduleKey === "staff") {
+      resolvedKey = "schedule";
+    } else if (
+      (pathname === "/appointments" && moduleKey === "appointments") ||
+      (pathname.startsWith("/checkout/") && moduleKey === "checkout")
+    ) {
+      resolvedKey = "clients";
+    }
+
+    const modulePermissions = permissions[resolvedKey];
     if (!modulePermissions) return false;
-  
-    return (
-      modulePermissions.read === true ||
-      modulePermissions.create === true ||
-      modulePermissions.update === true ||
-      modulePermissions.delete === true
-    );
+
+    return modulePermissions.read === true || 
+         modulePermissions.create === true || 
+         modulePermissions.update === true || 
+         modulePermissions.delete === true;
   };
-  
+
+
 
   // useEffect(() => {
   //   if (loading) return; // Don't redirect while checking session
@@ -226,20 +237,20 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
-  
+
     const authRoutes = ["/auth", "/auth/confirm", "/auth/verify"];
     const isAuthRoute = authRoutes.includes(pathname);
-  
+
     if (!user && !isAuthRoute) {
       router.replace("/auth");
       return;
     }
-  
+
     if (user && isAuthRoute) {
       router.replace("/dashboard");
       return;
     }
-  
+
     // Permission check - only for valid routes
     if (user && !isAuthRoute && permissions) {
       // First check if route is valid
@@ -249,10 +260,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         setUnauthorizedModule(null);
         return;
       }
-      
+
       // Route is valid, now check permissions
-      const moduleKey = pathname.split("/")[1]; // e.g. "/dashboard" => "dashboard"
+      const moduleKey = pathname.split("/")[1];
       const access = hasModuleAccess(moduleKey);
+
       if (!access) {
         // Valid route but no permission - show unauthorized modal
         setUnauthorizedModule(moduleKey);
@@ -263,7 +275,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [user, pathname, loading, permissions]);
-  
+
 
   if (loading) {
     return (
@@ -275,10 +287,10 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   const authRoutes = ["/auth", "/auth/confirm", "/auth/verify"];
   const isAuthRoute = authRoutes.includes(pathname);
-  
+
   // If no user and not on auth route, show loading while redirecting
   if (!user && !isAuthRoute) {
     return (
@@ -290,7 +302,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (isAuthRoute || !user) {
     return <AuthLayout>{children}</AuthLayout>;
   }
