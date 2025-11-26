@@ -142,7 +142,25 @@ export function PromotionsList() {
   const columns: ColumnDef<DiscountWithSalon>[] = [
     {
       accessorKey: "service_discount",
-      header: "Service Discount (%)",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Service Discount (%)</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                // Get current sort state
+                const currentSort = column.getIsSorted();
+                // If not sorted or descending, sort ascending
+                // If ascending, sort descending
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const discount = parseFloat(row.getValue("service_discount"));
         return <div className="font-medium">{discount}%</div>;
@@ -150,7 +168,25 @@ export function PromotionsList() {
     },
     {
       accessorKey: "deal_discount",
-      header: "Deal Discount (%)",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Deal Discount (%)</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                // Get current sort state
+                const currentSort = column.getIsSorted();
+                // If not sorted or descending, sort ascending
+                // If ascending, sort descending
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const discount = parseFloat(row.getValue("deal_discount"));
         return <div className="font-medium">{discount}%</div>;
@@ -158,7 +194,25 @@ export function PromotionsList() {
     },
     {
       accessorKey: "package_discount",
-      header: "Package Discount (%)",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Package Discount (%)</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                // Get current sort state
+                const currentSort = column.getIsSorted();
+                // If not sorted or descending, sort ascending
+                // If ascending, sort descending
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const discount = parseFloat(row.getValue("package_discount"));
         return <div className="font-medium">{discount}%</div>;
@@ -166,7 +220,25 @@ export function PromotionsList() {
     },
     {
       accessorKey: "created_at",
-      header: "Created At",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Created At</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                // Get current sort state
+                const currentSort = column.getIsSorted();
+                // If not sorted or descending, sort ascending
+                // If ascending, sort descending
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const date = new Date(row.getValue("created_at"));
         return <div className="text-sm">{date.toLocaleDateString()}</div>;

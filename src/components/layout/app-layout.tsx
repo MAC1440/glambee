@@ -208,7 +208,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
   
   const visibleNavItems = navItems?.filter((item: any) => {
     // Check roles-based access (for backward compatibility)
-    console.log("Item: ", item)
+    // console.log("Item: ", item)
     if (item.roles) {
       return item.roles.includes(user.role);
     }
@@ -234,7 +234,7 @@ export function AppLayout({ children, user }: { children: React.ReactNode, user:
     return item;
   });
   
-  console.log("Visible nav items: ", visibleNavItems)
+  // console.log("Visible nav items: ", visibleNavItems)
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };

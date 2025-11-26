@@ -26,18 +26,21 @@ import { DiscountWithSalon } from "@/lib/api/promotionsApi";
 
 const formSchema = z.object({
   service_discount: z.coerce.number()
+    .int("Service discount must be a whole number.")
     .min(0, "Service discount must be 0 or greater.")
     .max(100, "Service discount cannot exceed 100%.")
     .refine((val) => !isNaN(val), {
       message: "Service discount must be a valid number."
     }),
   deal_discount: z.coerce.number()
+    .int("Deal discount must be a whole number.")
     .min(0, "Deal discount must be 0 or greater.")
     .max(100, "Deal discount cannot exceed 100%.")
     .refine((val) => !isNaN(val), {
       message: "Deal discount must be a valid number."
     }),
   package_discount: z.coerce.number()
+    .int("Package discount must be a whole number.")
     .min(0, "Package discount must be 0 or greater.")
     .max(100, "Package discount cannot exceed 100%.")
     .refine((val) => !isNaN(val), {
@@ -86,6 +89,20 @@ export function PromotionFormDialog({
     onSave(data);
   };
 
+  // Watch all form values to check if any field is empty (0 or undefined)
+  const serviceDiscount = form.watch("service_discount");
+  const dealDiscount = form.watch("deal_discount");
+  const packageDiscount = form.watch("package_discount");
+
+  // Check if all fields have values greater than 0
+  const isFormValid = React.useMemo(() => {
+    return (
+      serviceDiscount > 0 &&
+      dealDiscount > 0 &&
+      packageDiscount > 0
+    );
+  }, [serviceDiscount, dealDiscount, packageDiscount]);
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     fieldName: keyof PromotionFormData,
@@ -99,33 +116,29 @@ export function PromotionFormDialog({
       return;
     }
 
-    // Remove any non-numeric characters except decimal point
-    const sanitized = value.replace(/[^0-9.]/g, "");
+    // Remove any non-numeric characters (no decimal points allowed)
+    const sanitized = value.replace(/[^0-9]/g, "");
     
-    // Prevent multiple decimal points
-    const parts = sanitized.split(".");
-    if (parts.length > 2) {
+    if (sanitized === "") {
+      onChange(0);
       return;
     }
 
-    // Limit to 2 decimal places
-    if (parts[1] && parts[1].length > 2) {
-      return;
-    }
-
-    const numValue = parseFloat(sanitized);
+    const numValue = parseInt(sanitized, 10);
     
-    // Prevent negative values
-    if (!isNaN(numValue) && numValue >= 0) {
+    // Prevent negative values and ensure it's a valid integer
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 100) {
       onChange(numValue);
-    } else if (sanitized === "" || sanitized === ".") {
+    } else if (numValue > 100) {
+      onChange(100);
+    } else {
       onChange(0);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Prevent typing minus sign
-    if (e.key === "-" || e.key === "e" || e.key === "E") {
+    // Prevent typing minus sign, decimal point, and scientific notation
+    if (e.key === "-" || e.key === "." || e.key === "e" || e.key === "E") {
       e.preventDefault();
     }
   };
@@ -138,14 +151,18 @@ export function PromotionFormDialog({
     e.preventDefault();
     const pastedText = e.clipboardData.getData("text");
     
-    // Remove minus signs and any non-numeric characters except decimal point
-    const sanitized = pastedText.replace(/[^0-9.]/g, "");
+    // Remove any non-numeric characters (no decimal points allowed)
+    const sanitized = pastedText.replace(/[^0-9]/g, "");
     
     if (sanitized) {
-      const numValue = parseFloat(sanitized);
+      const numValue = parseInt(sanitized, 10);
       if (!isNaN(numValue) && numValue >= 0) {
         onChange(Math.min(numValue, 100)); // Cap at 100%
+      } else {
+        onChange(0);
       }
+    } else {
+      onChange(0);
     }
   };
 
@@ -174,10 +191,10 @@ export function PromotionFormDialog({
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="0.00"
+                      placeholder="0"
                       min="0"
                       max="100"
-                      step="0.01"
+                      step="1"
                       value={field.value || ""}
                       onChange={(e) => handleInputChange(e, "service_discount", field.onChange)}
                       onKeyDown={handleKeyDown}
@@ -198,10 +215,10 @@ export function PromotionFormDialog({
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="0.00"
+                      placeholder="0"
                       min="0"
                       max="100"
-                      step="0.01"
+                      step="1"
                       value={field.value || ""}
                       onChange={(e) => handleInputChange(e, "deal_discount", field.onChange)}
                       onKeyDown={handleKeyDown}
@@ -222,10 +239,10 @@ export function PromotionFormDialog({
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="0.00"
+                      placeholder="0"
                       min="0"
                       max="100"
-                      step="0.01"
+                      step="1"
                       value={field.value || ""}
                       onChange={(e) => handleInputChange(e, "package_discount", field.onChange)}
                       onKeyDown={handleKeyDown}
@@ -245,7 +262,7 @@ export function PromotionFormDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={mode === "add" && !isFormValid}>
                 {mode === "add" ? "Create" : "Update"}
               </Button>
             </DialogFooter>

@@ -43,7 +43,7 @@ export const DataTable = React.forwardRef(function DataTable<TData, TValue>(
   ref: React.Ref<TanstackTable<TData>> // The ref will hold the TanStack table instance
 ) {
   // Log the data prop for debugging purposes
-  console.log("Data prop received by DataTable:", data);
+  // console.log("Data prop received by DataTable:", data);
 
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
