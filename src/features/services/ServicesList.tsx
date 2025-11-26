@@ -20,6 +20,16 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle, BookText } from "lucide-react";
 import { Service } from "@/types/service";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 // Removed unused inventoryItems import
 import { ServiceFormDialog } from "../services/ServiceFormDialog";
 import { fetchCategories, type Category } from "@/lib/api/categoriesApi";
@@ -64,6 +74,8 @@ export function ServicesList() {
   >(undefined);
   console.log("Edditing service: ", editingService)
   const [saving, setSaving] = React.useState(false);
+  const [serviceToDelete, setServiceToDelete] = React.useState<Service | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
@@ -182,14 +194,14 @@ export function ServicesList() {
         });
 
         setServices((prev) => [savedService, ...prev]);
-        toast({
-          title: "✅ Service Added",
-          description: `${savedService.name} has been successfully created.`,
-          style: {
-            backgroundColor: "lightgreen",
-            color: "black",
-          }
-        });
+      toast({
+        title: "Service Added",
+        description: `${savedService.name} has been successfully created.`,
+        style: {
+          backgroundColor: "lightgreen",
+          color: "black",
+        }
+      });
       } else if (editingService) {
         const savedService = await ServicesApi.updateService(editingService.id, {
           name: serviceData.name,
@@ -206,7 +218,7 @@ export function ServicesList() {
             prev.map((s) => s.id === savedService.id ? savedService : s)
           );
           toast({
-            title: "✅ Service Updated",
+            title: "Service Updated",
             description: `${savedService.name}'s details have been updated.`,
             style: {
               backgroundColor: "lightgreen",
@@ -229,13 +241,22 @@ export function ServicesList() {
     }
   };
 
-  const handleDelete = async (serviceId: string) => {
+  const handleDeleteClick = (service: Service) => {
+    setServiceToDelete(service);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!serviceToDelete) return;
+
     try {
-      const serviceName = services.find((s) => s.id === serviceId)?.name || "The service";
-      await ServicesApi.deleteService(serviceId);
-      setServices((prev) => prev.filter((s) => s.id !== serviceId));
+      const serviceName = serviceToDelete.name || "The service";
+      await ServicesApi.deleteService(serviceToDelete.id);
+      setServices((prev) => prev.filter((s) => s.id !== serviceToDelete.id));
+      setDeleteDialogOpen(false);
+      setServiceToDelete(null);
       toast({
-        title: "✅ Service Deleted",
+        title: "Service Deleted",
         description: `${serviceName} has been removed.`,
         style: {
           backgroundColor: "lightgreen",
@@ -249,6 +270,8 @@ export function ServicesList() {
         description: "Failed to delete service. Please try again.",
         variant: "destructive",
       });
+      setDeleteDialogOpen(false);
+      setServiceToDelete(null);
     }
   };
 
@@ -352,8 +375,8 @@ export function ServicesList() {
                 <>
                   {canUpdate(servicesModuleKey) && <DropdownMenuSeparator />}
                   <DropdownMenuItem
-                    onClick={() => handleDelete(service.id)}
-                    className="text-red-600"
+                    onClick={() => handleDeleteClick(service)}
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
                   >
                     Delete
                   </DropdownMenuItem>
@@ -468,6 +491,27 @@ export function ServicesList() {
         categories={categories}
         loadingCategories={loadingCategories}
       />
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{serviceToDelete?.name || 'this service'}" from your services. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-gray-100 hover:bg-gray-300 text-gray-900 border-gray-300">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
