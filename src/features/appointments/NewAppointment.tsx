@@ -34,6 +34,7 @@ export function NewAppointment({
   const [appointmentsList, setAppointmentsList] = useState<AppointmentWithDetails[]>(appointments);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
+  console.log("Services to book: ", servicesToBook)
   // const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
   // console.log("Selected client: ", preselectedClient)
   const [isLoading, setIsLoading] = useState(false);
@@ -119,6 +120,18 @@ export function NewAppointment({
   }, [appointmentsList, servicesToBook, selectedSlot, preselectedClient]);
 
   const handleAddServiceToList = (item: CartItem) => {
+    console.log("Item for selection: ", item)
+    // Check if service already exists in list
+    const isDuplicate = servicesToBook.some(service => service.service.id === item.service.id);
+    if (isDuplicate) {
+      toast({
+        title: "Service Already Added",
+        description: `${item.service.name} is already in your booking list.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setServicesToBook(prev => [...prev, item]);
     toast({
       title: "Service Added",
@@ -182,6 +195,43 @@ export function NewAppointment({
       return;
     }
 
+    // Validation: Check for duplicate bookings
+    const selectedDate = selectedSlot.start.toISOString().split('T')[0];
+    
+    // Check for same service on same date
+    const serviceIds = servicesToBook.map(item => item.service.id);
+    const duplicateServices = serviceIds.filter((id, index) => serviceIds.indexOf(id) !== index);
+    if (duplicateServices.length > 0) {
+      toast({
+        title: "Duplicate Service",
+        description: "You cannot book the same service multiple times on the same date.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for same staff member, same service, same date
+    for (const item of servicesToBook) {
+      if (item.artist) {
+        console.log("Yes artist...")
+        const existingAppointment = appointmentsList.find(apt => {
+          const aptDate = apt.date;
+          const hasSameService = apt.services?.some(s => s.id === item.service.id);
+          const hasSameStaff = apt.staff_id === item.artist?.value;
+          return aptDate === selectedDate && hasSameService && hasSameStaff && apt.customer_id === preselectedClient.id;
+        });
+
+        if (existingAppointment) {
+          toast({
+            title: "Duplicate Appointment",
+            description: `An appointment for ${item.service.name} with ${item.artist.label} on ${format(new Date(selectedDate), 'MMM dd, yyyy')} already exists for this client.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
     let allArtistsAssigned = true;
     const appointmentsToCreate: CreateAppointmentData[] = [];
 
@@ -206,21 +256,25 @@ export function NewAppointment({
 
     // Create appointment data for each staff member
     let cumulativeEndTime = new Date(selectedSlot.start);
-    for (const [staffId, services] of servicesByStaff) {
+    console.log("Check services by staff: ", servicesByStaff)
+
+    // for (const [staffId, services] of servicesByStaff) {
+    for (const service of servicesToBook) {
       const appointmentStart = new Date(cumulativeEndTime);
       let appointmentEnd = new Date(appointmentStart);
 
       // Calculate total duration for this staff member
-      const totalDuration = services.reduce((sum, service) => sum + (service.service.duration || 30), 0);
+      const totalDuration = service.service.duration || 30;
       appointmentEnd.setMinutes(appointmentEnd.getMinutes() + totalDuration);
 
       appointmentsToCreate.push({
         customerId: preselectedClient.id,
-        staffId: staffId, // Pass null if no artist selected
-        services: services.map(service => ({
-          serviceId: service.service.id,
-          price: typeof service.service.price === 'string' ? parseFloat(service.service.price) : service.service.price
-        })),
+        staffId: service.artist?.value || null, // Pass null if no artist selected
+        services: [{
+          serviceId: service.service.id || '',
+          price: typeof service.service.price === 'string' ? parseFloat(service.service.price) : service.service.price,
+          category: service.service.category || ''
+        }],
         startTime: appointmentStart.toISOString(),
         endTime: appointmentEnd.toISOString(),
         date: appointmentStart.toISOString().split('T')[0],
@@ -228,6 +282,7 @@ export function NewAppointment({
         bookingType: undefined,
         bookingApproach: undefined
       });
+      console.log("Appointments to create: ", appointmentsToCreate)
 
       cumulativeEndTime = appointmentEnd;
     }
@@ -241,6 +296,7 @@ export function NewAppointment({
         const createdAppointment = await AppointmentsApi.createAppointment(appointmentData);
         createdAppointments.push(createdAppointment);
       }
+      console.log("Created appointments: ", createdAppointments)
 
       // Refresh appointments list
       const salonId = sessionData ? JSON.parse(sessionData).salonId : null;
@@ -256,7 +312,10 @@ export function NewAppointment({
       toast({
         title: "✅ Appointments Booked!",
         description: `${servicesToBook.length} service(s) for ${preselectedClient.name} have been scheduled starting at ${format(selectedSlot.start, "p")}.`,
-        className: "border-green-500 bg-green-50 text-green-900",
+        style: {
+          backgroundColor: "lightgreen",
+          color: "black",
+        }
       });
 
       setServicesToBook([]);
@@ -334,7 +393,12 @@ export function NewAppointment({
         </div>
 
         <div className="space-y-4">
-          <ServiceSelection onAddToCart={handleAddServiceToList} buttonText="Add Service to List" salonId={sessionData ? JSON.parse(sessionData).salonId : null} />
+          <ServiceSelection 
+            onAddToCart={handleAddServiceToList} 
+            buttonText="Add Service to List" 
+            existingItems={servicesToBook}
+            salonId={sessionData ? JSON.parse(sessionData).salonId : null} 
+          />
         </div>
 
 

@@ -93,15 +93,19 @@ export function PromotionFormDialog({
   const serviceDiscount = form.watch("service_discount");
   const dealDiscount = form.watch("deal_discount");
   const packageDiscount = form.watch("package_discount");
+  console.log("Service Discount: ", serviceDiscount);
+  console.log("Deal Discount: ", dealDiscount);
+  console.log("Package Discount: ", packageDiscount);
 
   // Check if all fields have values greater than 0
   const isFormValid = React.useMemo(() => {
     return (
-      serviceDiscount > 0 &&
-      dealDiscount > 0 &&
+      serviceDiscount > 0 ||
+      dealDiscount > 0 ||
       packageDiscount > 0
     );
   }, [serviceDiscount, dealDiscount, packageDiscount]);
+  console.log("Form valid ", isFormValid)
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -262,7 +266,7 @@ export function PromotionFormDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={mode === "add" && !isFormValid}>
+              <Button type="submit" disabled={(mode === "add" || mode === "edit") && !isFormValid}>
                 {mode === "add" ? "Create" : "Update"}
               </Button>
             </DialogFooter>

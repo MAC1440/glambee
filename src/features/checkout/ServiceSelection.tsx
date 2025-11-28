@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServicesApi, type ServiceWithStaff } from "@/lib/api/servicesApi";
 import { StaffApi, type StaffWithCategories } from "@/lib/api/staffApi";
+import { DealsApi } from "@/lib/api/dealsApi";
+import { supabase } from "@/lib/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 
 type Service = ServiceWithStaff & {
@@ -36,49 +39,123 @@ export type CartItem = {
 type ServiceSelectionProps = {
   onAddToCart: (item: CartItem) => void;
   buttonText?: string;
+  existingItems?: CartItem[]; // To prevent duplicates
+  salonId?: string | null;
 };
 
-export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: ServiceSelectionProps) {
+export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", existingItems = [], salonId: propSalonId }: ServiceSelectionProps) {
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [deals, setDeals] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
   const sessionData = localStorage.getItem("session");
-  const salonId = sessionData ? JSON.parse(sessionData).salonId : null;
+  const salonId = propSalonId || (sessionData ? JSON.parse(sessionData).salonId : null);
 
-  // Fetch services on component mount
+  // Fetch services and deals on component mount
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await ServicesApi.getServices({ limit: 100, salonId });
-        const servicesWithDefaults = response.data.map(service => ({
+        
+        // Fetch services
+        const servicesResponse = await ServicesApi.getServices({ limit: 100, salonId });
+        const servicesWithDefaults = servicesResponse.data.map(service => ({
           ...service,
-          description: service.name, // Use name as description if no description
+          description: service.name,
           originalPrice: null,
           image: `https://picsum.photos/seed/${service.name}/200`,
           category: "Service" as const,
           includedServices: [],
         }));
         setServices(servicesWithDefaults);
+
+        // Fetch deals
+        if (salonId) {
+          const dealsResponse = await DealsApi.getDeals({ salonId, limit: 100 });
+          
+          // Fetch services for each deal
+          const dealsWithServices = await Promise.all(
+            dealsResponse.data.map(async (deal) => {
+              // Fetch services included in this deal
+              const { data: dealServices } = await supabase
+                .from('salons_deals_services')
+                .select(`
+                  salon_service_id,
+                  service:salons_services(id, name, price, time)
+                `)
+                .eq('deal_id', deal.id);
+
+              const includedServices = dealServices?.map(ds => ({
+                value: ds.service?.id || '',
+                label: ds.service?.name || ''
+              })) || [];
+
+              // Calculate total duration from included services
+              // Helper function to parse time string to minutes
+              const parseTimeToMinutes = (timeString: string): number => {
+                if (!timeString) return 30;
+                const match = timeString.match(/(\d+)\s*(min|minutes?|m)/i);
+                if (match) return parseInt(match[1], 10);
+                const numMatch = timeString.match(/(\d+)/);
+                if (numMatch) return parseInt(numMatch[1], 10);
+                return 30;
+              };
+              
+              const totalDuration = dealServices?.reduce((sum, ds) => {
+                if (ds.service?.time) {
+                  const duration = parseTimeToMinutes(ds.service.time);
+                  return sum + duration;
+                }
+                return sum;
+              }, 0) || 30;
+
+              return {
+                id: deal.id,
+                name: deal.title || deal.popup_title || 'Deal',
+                price: deal.discounted_price || deal.price || 0,
+                duration: totalDuration,
+                description: deal.description || deal.title,
+                originalPrice: deal.price,
+                image: deal.media_url || `https://picsum.photos/seed/${deal.title}/200`,
+                category: "Deal" as const,
+                includedServices,
+                salon_id: deal.salon_id,
+                category_id: null,
+                gender: null,
+                starting_from: null,
+                has_range: false,
+                time: `${totalDuration} minutes`,
+                created_at: deal.created_at,
+                updated_at: deal.updated_at,
+                staff: [],
+              } as Service;
+            })
+          );
+          
+          setDeals(dealsWithServices);
+        }
       } catch (error) {
-        console.error("Error fetching services:", error);
+        console.error("Error fetching data:", error);
         setServices([]);
+        setDeals([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchServices();
-  }, []);
+    fetchData();
+  }, [salonId]);
 
   const selectedService = useMemo(() => {
-    return services.find(s => s.id === selectedServiceId);
-  }, [selectedServiceId, services]);
+    const allItems = [...services, ...deals];
+    return allItems.find(s => s.id === selectedServiceId);
+  }, [selectedServiceId, services, deals]);
 
   const [staffForService, setStaffForService] = useState<any[]>([]);
 
-  // Fetch staff for selected service
+  // Fetch staff for selected service or deal
   useEffect(() => {
     const fetchStaffForService = async () => {
       if (!selectedService?.id) {
@@ -87,7 +164,17 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: Se
       }
 
       try {
-        const staff = await ServicesApi.getStaffForService(selectedService.id, salonId || '');
+        let staff: any[] = [];
+        
+        // Check if it's a deal or a regular service
+        if (selectedService.category === "Deal") {
+          // For deals, get staff based on categories of included services
+          staff = await ServicesApi.getStaffForDeal(selectedService.id, salonId || '');
+        } else {
+          // For regular services, get staff based on service category
+          staff = await ServicesApi.getStaffForService(selectedService.id, salonId || '');
+        }
+        
         setStaffForService(staff);
       } catch (error) {
         console.error("Error fetching staff for service:", error);
@@ -96,7 +183,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: Se
     };
 
     fetchStaffForService();
-  }, [selectedService?.id]);
+  }, [selectedService?.id, selectedService?.category, salonId]);
 
   const artistOptions = useMemo(() => {
     return staffForService.map(staff => ({
@@ -105,25 +192,27 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: Se
     }));
   }, [staffForService]);
 
-  // Group services for the dropdown
+  // Group services and deals for the dropdown
   const groupedOptions = useMemo(() => {
     const individualServices = services
       .filter((s) => s.category === "Service" || !s.category)
       .map((s) => ({ value: s.id, label: s.name }));
     
-    const packageDeals = services
+    const packageDeals = deals
       .filter((s) => s.category === "Deal")
       .map((s) => ({ value: s.id, label: s.name }));
 
     const groups = [];
     if (packageDeals.length > 0) {
-      groups.push({ label: "Package Deals", options: packageDeals });
+      groups.push({ label: "Deals", options: packageDeals });
     }
     if (individualServices.length > 0) {
       groups.push({ label: "Individual Services", options: individualServices });
     }
     return groups;
-  }, [services]);
+  }, [services, deals]);
+
+  console.log("Grouped options: ", groupedOptions)
 
   const handleServiceChange = (serviceId: string | null) => {
     setSelectedServiceId(serviceId);
@@ -132,9 +221,29 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart" }: Se
   
   const handleAddClick = () => {
     if (selectedService) {
-        onAddToCart({ service: selectedService, artist: selectedArtist });
-        setSelectedServiceId(null);
-        setSelectedArtist(null);
+      // Check if service already exists in cart
+      const isDuplicate = existingItems.some(item => item.service.id === selectedService.id);
+      
+      if (isDuplicate) {
+        toast({
+          title: "Service Already Added",
+          description: `${selectedService.name} is already selected.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      onAddToCart({ service: selectedService, artist: selectedArtist });
+      setSelectedServiceId(null);
+      setSelectedArtist(null);
+      toast({
+        title: "Service Added",
+        description: `${selectedService.name} has been selected.`,
+        style: {
+          backgroundColor: "lightgreen",
+          color: "black",
+        }
+      });
     }
   }
 

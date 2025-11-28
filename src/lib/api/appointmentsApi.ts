@@ -24,6 +24,11 @@ export interface AppointmentWithDetails extends Appointment {
         name: string;
         price: number;
     }>;
+    deals?: Array<{
+        id: string;
+        name: string;
+        price: number;
+    }>;
 }
 
 export interface AppointmentFilters {
@@ -49,6 +54,7 @@ export interface CreateAppointmentData {
     services: Array<{
         serviceId: string;
         price: number;
+        category: string;
     }>;
     startTime: string;
     endTime: string;
@@ -68,6 +74,7 @@ export class AppointmentsApi {
             const limit = filters.limit;
             const offset = filters.offset || 0;
 
+            // TODO: For now adjust price logic for appointments_deals from salons_deals table by matching deal_id
             let query = supabase
                 .from('appointments')
                 .select(`
@@ -88,6 +95,15 @@ export class AppointmentsApi {
                         service:salons_services(
                             id,
                             name
+                        )
+                    ),
+                    deals:appointments_deals(
+                        id,
+                        deal:salons_deals(
+                            id,
+                            title,
+                            discounted_price,
+                            price
                         )
                     )
                 `, { count: 'exact' });
@@ -114,12 +130,12 @@ export class AppointmentsApi {
 
             // Apply ordering
             query = query.order('date', { ascending: false }).order('start_time', { ascending: false });
-            
+
             // Apply range only if limit is specified
             if (limit !== undefined && limit > 0) {
                 query = query.range(offset, offset + limit - 1);
             }
-            
+
             const { data: appointments, error, count } = await query;
 
             if (error) {
@@ -129,10 +145,10 @@ export class AppointmentsApi {
 
             // Transform data to include customer details from users table
             const appointmentsWithDetails: AppointmentWithDetails[] = [];
-            
+
             for (const appointment of appointments || []) {
                 let customerDetails = null;
-                
+
                 // Fetch customer details from users table if customer exists
                 if (appointment.customer?.auth_id) {
                     const { data: userData } = await supabase
@@ -140,7 +156,7 @@ export class AppointmentsApi {
                         .select('id, email, phone_number, fullname, avatar')
                         .eq('id', appointment.customer.auth_id)
                         .single();
-                    
+
                     if (userData) {
                         customerDetails = {
                             id: appointment.customer.id,
@@ -170,6 +186,11 @@ export class AppointmentsApi {
                         id: s.service?.id || '',
                         name: s.service?.name || 'Unknown Service',
                         price: s.price
+                    })) || [],
+                    deals: appointment.deals?.map(d => ({
+                        id: d.deal?.id || '',
+                        name: d.deal?.title || 'Unknown Deal',
+                        price: d.deal?.discounted_price || d.deal?.price || 0
                     })) || []
                 });
             }
@@ -300,6 +321,7 @@ export class AppointmentsApi {
      */
     static async createAppointment(appointmentData: CreateAppointmentData): Promise<AppointmentWithDetails> {
         try {
+            console.log("Appointment data in api: ", appointmentData)
             // Get salon ID from appointmentData or from session
             let salonId = appointmentData.salon_id;
             if (!salonId && typeof window !== 'undefined') {
@@ -369,28 +391,55 @@ export class AppointmentsApi {
             }
 
             // Create appointment services
-            const appointmentServices = appointmentData.services.map(service => ({
-                appointment_id: appointment.id,
-                service_id: service.serviceId,
-                price: service.price,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            }));
+            const appointmentServices = appointmentData.services.map(service => {
+                if(service.category === 'Service') {
+                    return ({
+                        appointment_id: appointment.id,
+                        service_id: service.serviceId,
+                        price: service.price,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                }
+                else if (service.category === 'Deal') {
+                    return ({
+                        appointment_id: appointment.id,
+                        deal_id: service.serviceId,
+                        // price: service.price, TODO: Add price column in appointments_deals for smooth flow
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                }
+            })
+            console.log("Appointments services: ", appointmentServices)
 
-            const { error: servicesError } = await supabase
-                .from('appointments_services')
-                .insert(appointmentServices);
+            for (const service of appointmentServices) {
+                if (service?.service_id) {
+                    const { error: serviceError } = await supabase
+                        .from('appointments_services')
+                        .insert(service);
 
-            if (servicesError) {
-                console.error('Error creating appointment services:', servicesError);
-                // Don't throw here, appointment was created successfully
-                console.warn('Appointment created but services failed:', servicesError);
+                    if (serviceError) {
+                        console.error('Error creating appointment service:', serviceError);
+                        throw serviceError;
+                    }
+
+                } else if (service?.deal_id) {
+                    const { error: dealError } = await supabase
+                        .from('appointments_deals')
+                        .insert(service);
+
+                    if (dealError) {
+                        console.error('Error creating appointment deal:', dealError);
+                        throw dealError;
+                    }
+                }
             }
-            
+
             // Return the created appointment with details
             const response = await this.getAppointments({ customerId: appointmentData.customerId, salonId: salonId });
             const createdAppointment = response.data.find(apt => apt.id === appointment.id);
-            
+
             return createdAppointment || {
                 ...appointment,
                 customer: {
@@ -502,8 +551,8 @@ export class AppointmentsApi {
 
             const stats = {
                 totalAppointments: appointments?.length || 0,
-        scheduledAppointments: appointments?.filter(a => a.status === 'upcoming').length || 0,
-        completedAppointments: appointments?.filter(a => a.status === 'past').length || 0,
+                scheduledAppointments: appointments?.filter(a => a.status === 'upcoming').length || 0,
+                completedAppointments: appointments?.filter(a => a.status === 'past').length || 0,
                 cancelledAppointments: appointments?.filter(a => a.status === 'cancelled').length || 0,
                 totalRevenue: appointments?.reduce((sum, apt) => sum + (apt.bill || 0), 0) || 0
             };

@@ -489,4 +489,72 @@ export class ServicesApi {
       return [];
     }
   }
+
+  /**
+   * Get staff for a deal (based on categories of services included in the deal)
+   */
+  static async getStaffForDeal(dealId: string, salonId?: string): Promise<any[]> {
+    try {
+      // Get all services included in this deal
+      const { data: dealServices, error: dealServicesError } = await supabase
+        .from('salons_deals_services')
+        .select(`
+          salon_service_id,
+          service:salons_services(
+            id,
+            category_id
+          )
+        `)
+        .eq('deal_id', dealId);
+
+      if (dealServicesError || !dealServices || dealServices.length === 0) {
+        return [];
+      }
+
+      // Extract unique category IDs from the services
+      const categoryIds = Array.from(
+        new Set(
+          dealServices
+            .map(ds => ds.service?.category_id)
+            .filter((id): id is string => id !== null && id !== undefined)
+        )
+      );
+
+      if (categoryIds.length === 0) {
+        return [];
+      }
+
+      // Get staff assigned to any of these categories
+      const { data: assignments, error } = await supabase
+        .from('staff_category_assignments')
+        .select(`
+          staff:salons_staff(
+            id,
+            name,
+            avatar,
+            role
+          )
+        `)
+        .in('category_id', categoryIds)
+        .eq('salon_id', salonId || '');
+
+      if (error) {
+        console.error('Error fetching staff for deal:', error);
+        return [];
+      }
+
+      // Remove duplicates (same staff might be assigned to multiple categories)
+      const uniqueStaff = new Map();
+      assignments?.forEach(assignment => {
+        if (assignment.staff && !uniqueStaff.has(assignment.staff.id)) {
+          uniqueStaff.set(assignment.staff.id, assignment.staff);
+        }
+      });
+
+      return Array.from(uniqueStaff.values());
+    } catch (error) {
+      console.error('Failed to fetch staff for deal:', error);
+      return [];
+    }
+  }
 }

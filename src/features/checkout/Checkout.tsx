@@ -90,7 +90,11 @@ export function Checkout({ client }: { client: Customer | undefined }) {
     setDiscountAmount(0);
     toast({
         title: "Cart Cleared",
-        description: "All items have been removed from the cart."
+        description: "All items have been removed from the cart.",
+        style: {
+          backgroundColor: "lightgreen",
+          color: "black",
+        }
     });
   }
 
@@ -132,7 +136,7 @@ export function Checkout({ client }: { client: Customer | undefined }) {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-grow min-h-0">
         {/* Left Column: Service Selection */}
-        <ServiceSelection onAddToCart={handleAddToCart} />
+        <ServiceSelection onAddToCart={handleAddToCart} existingItems={cart} />
 
         {/* Right Column: Order Summary */}
         <Card className="flex flex-col">
