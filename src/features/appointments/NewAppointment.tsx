@@ -85,12 +85,23 @@ export function NewAppointment({
       confirmedAppointments = confirmedAppointments.filter(apt => selectedArtistIds.has(apt.staff_id || ''));
     }
 
-    const confirmedEvents = confirmedAppointments.map((apt) => ({
-      title: `${apt.services?.[0]?.name || 'Service'} - ${apt.customer?.name || apt.customer_name || 'Unknown'}`,
+    console.log("Confirmed appointments: ", confirmedAppointments)
+
+    const confirmedEvents = confirmedAppointments.map((apt) => {
+      let title = ''
+      if (apt.services?.[0]?.name) {
+        title = `${apt.services?.[0]?.name} (Service) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`
+      } 
+      else {
+        title = `${apt.deals?.[0]?.name} (Deal) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`
+      }
+      
+      return {
+      title: title,
       start: apt.start_time ? new Date(apt.start_time) : new Date(apt.date),
       end: apt.end_time ? new Date(apt.end_time) : new Date(apt.date),
       resource: { ...apt, isTemporary: false },
-    }));
+    }});
 
     if (selectedSlot && servicesToBook.length > 0) {
       let cumulativeEndTime = new Date(selectedSlot.start);

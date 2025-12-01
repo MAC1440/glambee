@@ -46,7 +46,6 @@ export function Schedule() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // You can adjust this
   const sessionData = localStorage.getItem("session");
-  console.log("Session schedule data: ", JSON.parse(sessionData || ''))
   
   // Get permissions for schedule/appointments module
   const { canCreate, hasModuleAccess } = usePermissions();
@@ -92,6 +91,7 @@ export function Schedule() {
       customerName: apt.customer?.name || 'Unknown Customer',
       customerAvatar: apt.customer?.avatar || `https://picsum.photos/seed/${apt.customer?.name}/100`,
       service: apt.services?.map(s => s.name).join(', ') || 'No Service',
+      deal: apt.deals?.map((d) => d.name).join(', ') || 'No Deal',
       start: new Date(apt.start_time || new Date()),
       end: new Date(apt.end_time || new Date()),
       staffId: apt.staff?.id || 'unassigned'
@@ -117,7 +117,7 @@ export function Schedule() {
   const weeklyAppointments = filteredAppointments.filter((apt) =>
     isThisWeek(apt.start, { weekStartsOn: 0 })
   );
-  console.log("Filtered appointments weekly: ", weeklyAppointments);
+  // console.log("Filtered appointments weekly: ", weeklyAppointments);
 
   const monthlyAppointments = filteredAppointments.filter((apt) =>
     isThisMonth(apt.start)
@@ -128,9 +128,16 @@ export function Schedule() {
     .map((apt) => {
       const staffMember = staff.find(s => s.id === apt.staffId);
       const staffName = staffMember?.name || 'Unassigned';
+      let title = ''
+      if (apt.service && apt.service !== 'No Service') {
+        title = `${apt.service} (Service) - ${apt.customerName} - ${staffName}`
+      } 
+      else {
+        title = `${apt.deal} (Deal) - ${apt.customerName} - ${staffName}`
+      }
       
       return {
-        title: `${apt.service} - ${apt.customerName} - ${staffName}`,
+        title: title,
         start: apt.start,
         end: apt.end,
         resource: apt,
