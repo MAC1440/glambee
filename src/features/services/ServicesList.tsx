@@ -278,7 +278,22 @@ export function ServicesList() {
   const columns: ColumnDef<Service>[] = [
     {
       accessorKey: "name",
-      header: "Name",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Name</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const service = row.original;
         // const hasRecipe = service.recipe && service.recipe.length > 0;
@@ -291,12 +306,47 @@ export function ServicesList() {
     },
     {
       accessorKey: "time",
-      header: "Duration",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Duration</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => <div>{row.getValue("time")}</div>,
+      sortingFn: (rowA, rowB) => {
+        const timeA = parseFloat(rowA.getValue("time") || "0");
+        const timeB = parseFloat(rowB.getValue("time") || "0");
+        return timeA - timeB;
+      },
     },
     {
       accessorKey: "starting_from",
-      header: "Starting From",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Starting From</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("starting_from"));
         const formatted = amount ? new Intl.NumberFormat("en-US", {
@@ -310,7 +360,22 @@ export function ServicesList() {
     },
     {
       accessorKey: "price",
-      header: "Price",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Price</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("price"));
         const formatted = new Intl.NumberFormat("en-US", {
@@ -323,24 +388,83 @@ export function ServicesList() {
     },
     {
       accessorKey: "category_id",
-      header: "Category",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Category</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const categoryId = row.original.category_id as string;
         const category = categories.find(cat => cat.id === categoryId);
         return <div>{category?.name || 'Unknown'}</div>;
       },
+      sortingFn: (rowA, rowB) => {
+        const categoryIdA = rowA.original.category_id as string;
+        const categoryIdB = rowB.original.category_id as string;
+        const categoryA = categories.find(cat => cat.id === categoryIdA);
+        const categoryB = categories.find(cat => cat.id === categoryIdB);
+        const nameA = categoryA?.name || 'Unknown';
+        const nameB = categoryB?.name || 'Unknown';
+        return nameA.localeCompare(nameB);
+      },
     },
     {
       accessorKey: "service_discount",
-      header: "Discount",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Discount</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const serviceDiscount = parseFloat(row.getValue("service_discount"));
         return <div>{serviceDiscount ? `${serviceDiscount}%` : 'N/A'}</div>;
       },
+      sortingFn: (rowA, rowB) => {
+        const discountA = parseFloat(rowA.getValue("service_discount") || "0");
+        const discountB = parseFloat(rowB.getValue("service_discount") || "0");
+        return discountA - discountB;
+      },
     },
     {
       accessorKey: "gender",
-      header: "Gender",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Gender</span>
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const gender = row.original.gender as string;
         return <div>{gender || 'Unknown'}</div>;

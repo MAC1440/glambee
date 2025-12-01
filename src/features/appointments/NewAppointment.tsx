@@ -19,7 +19,7 @@ import { ClientsApi, type ClientWithDetails } from "@/lib/api/clientsApi";
 import { StaffApi } from "@/lib/api/staffApi";
 import Link from "next/link";
 
-type Client = ClientWithDetails;
+type Client = ClientWithDetails | any;
 
 export function NewAppointment({
   appointments,
@@ -32,7 +32,9 @@ export function NewAppointment({
 }) {
   const { toast } = useToast();
   const [appointmentsList, setAppointmentsList] = useState<AppointmentWithDetails[]>(appointments);
+  console.log("List of appointments: ", appointmentsList)
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
+  console.log("Selected slot: ", selectedSlot, new Date(selectedSlot?.start || ''))
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
   console.log("Services to book: ", servicesToBook)
   // const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
@@ -91,17 +93,18 @@ export function NewAppointment({
       let title = ''
       if (apt.services?.[0]?.name) {
         title = `${apt.services?.[0]?.name} (Service) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`
-      } 
+      }
       else {
         title = `${apt.deals?.[0]?.name} (Deal) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`
       }
-      
+
       return {
-      title: title,
-      start: apt.start_time ? new Date(apt.start_time) : new Date(apt.date),
-      end: apt.end_time ? new Date(apt.end_time) : new Date(apt.date),
-      resource: { ...apt, isTemporary: false },
-    }});
+        title: title,
+        start: apt.start_time ? new Date(apt.start_time) : new Date(apt.date),
+        end: apt.end_time ? new Date(apt.end_time) : new Date(apt.date),
+        resource: { ...apt, isTemporary: false },
+      }
+    });
 
     if (selectedSlot && servicesToBook.length > 0) {
       let cumulativeEndTime = new Date(selectedSlot.start);
@@ -142,7 +145,7 @@ export function NewAppointment({
       });
       return;
     }
-    
+
     setServicesToBook(prev => [...prev, item]);
     toast({
       title: "Service Added",
@@ -208,7 +211,7 @@ export function NewAppointment({
 
     // Validation: Check for duplicate bookings
     const selectedDate = selectedSlot.start.toISOString().split('T')[0];
-    
+
     // Check for same service on same date
     const serviceIds = servicesToBook.map(item => item.service.id);
     const duplicateServices = serviceIds.filter((id, index) => serviceIds.indexOf(id) !== index);
@@ -221,25 +224,60 @@ export function NewAppointment({
       return;
     }
 
-    // Check for same staff member, same service, same date
+    // Check for duplicate appointments: same service, same date, same time, and optionally same staff
     for (const item of servicesToBook) {
-      if (item.artist) {
-        console.log("Yes artist...")
-        const existingAppointment = appointmentsList.find(apt => {
-          const aptDate = apt.date;
-          const hasSameService = apt.services?.some(s => s.id === item.service.id);
-          const hasSameStaff = apt.staff_id === item.artist?.value;
-          return aptDate === selectedDate && hasSameService && hasSameStaff && apt.customer_id === preselectedClient.id;
-        });
+      // Convert selected slot start time to ISO string for comparison
+      const selectedStartTimeISO = selectedSlot.start.toISOString();
+      // Extract just the time portion (HH:MM:SS) for comparison
+      const selectedTimeOnly = selectedStartTimeISO.split('T')[1]?.split('.')[0]; // Remove milliseconds
 
-        if (existingAppointment) {
-          toast({
-            title: "Duplicate Appointment",
-            description: `An appointment for ${item.service.name} with ${item.artist.label} on ${format(new Date(selectedDate), 'MMM dd, yyyy')} already exists for this client.`,
-            variant: "destructive",
-          });
-          return;
+      const existingAppointment = appointmentsList.find(apt => {
+        // Must be for the same customer
+        if (apt.customer_id !== preselectedClient.id) return false;
+
+        // Must be on the same date
+        if (apt.date !== selectedDate) return false;
+
+        // Check if start_time matches (same time slot) - this is the key check
+        if (apt.start_time) {
+          const aptStartTimeISO = new Date(apt.start_time).toISOString();
+          const aptTimeOnly = aptStartTimeISO.split('T')[1]?.split('.')[0]; // Remove milliseconds
+
+          // If times match exactly, it's a duplicate regardless of service/staff
+          if (aptTimeOnly === selectedTimeOnly) {
+            return true;
+          }
         }
+
+        // Additional check: same service + same staff (if staff is selected)
+        const hasSameService = apt.services?.some(s => s.id === item.service.id) ||
+          apt.deals?.some(d => d.id === item.service.id);
+
+        if (hasSameService) {
+          // If staff is selected, check for same staff
+          if (item.artist) {
+            return apt.staff_id === item.artist.value;
+          }
+          // If no staff is selected, check if existing appointment also has no staff
+          if (!item.artist && (!apt.staff_id || apt.staff_id === null)) {
+            return true;
+          }
+        }
+
+        return false;
+      });
+
+      console.log("Existing appointment: ", existingAppointment)
+      if (existingAppointment) {
+        const staffInfo = item.artist ? ` with staff member ${item.artist.label}` : '';
+        const timeInfo = format(selectedSlot.start, 'p');
+
+        toast({
+          title: "Duplicate Appointment",
+          description: `An appointment${staffInfo ? `${staffInfo}` : ''} at ${timeInfo} on ${format(new Date(selectedDate), 'MMM dd, yyyy')} already exists for this client. Please select a different time.`,
+          variant: "destructive",
+        });
+        return;
       }
     }
 
@@ -404,11 +442,11 @@ export function NewAppointment({
         </div>
 
         <div className="space-y-4">
-          <ServiceSelection 
-            onAddToCart={handleAddServiceToList} 
-            buttonText="Add Service to List" 
+          <ServiceSelection
+            onAddToCart={handleAddServiceToList}
+            buttonText="Add Service to List"
             existingItems={servicesToBook}
-            salonId={sessionData ? JSON.parse(sessionData).salonId : null} 
+            salonId={sessionData ? JSON.parse(sessionData).salonId : null}
           />
         </div>
 

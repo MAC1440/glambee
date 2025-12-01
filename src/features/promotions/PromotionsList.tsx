@@ -15,6 +15,16 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
@@ -31,6 +41,8 @@ export function PromotionsList() {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [dialogMode, setDialogMode] = React.useState<"add" | "edit">("add");
   const [editingPromotion, setEditingPromotion] = React.useState<DiscountWithSalon | undefined>(undefined);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [promotionToDelete, setPromotionToDelete] = React.useState<DiscountWithSalon | null>(null);
   const sessionData = localStorage.getItem("session");
   console.log("Session data: ", JSON.parse(sessionData || ''))
   
@@ -117,10 +129,17 @@ export function PromotionsList() {
     }
   };
 
-  const handleDelete = async (promotionId: string) => {
+  const handleDeleteClick = (promotion: DiscountWithSalon) => {
+    setPromotionToDelete(promotion);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!promotionToDelete) return;
+
     try {
-      await PromotionsApi.deleteDiscount(promotionId);
-      setPromotions((prev) => prev.filter((p) => p.id !== promotionId));
+      await PromotionsApi.deleteDiscount(promotionToDelete.id);
+      setPromotions((prev) => prev.filter((p) => p.id !== promotionToDelete.id));
       toast({
         title: "Promotion Deleted",
         description: "Discount has been removed.",
@@ -129,6 +148,8 @@ export function PromotionsList() {
           color: "black",
         }
       });
+      setDeleteDialogOpen(false);
+      setPromotionToDelete(null);
     } catch (error) {
       console.error("Error deleting promotion:", error);
       toast({
@@ -270,7 +291,10 @@ export function PromotionsList() {
               {canDelete(promotionsModuleKey) && (
                 <>
                   {canUpdate(promotionsModuleKey) && <DropdownMenuSeparator />}
-                  <DropdownMenuItem onClick={() => handleDelete(promotion.id)} className="text-red-600">
+                  <DropdownMenuItem 
+                    onClick={() => handleDeleteClick(promotion)} 
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                  >
                     Delete
                   </DropdownMenuItem>
                 </>
@@ -325,6 +349,33 @@ export function PromotionsList() {
         promotion={editingPromotion}
         onSave={handleSave}
       />
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this promotion discount. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setPromotionToDelete(null);
+              }}
+              className="bg-gray-100 hover:bg-gray-300 text-gray-900 border-gray-300"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

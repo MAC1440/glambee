@@ -4,20 +4,10 @@
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ColumnDef,
+} from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { appointments, mockCustomers as initialMockCustomers } from "@/lib/placeholder-data";
 import { PlusCircle, CalendarPlus, UserCheck, DollarSign, Loader2, Search } from "lucide-react";
@@ -30,6 +20,7 @@ import { DebouncedInput } from "@/components/ui/debounced-input";
 import { ClientsApi } from "@/lib/api/clientsApi";
 import { usePermissions } from "@/hooks/use-permissions";
 import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
+import { DataTable } from "@/components/ui/data-table";
 const getTagColor = (tag: string) => {
   switch (tag.toLowerCase()) {
     case "vip":
@@ -98,21 +89,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
       email: customer?.email || 'No email',
       phone: customer?.phone_number || 'No phone'
     };
-  }).sort((a, b) => {
-    // Sort by lastVisit date, handling null values
-    const dateA = a.lastVisit === 'N/A' || !a.lastVisit ? new Date(0) : new Date(a.lastVisit);
-    const dateB = b.lastVisit === 'N/A' || !b.lastVisit ? new Date(0) : new Date(b.lastVisit);
-    return dateB.getTime() - dateA.getTime();
   });
-
-  const filteredClients = clients.filter(client => {
-    const filter = globalFilter?.toLowerCase();
-    return (
-      client?.name?.toLowerCase().includes(filter) ||
-      client?.email?.toLowerCase().includes(filter) ||
-      client?.phone?.includes(filter)
-    )
-  })
 
 
   const handleSaveClient = async (clientData: ClientFormData) => {
@@ -151,6 +128,226 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
   //   return <UnauthorizedAccess moduleName="Clients" />;
   // }
 
+  // Define columns for DataTable
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Name</span>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
+      cell: ({ row }) => {
+        const client = row.original;
+        return (
+          <Link href={`/clients/${client?.id}`} className="flex items-center gap-3 group">
+            <Avatar className="h-9 w-9">
+              <AvatarImage
+                src={client?.avatar || `https://picsum.photos/seed/${client?.name}/100`}
+                alt="Avatar"
+              />
+              <AvatarFallback>
+                {client?.name?.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium group-hover:underline">{client?.name}</div>
+              <div className="text-sm text-muted-foreground">
+                {client?.email || 'No email'}
+              </div>
+            </div>
+          </Link>
+        );
+      },
+    },
+    {
+      accessorKey: "tags",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Tags</span>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
+      cell: ({ row }) => {
+        const client = row.original;
+        return (
+          <div className="flex gap-2">
+            {client?.tags?.map((tag: string) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className={cn(getTagColor(tag))}
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
+      sortingFn: (rowA, rowB) => {
+        const tagsA = (rowA.original.tags || []).join(', ');
+        const tagsB = (rowB.original.tags || []).join(', ');
+        return tagsA.localeCompare(tagsB);
+      },
+    },
+    {
+      accessorKey: "lastVisit",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Last Visit</span>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
+      cell: ({ row }) => {
+        const lastVisit = row.getValue("lastVisit") as string;
+        return <div>{lastVisit}</div>;
+      },
+      sortingFn: (rowA, rowB) => {
+        const dateA = rowA.getValue("lastVisit") as string;
+        const dateB = rowB.getValue("lastVisit") as string;
+        const timeA = dateA === 'N/A' || !dateA ? new Date(0).getTime() : new Date(dateA).getTime();
+        const timeB = dateB === 'N/A' || !dateB ? new Date(0).getTime() : new Date(dateB).getTime();
+        return timeB - timeA; // Default to descending (most recent first)
+      },
+    },
+    {
+      accessorKey: "appointments",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center justify-end">
+            <span>Total Appointments</span>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
+      cell: ({ row }) => {
+        const appointments = row.getValue("appointments") as number;
+        return <div className="flex items-center justify-center">{appointments}</div>;
+      },
+    },
+    {
+      accessorKey: "totalSpent",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center justify-end">
+            <span>Total Spent</span>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
+      cell: ({ row }) => {
+        const totalSpent = row.getValue("totalSpent") as number;
+        return <div className="text-center">${totalSpent?.toFixed(2)}</div>;
+      },
+    },
+    {
+      id: "actions",
+      header: ({ column }) => {
+        return (
+          <div className="flex justify-center">
+            <span>Actions</span>
+          </div>
+        );
+      },
+      enableHiding: false,
+      cell: ({ row }) => {
+        const client = row.original;
+        return (
+          <div className="text-right">
+            {isSelectMode ? (
+              <Button variant="default"
+                onClick={() => {
+                  // Update the URL with clientId (no reload, no redirect)
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("clientId", client.id);
+                  window.history.pushState({}, "", url);
+                  // Then call parent callback to select client
+                  onClientSelect?.(client);
+                }}
+              >
+                <UserCheck className="mr-2 h-4 w-4" /> Select
+              </Button>
+            ) : (
+              <div className="flex gap-2 justify-end">
+                {(canCreate(clientsModuleKey) || canUpdate(clientsModuleKey)) && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/checkout/${client?.id}`}>
+                      <DollarSign className="mr-2 h-4 w-4" />
+                      Payment
+                    </Link>
+                  </Button>
+                )}
+                <Button asChild variant="default" size="sm">
+                  <Link href={`/appointments?clientId=${client?.id}`}>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Book
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+
+  // Filter clients based on search query (client-side filtering for DataTable)
+  const filteredClients = clients.filter(client => {
+    const filter = globalFilter?.toLowerCase();
+    if (!filter) return true;
+    return (
+      client?.name?.toLowerCase().includes(filter) ||
+      client?.email?.toLowerCase().includes(filter) ||
+      client?.phone?.includes(filter)
+    );
+  });
 
   return (
     <>
@@ -179,140 +376,42 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
           />
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Clients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="flex flex-col items-center gap-4">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  <p className="text-muted-foreground">Loading clients...</p>
-                </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="text-muted-foreground">Loading clients...</p>
+            </div>
+          </div>
+        ) : filteredClients.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 border rounded-md">
+            <div className="flex flex-col items-center gap-4">
+              <Search className="h-12 w-12 text-muted-foreground" />
+              <div>
+                <p className="text-lg font-medium text-muted-foreground">
+                  {globalFilter ? 'No clients found' : 'No clients available'}
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {globalFilter
+                    ? `No clients match "${globalFilter}". Try a different search term.`
+                    : 'Get started by adding your first client.'
+                  }
+                </p>
               </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Tags</TableHead>
-                    <TableHead>Last Visit</TableHead>
-                    <TableHead>Total Appointments</TableHead>
-                    <TableHead className="text-right">Total Spent</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredClients.length > 0 ? (
-                    filteredClients.map((client) => (
-                      <TableRow
-                        key={client?.id}
-                        className="hover:bg-muted/50"
-                      >
-                        <TableCell>
-                          <Link href={`/clients/${(client?.id)}`} className="flex items-center gap-3 group">
-                            <Avatar className="h-9 w-9">
-                              <AvatarImage
-                                src={client?.avatar || `https://picsum.photos/seed/${client?.name}/100`}
-                                alt="Avatar"
-                              />
-                              <AvatarFallback>
-                                {client?.name?.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium group-hover:underline">{client?.name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {client?.email || 'No email'}
-                              </div>
-                            </div>
-                          </Link>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            {client?.tags?.map((tag: string) => (
-                              <Badge
-                                key={tag}
-                                variant="outline"
-                                className={cn(getTagColor(tag))}
-                              >
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell>{client?.lastVisit}</TableCell>
-                        <TableCell>{client?.appointments}</TableCell>
-                        <TableCell className="text-right">
-                          ${client?.totalSpent?.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {isSelectMode ? (
-                            <Button variant="default"
-                              onClick={() => {
-                                // Update the URL with clientId (no reload, no redirect)
-                                const url = new URL(window.location.href);
-                                url.searchParams.set("clientId", client.id);
-                                window.history.pushState({}, "", url);
-                                // Then call parent callback to select client
-                                onClientSelect?.(client);
-                              }}
-                            >
-                              <UserCheck className="mr-2 h-4 w-4" /> Select
-                            </Button>
-                          ) : (
-                            <div className="flex gap-2 justify-end">
-                              {(canCreate(clientsModuleKey) || canUpdate(clientsModuleKey)) && (
-                                <Button asChild variant="outline" size="sm">
-                                  <Link href={`/checkout/${(client?.id)}`}>
-                                    <DollarSign className="mr-2 h-4 w-4" />
-                                    Payment
-                                  </Link>
-                                </Button>
-                              )}
-                              <Button asChild variant="default" size="sm">
-                                <Link href={`/appointments?clientId=${(client?.id)}`}>
-                                  <CalendarPlus className="mr-2 h-4 w-4" />
-                                  Book
-                                </Link>
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12">
-                        <div className="flex flex-col items-center gap-4">
-                          <Search className="h-12 w-12 text-muted-foreground" />
-                          <div>
-                            <p className="text-lg font-medium text-muted-foreground">
-                              {globalFilter ? 'No clients found' : 'No clients available'}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {globalFilter
-                                ? `No clients match "${globalFilter}". Try a different search term.`
-                                : 'Get started by adding your first client.'
-                              }
-                            </p>
-                          </div>
-                          {!isSelectMode && !globalFilter && canCreate(clientsModuleKey) && (
-                            <Button onClick={() => setIsFormOpen(true)}>
-                              <PlusCircle className="mr-2 h-4 w-4" />
-                              Add First Client
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+              {!isSelectMode && !globalFilter && canCreate(clientsModuleKey) && (
+                <Button onClick={() => setIsFormOpen(true)}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add First Client
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <DataTable
+            columns={columns as any}
+            data={filteredClients}
+          />
+        )}
       </div>
       <ClientFormDialog
         isOpen={isFormOpen}

@@ -59,9 +59,15 @@ const formSchema = z.object({
     .min(1, "Duration is required.")
     .refine((val) => {
       const numValue = parseFloat(val);
-      return !isNaN(numValue) && numValue > 0;
+      if (isNaN(numValue) || numValue <= 0) {
+        return false;
+      }
+      if (numValue > 300) {
+        return false;
+      }
+      return true;
     }, {
-      message: "Duration must be a positive number."
+      message: "Duration must be between 1 and 300 minutes."
     }),
   category_id: z.string().min(1, "Category is required."),
   gender: z.string().min(1, "Gender is required."),
