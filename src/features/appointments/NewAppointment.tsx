@@ -211,10 +211,12 @@ export function NewAppointment({
 
     // Validation: Check for duplicate bookings
     const selectedDate = selectedSlot.start.toISOString().split('T')[0];
-
+    console.log("Selected date: ", selectedDate)
     // Check for same service on same date
     const serviceIds = servicesToBook.map(item => item.service.id);
+    console.log("Services ids: ", serviceIds)
     const duplicateServices = serviceIds.filter((id, index) => serviceIds.indexOf(id) !== index);
+    console.log("Duplicated services: ", duplicateServices)
     if (duplicateServices.length > 0) {
       toast({
         title: "Duplicate Service",
@@ -229,7 +231,9 @@ export function NewAppointment({
       // Convert selected slot start time to ISO string for comparison
       const selectedStartTimeISO = selectedSlot.start.toISOString();
       // Extract just the time portion (HH:MM:SS) for comparison
-      const selectedTimeOnly = selectedStartTimeISO.split('T')[1]?.split('.')[0]; // Remove milliseconds
+      const selectedTimeOnly = selectedStartTimeISO.split('T')[1]?.slice(0, 5); // Remove milliseconds
+      console.log("Check selected start time for ISO conversion: ", selectedStartTimeISO)
+      console.log("Converted selected slot time: ", selectedTimeOnly)
 
       const existingAppointment = appointmentsList.find(apt => {
         // Must be for the same customer
@@ -241,7 +245,8 @@ export function NewAppointment({
         // Check if start_time matches (same time slot) - this is the key check
         if (apt.start_time) {
           const aptStartTimeISO = new Date(apt.start_time).toISOString();
-          const aptTimeOnly = aptStartTimeISO.split('T')[1]?.split('.')[0]; // Remove milliseconds
+          const aptTimeOnly = aptStartTimeISO.split('T')[1]?.slice(0, 5); // Remove milliseconds
+          console.log("Converted existing appointment time: ", aptTimeOnly)
 
           // If times match exactly, it's a duplicate regardless of service/staff
           if (aptTimeOnly === selectedTimeOnly) {
@@ -444,7 +449,7 @@ export function NewAppointment({
         <div className="space-y-4">
           <ServiceSelection
             onAddToCart={handleAddServiceToList}
-            buttonText="Add Service to List"
+            buttonText="Add to Booking List"
             existingItems={servicesToBook}
             salonId={sessionData ? JSON.parse(sessionData).salonId : null}
           />
@@ -454,9 +459,9 @@ export function NewAppointment({
         {servicesToBook.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Services to Book</CardTitle>
+              <CardTitle>Services or Deals to Book</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 overflow-y-auto max-h-[300px]">
               {servicesWithTime.map((item, index) => (
                 <div key={index} className="flex justify-between items-start text-sm p-2 rounded-md bg-muted/50">
                   <div>

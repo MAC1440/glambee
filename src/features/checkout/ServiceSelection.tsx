@@ -251,7 +251,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
     return (
       <Card className="flex flex-col">
         <CardHeader>
-          <CardTitle>Select Service</CardTitle>
+          <CardTitle>Select Service or Deal</CardTitle>
         </CardHeader>
         <CardContent className="flex-grow p-4 space-y-4">
           <div className="text-center py-8">
@@ -266,7 +266,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <CardTitle>Select Service</CardTitle>
+        <CardTitle>Select Service or Deal</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow p-4 space-y-4">
         <div className="space-y-2">
