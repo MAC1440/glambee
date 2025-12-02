@@ -279,7 +279,7 @@ export function NewAppointment({
 
         toast({
           title: "Duplicate Appointment",
-          description: `An appointment${staffInfo ? `${staffInfo}` : ''} at ${timeInfo} on ${format(new Date(selectedDate), 'MMM dd, yyyy')} already exists for this client. Please select a different time.`,
+          description: `An appointment at ${timeInfo} on ${format(new Date(selectedDate), 'MMM dd, yyyy')} already exists for this client. Please select a different time.`,
           variant: "destructive",
         });
         return;
