@@ -114,6 +114,7 @@ export function ServiceFormDialog({
 
   // Fetch Simple price for validating starting from field
   const servicePrice = form.watch('price')
+  const serviceStartingFromPrice = form.watch('starting_from') || 0;
   // Recipe functionality removed for now
 
   // Removed unused options for now
@@ -342,8 +343,8 @@ export function ServiceFormDialog({
                     field.onChange('');
                   } else {
                     const numValue = parseFloat(value.replace(/-/g, ''));
-                    if (!isNaN(numValue) && numValue >= 0) {
-                      field.onChange(value.replace(/-/g, ''));
+                    if (!isNaN(numValue) && numValue >= 0 && numValue > serviceStartingFromPrice) {
+                      field.onChange(numValue);
                     }
                   }
                 }}
