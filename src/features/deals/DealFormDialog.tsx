@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -62,25 +63,26 @@ const formSchema = z.object({
   ),
   dealpopup: z.preprocess(emptyToNull, z.boolean().default(false)),
   popup_title: z.preprocess(emptyToNull, z.string().nullable()),
-  popup_price: z.preprocess(emptyToNull,
-    z.number({ invalid_type_error: "Popup price must be a number." })
-      .positive("Popup price must be greater than zero.")
-      .max(999999.99, "Popup price must be less than $1,000,000.")
-      .nullable()
+      popup_color: z.preprocess(
+    (val) => {
+      if (!val || val === "") return null;
+      const validColors = ["#FFCCCC", "#CCFFCC", "#CCE5FF", "#FFE5CC", "#FFCCE5"];
+      return validColors.includes(val as string) ? val : null;
+    },
+    z.enum(["#FFCCCC", "#CCFFCC", "#CCE5FF", "#FFE5CC", "#FFCCE5"], {
+      errorMap: () => ({ message: "Please select a valid popup color." })
+    }).nullable()
   ),
-  popup_color: z.preprocess(
-    emptyToNull,
-    z
-      .string()
-      .nullable()
-      .refine((val) => {
-        if (!val || val === "") return true; // Allow empty/null
-        return /^#[0-9A-Fa-f]{6}$/.test(val);
-      }, {
-        message: "Please enter a valid hex color code (e.g., #FF0000)."
-      })
+  popup_template: z.preprocess(
+    (val) => {
+      if (!val || val === "") return null;
+      const validTemplates = ["Bell Icon", "Coupon"];
+      return validTemplates.includes(val as string) ? val : null;
+    },
+    z.enum(["Bell Icon", "Coupon"], {
+      errorMap: () => ({ message: "Please select a popup template." })
+    }).nullable()
   ),
-  popup_template: z.preprocess(emptyToNull, z.string().nullable()),
 }).superRefine((data, ctx) => {
   // Popup: title required when enabled
   if (data.dealpopup && (!data.popup_title || data.popup_title.trim() === "")) {
@@ -124,6 +126,7 @@ type ServiceFormDialogProps = {
   deal?: DealWithSalon | null;
   onSave: (deal: DealFormData) => void;
   saving?: boolean;
+  isPopUpEnabledInAnyDeal: boolean;
 };
 
 export function DealFormDialog({
@@ -133,6 +136,7 @@ export function DealFormDialog({
   deal,
   onSave,
   saving = false,
+  isPopUpEnabledInAnyDeal,
 }: ServiceFormDialogProps) {
   const { toast } = useToast();
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -153,14 +157,20 @@ export function DealFormDialog({
       media_url: deal?.media_url || "",
       dealpopup: deal?.dealpopup || false,
       popup_title: deal?.popup_title || "",
-      popup_price: (deal as any)?.popup_price || null,
-      popup_color: deal?.popup_color || "",
-      popup_template: deal?.popup_template || "",
+      popup_color: (deal?.popup_color && ["#FFCCCC", "#CCFFCC", "#CCE5FF", "#FFE5CC", "#FFCCE5"].includes(deal.popup_color)) 
+        ? (deal.popup_color as "#FFCCCC" | "#CCFFCC" | "#CCE5FF" | "#FFE5CC" | "#FFCCE5")
+        : null,
+      popup_template: (deal?.popup_template && ["Bell Icon", "Coupon"].includes(deal.popup_template))
+        ? (deal.popup_template as "Bell Icon" | "Coupon")
+        : null,
     },
   });
 
   useEffect(() => {
     if (isOpen) {
+      const validColors = ["#FFCCCC", "#CCFFCC", "#CCE5FF", "#FFE5CC", "#FFCCE5"] as const;
+      const validTemplates = ["Bell Icon", "Coupon"] as const;
+      
       form.reset({
         title: deal?.title || "",
         price: deal?.price || null,
@@ -171,9 +181,12 @@ export function DealFormDialog({
         media_url: deal?.media_url || "",
         dealpopup: deal?.dealpopup || false,
         popup_title: deal?.popup_title || "",
-        popup_price: (deal as any)?.popup_price || null,
-        popup_color: deal?.popup_color || "",
-        popup_template: deal?.popup_template || "",
+        popup_color: (deal?.popup_color && validColors.includes(deal.popup_color as any)) 
+          ? (deal.popup_color as typeof validColors[number])
+          : null,
+        popup_template: (deal?.popup_template && validTemplates.includes(deal.popup_template as any))
+          ? (deal.popup_template as typeof validTemplates[number])
+          : null,
       });
       // Reset image state
       setImageFile(null);
@@ -565,12 +578,20 @@ export function DealFormDialog({
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={saving}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          // Clear popup fields when checkbox is unchecked
+                          if (!checked) {
+                            form.setValue("popup_title", null, { shouldValidate: true, shouldDirty: true });
+                            form.setValue("popup_color", null, { shouldValidate: true, shouldDirty: true });
+                            form.setValue("popup_template", null, { shouldValidate: true, shouldDirty: true });
+                          }
+                        }}
+                        disabled={saving || (!form.formState.defaultValues?.dealpopup && isPopUpEnabledInAnyDeal)}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Enable Popup</FormLabel>
+                      <FormLabel>Enable Popup {(!form.formState.defaultValues?.dealpopup && isPopUpEnabledInAnyDeal) ? <span className="text-red-500">(Can't enable popup for multiple deals)</span> : ""}</FormLabel>
                       <p className="text-sm text-muted-foreground">
                         Show this deal as a popup to customers.
                       </p>
@@ -602,87 +623,28 @@ export function DealFormDialog({
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="popup_price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Popup Price ($)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="e.g., 99.99"
-                            step="0.01"
-                            min="0"
-                            max="999999.99"
-                            {...field}
-                            value={field.value ?? ""}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === "") {
-                                field.onChange(null);
-                                return;
-                              }
-                              const numValue = parseFloat(value);
-                              if (!isNaN(numValue) && numValue >= 0 && numValue <= 999999.99) {
-                                field.onChange(numValue);
-                              }
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === '-') {
-                                e.preventDefault();
-                              }
-                            }}
-                            onPaste={(e) => {
-                              const pastedText = e.clipboardData.getData('text');
-                              const sanitizedText = pastedText.replace(/[^0-9.]/g, '');
-                              const numValue = parseFloat(sanitizedText);
-                              if (!isNaN(numValue) && numValue >= 0 && numValue <= 999999.99) {
-                                field.onChange(numValue);
-                              } else {
-                                field.onChange(null);
-                              }
-                              e.preventDefault();
-                            }}
-                            disabled={saving}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
-                      name="popup_color"
+                      name="popup_template"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Popup Color</FormLabel>
-                          <FormControl>
-                            <div className="flex gap-2">
-                              <Input
-                                type="color"
-                                {...field}
-                                value={field.value || '#000000'}
-                                disabled={saving}
-                                className="w-16 h-10 p-1"
-                              />
-                              <Input
-                                type="text"
-                                placeholder="#000000"
-                                value={field.value || ''}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (value === '' || /^#[0-9A-Fa-f]{6}$/.test(value)) {
-                                    field.onChange(value || null);
-                                  }
-                                }}
-                                disabled={saving}
-                                className="flex-1"
-                              />
-                            </div>
-                          </FormControl>
+                          <FormLabel>Popup Template</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ""}
+                            disabled={saving}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select template" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Bell Icon">Bell Icon</SelectItem>
+                              <SelectItem value="Coupon">Coupon</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -690,21 +652,61 @@ export function DealFormDialog({
 
                     <FormField
                       control={form.control}
-                      name="popup_template"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Popup Template</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="template1" 
-                              {...field} 
-                              value={field.value || ''}
-                              disabled={saving} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      name="popup_color"
+                      render={({ field }) => {
+                        const colorOptions = [
+                          { value: "#FFCCCC", label: "Light Red" },
+                          { value: "#CCFFCC", label: "Light Green" },
+                          { value: "#CCE5FF", label: "Light Blue" },
+                          { value: "#FFE5CC", label: "Light Orange" },
+                          { value: "#FFCCE5", label: "Light Pink" },
+                        ];
+                        
+                        return (
+                          <FormItem>
+                            <FormLabel>Popup Color</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value || ""}
+                              disabled={saving}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select color">
+                                    {field.value ? (
+                                      <div className="flex items-center gap-2">
+                                        <div
+                                          className="w-4 h-4 rounded border border-gray-300"
+                                          style={{ backgroundColor: field.value }}
+                                        />
+                                        <span>
+                                          {colorOptions.find(opt => opt.value === field.value)?.label || field.value}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      "Select color"
+                                    )}
+                                  </SelectValue>
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {colorOptions.map((color) => (
+                                  <SelectItem key={color.value} value={color.value}>
+                                    <div className="flex items-center gap-2">
+                                      <div
+                                        className="w-4 h-4 rounded border border-gray-300"
+                                        style={{ backgroundColor: color.value }}
+                                      />
+                                      <span>{color.label}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
                 </div>

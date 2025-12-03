@@ -129,7 +129,8 @@ export class PromotionsApi {
   }
 
   /**
-   * Sync service_discount to all services for a salon
+   * Sync service_discount to recently added or updated services for a salon
+   * Only syncs to services created or updated in the last 24 hours
    */
   private static async syncServiceDiscounts(salonId: string, serviceDiscount: number | null): Promise<void> {
     try {
@@ -139,10 +140,21 @@ export class PromotionsApi {
       }
 
       if (Object.keys(updateData).length > 0) {
+        // Calculate the cutoff time (24 hours ago)
+        const cutoffTime = new Date();
+        cutoffTime.setHours(cutoffTime.getHours() - 24);
+        const cutoffTimeISO = cutoffTime.toISOString();
+
+        // Only update services that were created or updated in the last 24 hours
+        // This ensures only recently added or updated services get the discount synced
         const { error } = await supabase
           .from('salons_services')
-          .update(updateData)
-          .eq('salon_id', salonId);
+          .update({
+            ...updateData,
+            updated_at: new Date().toISOString() // Update the updated_at timestamp
+          })
+          .eq('salon_id', salonId)
+          .or(`created_at.gte.${cutoffTimeISO},updated_at.gte.${cutoffTimeISO}`);
 
         if (error) {
           console.error('Error syncing service discounts:', error);
@@ -156,7 +168,8 @@ export class PromotionsApi {
   }
 
   /**
-   * Sync deal_discount to all deals for a salon
+   * Sync deal_discount to recently added or updated deals for a salon
+   * Only syncs to deals created or updated in the last 24 hours
    */
   private static async syncDealDiscounts(salonId: string, dealDiscount: number | null): Promise<void> {
     try {
@@ -166,10 +179,21 @@ export class PromotionsApi {
       }
 
       if (Object.keys(updateData).length > 0) {
+        // Calculate the cutoff time (24 hours ago)
+        const cutoffTime = new Date();
+        cutoffTime.setHours(cutoffTime.getHours() - 24);
+        const cutoffTimeISO = cutoffTime.toISOString();
+
+        // Only update deals that were created or updated in the last 24 hours
+        // This ensures only recently added or updated deals get the discount synced
         const { error } = await supabase
           .from('salons_deals')
-          .update(updateData)
-          .eq('salon_id', salonId);
+          .update({
+            ...updateData,
+            updated_at: new Date().toISOString() // Update the updated_at timestamp
+          })
+          .eq('salon_id', salonId)
+          .or(`created_at.gte.${cutoffTimeISO},updated_at.gte.${cutoffTimeISO}`);
 
         if (error) {
           console.error('Error syncing deal discounts:', error);

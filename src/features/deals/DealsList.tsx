@@ -74,6 +74,8 @@ export function DealsList() {
   // Get permissions for deals module
   const { canCreate, canUpdate, canDelete, canRead, hasModuleAccess } = usePermissions();
   const dealsModuleKey = "deals" as const;
+  const isPopUpEnabledInAnyDeal = deals.some((item) => item?.dealpopup)
+  // console.log("Is popup enable already: ", isPopUpEnabledInAnyDeal)
   
   // State to track if user has access (with async permission loading)
   const [hasAccess, setHasAccess] = React.useState<boolean | null>(null);
@@ -285,7 +287,19 @@ export function DealsList() {
   const columns: ColumnDef<DealWithSalon>[] = [
     {
       accessorKey: "title",
-      header: "Title",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Title</span>
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const deal = row.original;
         return (
@@ -300,7 +314,19 @@ export function DealsList() {
     },
     {
       accessorKey: "price",
-      header: "Price",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Price</span>
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("price"));
         const formatted = amount ? new Intl.NumberFormat("en-US", {
@@ -312,7 +338,19 @@ export function DealsList() {
     },
     {
       accessorKey: "discounted_price",
-      header: "Discounted Price",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Discounted Price</span>
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("discounted_price"));
         const formatted = amount ? new Intl.NumberFormat("en-US", {
@@ -324,7 +362,19 @@ export function DealsList() {
     },
     {
       accessorKey: "valid_from",
-      header: "Valid Period",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Valid Period</span>
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const deal = row.original;
         // For dates
@@ -357,7 +407,19 @@ export function DealsList() {
     // },
     {
       accessorKey: "deal_discount",
-      header: "Deal Discount",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Deal Discount</span>
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const deal = parseFloat(row.getValue("deal_discount"));
         return <div className="font-medium pr-4">{deal ? `${deal}%` : 'N/A'}</div>;
@@ -365,7 +427,19 @@ export function DealsList() {
     },
     {
       accessorKey: "dealpopup",
-      header: "Popup",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Popup</span>
+            <Button
+              variant="ghost"
+              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+              <CaretSortIcon />
+            </Button>
+          </div>
+        );
+      },
       cell: ({ row }) => {
         const deal = row.original;
         return (
@@ -400,13 +474,13 @@ export function DealsList() {
                 </DropdownMenuItem>
               )}
               {/* Show Popup toggle only if user has update permission */}
-              {canUpdate(dealsModuleKey) && (
+              {/* {canUpdate(dealsModuleKey) && (
                 <DropdownMenuItem
                   onClick={() => handleTogglePopup(deal.id, !deal.dealpopup)}
                 >
                   {deal.dealpopup ? "Disable Popup" : "Enable Popup"}
                 </DropdownMenuItem>
-              )}
+              )} */}
               {/* Show Delete only if user has delete permission (admins only per requirements) */}
               {canDelete(dealsModuleKey) && (
                 <>
@@ -536,6 +610,7 @@ export function DealsList() {
         deal={editingDeal}
         onSave={handleSave}
         saving={saving}
+        isPopUpEnabledInAnyDeal={isPopUpEnabledInAnyDeal}
       />
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
