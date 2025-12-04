@@ -395,22 +395,31 @@ export class AuthService {
       }
 
       // Transform the data to match AuthUser interface
-      const authUser: AuthUser = {
-        id: userData.id,
-        email: userData.email,
-        phone_number: userData.phone_number,
-        fullname: userData.fullname,
-        avatar: userData.avatar,
-        user_type: userData.user_type as 'salon' | 'customer',
-        created_at: userData.created_at,
-        updated_at: userData.updated_at,
-        salon: salonData,
-      };
-
-      return {
-        success: true,
-        data: authUser
-      };
+      // If no salon then error should be there like no salon associated against this user and this user is not an owner of any salon
+      if (salonData) {
+        const authUser: AuthUser = {
+          id: userData.id,
+          email: userData.email,
+          phone_number: userData.phone_number,
+          fullname: userData.fullname,
+          avatar: userData.avatar,
+          user_type: userData.user_type as 'salon' | 'customer',
+          created_at: userData.created_at,
+          updated_at: userData.updated_at,
+          salon: salonData,
+        };
+        
+        return {
+          success: true,
+          data: authUser
+        };
+      }
+      else {
+        return {
+          success: false,
+          error: "No salon associated against this user and this user is not an owner of any salon"
+        };
+      }
     } catch (error) {
       console.error('Direct Login Error:', error);
       return {
