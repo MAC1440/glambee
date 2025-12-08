@@ -150,7 +150,8 @@ export function Dashboard() {
       id: apt.id,
       customerName: apt.customer?.name || 'Unknown Customer',
       customerAvatar: apt.customer?.avatar || `https://picsum.photos/seed/${apt.customer?.name}/100`,
-      service: apt.services?.map(s => s.name).join(', ') || 'No Service',
+      service: apt.services?.map(s => s.name).join(', ') || 'N/A',
+      deal: apt.deals?.map(d => d.name).join(', ') || 'N/A',
       start: new Date(apt.start_time || new Date()),
       end: new Date(apt.end_time || new Date()),
       staffId: apt.staff?.id || 'unassigned'
@@ -181,6 +182,7 @@ export function Dashboard() {
         email: originalAppointment?.customer?.email || `${apt.customerName.toLowerCase().replace(' ', '.')}@example.com`
       },
       service: apt.service,
+      deal: apt.deal,
       staff: originalAppointment?.staff?.name || 'Unknown',
       date: format(apt.start, 'yyyy-MM-dd'),
       time: format(apt.start, 'p'),

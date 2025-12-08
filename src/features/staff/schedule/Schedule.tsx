@@ -90,8 +90,8 @@ export function Schedule() {
       id: apt.id,
       customerName: apt.customer?.name || 'Unknown Customer',
       customerAvatar: apt.customer?.avatar || `https://picsum.photos/seed/${apt.customer?.name}/100`,
-      service: apt.services?.map(s => s.name).join(', ') || 'No Service',
-      deal: apt.deals?.map((d) => d.name).join(', ') || 'No Deal',
+      service: apt.services?.map(s => s.name).join(', ') || 'N/A',
+      deal: apt.deals?.map((d) => d.name).join(', ') || 'N/A',
       start: new Date(apt.start_time || new Date()),
       end: new Date(apt.end_time || new Date()),
       staffId: apt.staff?.id || 'unassigned'
@@ -170,6 +170,7 @@ export function Schedule() {
             <TableRow>
               <TableHead>Customer</TableHead>
               <TableHead>Service</TableHead>
+              <TableHead>Deal</TableHead>
               {showDate && <TableHead className="hidden md:table-cell">Date</TableHead>}
               <TableHead className="text-right">Time</TableHead>
             </TableRow>
@@ -190,6 +191,7 @@ export function Schedule() {
                     </div>
                   </TableCell>
                   <TableCell>{apt.service}</TableCell>
+                  <TableCell>{apt.deal}</TableCell>
                   {showDate && (
                     <TableCell className="hidden md:table-cell">
                       {format(apt.start, "PPP")}

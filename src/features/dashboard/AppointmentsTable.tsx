@@ -25,6 +25,7 @@ type Appointment = {
         email: string;
     };
     service: string;
+    deal: string;
     staff: string;
     date: string;
     time: string;
@@ -57,6 +58,7 @@ export function AppointmentsTable({
               <TableRow>
                 <TableHead>Customer</TableHead>
                 <TableHead>Service</TableHead>
+                <TableHead>Deal</TableHead>
                 <TableHead className="text-right">Time</TableHead>
               </TableRow>
             </TableHeader>
@@ -79,6 +81,7 @@ export function AppointmentsTable({
                       </div>
                     </TableCell>
                     <TableCell>{apt.service}</TableCell>
+                    <TableCell>{apt.deal}</TableCell>
                     <TableCell className="text-right">{apt.time}</TableCell>
                   </TableRow>
                 ))
