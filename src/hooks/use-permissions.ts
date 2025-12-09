@@ -214,7 +214,8 @@ export function usePermissions() {
     hasModuleAccess: (moduleKey: ModuleKey) => hasModuleAccess(moduleKey, user),
     hasPermission: (moduleKey: ModuleKey, permissionType: keyof PermissionSet) => 
       hasPermission(moduleKey, permissionType, user),
-    canDelete: (moduleKey: ModuleKey) => canDelete(moduleKey, user),
+    // canDelete: (moduleKey: ModuleKey) => canDelete(moduleKey, user),
+    canDelete: (moduleKey: ModuleKey) => hasPermission(moduleKey, "delete", user),
     canCreate: (moduleKey: ModuleKey) => hasPermission(moduleKey, "create", user),
     canUpdate: (moduleKey: ModuleKey) => hasPermission(moduleKey, "update", user),
     canRead: (moduleKey: ModuleKey) => hasPermission(moduleKey, "read", user),
