@@ -379,6 +379,44 @@ export class AuthService {
         };
       }
 
+      // Generate Supabase session server-side (NO OTP COST)
+      // This creates a session without sending SMS/email
+      try {
+        const sessionResponse = await fetch('/api/auth/generate-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: userData.id }),
+        });
+
+        const sessionResult = await sessionResponse.json();
+
+        if (sessionResult.success && sessionResult.data?.token) {
+          // Set the session using the token from server
+          // For magic links, we can use token_hash parameter
+          const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
+            token_hash: sessionResult.data.token,
+            type: 'magiclink',
+          });
+
+          if (sessionError) {
+            console.error('Failed to set session from token_hash:', sessionError);
+            // Note: For salon admins, we authenticate with phone
+            // The token_hash method should work regardless of email/phone
+            // If it fails, the session generation might have an issue
+            console.warn('Session creation failed - user may need to use OTP flow instead');
+          } else if (sessionData?.session) {
+            console.log('✅ Supabase session created successfully for direct login');
+          }
+        } else {
+          console.warn('Failed to generate session token:', sessionResult.error);
+        }
+      } catch (sessionErr) {
+        console.error('Error generating session:', sessionErr);
+        // Continue with login - session generation is optional for now
+      }
+
       // Get salon data by phone number if user_type is 'salon'
       let salonData: Salon | null = null;
       if (userData.user_type === 'salon') {

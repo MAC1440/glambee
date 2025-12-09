@@ -235,8 +235,10 @@ export class DealsApi {
     try {
       // Ensure we have a valid session and refresh if needed
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log("Session in create deal: ", session)
       
       if (sessionError || !session) {
+        console.log("IN session check...")
         // Try to refresh the session
         const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
         console.log("Refreshed session in creation of deal: ", refreshedSession)

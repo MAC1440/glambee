@@ -156,6 +156,10 @@ export function Auth() {
           toast({
             title: "Welcome Back!",
             description: "You have been logged in successfully",
+            style: {
+              backgroundColor: "lightgreen",
+              color: "black",
+            }
           });
         } else {
           setError(loginResponse.error || "Login failed");
@@ -295,6 +299,10 @@ export function Auth() {
       toast({
         title: "Welcome Back!",
         description: "You have been logged in successfully",
+        style: {
+          backgroundColor: "lightgreen",
+          color: "black",
+        }
       });
     } catch (err: any) {
       const errorMessage = err.message || "An unexpected error occurred. Please try again.";
@@ -580,6 +588,10 @@ export function Auth() {
               toast({
                 title: "Welcome!",
                 description: "Password updated and logged in successfully",
+                style: {
+                  backgroundColor: "lightgreen",
+                  color: "black",
+                }
               });
             } catch (err: any) {
               setError(err.message || "Failed to complete login. Please try again.");
