@@ -11,6 +11,7 @@ import { StaffApi, type StaffWithCategories } from "@/lib/api/staffApi";
 import { DealsApi } from "@/lib/api/dealsApi";
 import { supabase } from "@/lib/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/use-permissions";
 
 
 type Service = ServiceWithStaff & {
@@ -52,7 +53,8 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
   const { toast } = useToast();
   const sessionData = localStorage.getItem("session");
   const salonId = propSalonId || (sessionData ? JSON.parse(sessionData).salonId : null);
-
+  const { hasModuleAccess } = usePermissions();
+  console.log("Has services access: ", hasModuleAccess("services"))
   // Fetch services and deals on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -279,7 +281,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
                   <SelectValue placeholder="Search for a service or deal..." />
               </SelectTrigger>
               <SelectContent className="w-[var(--radix-select-trigger-width)] max-h-[300px]">
-                  {groupedOptions.length > 0 ? (
+                  {hasModuleAccess("services") && groupedOptions && groupedOptions.length > 0 ? (
                     groupedOptions.map(group => (
                       <div key={group.label}>
                         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">

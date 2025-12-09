@@ -351,6 +351,20 @@ export class AuthService {
 
   /**
    * Direct login for existing users (without OTP)
+   * 
+   * FLOW EXPLANATION:
+   * 1. User enters phone number
+   * 2. We verify user exists in database
+   * 3. We generate a Supabase session token server-side (NO OTP COST)
+   * 4. We exchange the token for a Supabase session
+   * 5. User is logged in with both localStorage session AND Supabase session
+   * 
+   * WHY THIS APPROACH?
+   * - Avoids OTP costs (no SMS sent)
+   * - Creates Supabase session needed for RLS policies
+   * - Secure (uses service role key server-side only)
+   * 
+   * See docs/DIRECT_LOGIN_FLOW.md for detailed explanation
    */
   static async directLogin(phone: string): Promise<{ success: boolean; data?: AuthUser; error?: string }> {
     try {
@@ -379,9 +393,12 @@ export class AuthService {
         };
       }
 
-      // Generate Supabase session server-side (NO OTP COST)
+      // STEP 3: Generate Supabase session server-side (NO OTP COST)
       // This creates a session without sending SMS/email
+      // Why? To avoid OTP costs while still enabling RLS policies
       try {
+        // Call server API to generate session token
+        // Server uses service role key (secret, never exposed to client)
         const sessionResponse = await fetch('/api/auth/generate-session', {
           method: 'POST',
           headers: {
@@ -393,8 +410,8 @@ export class AuthService {
         const sessionResult = await sessionResponse.json();
 
         if (sessionResult.success && sessionResult.data?.token) {
-          // Set the session using the token from server
-          // For magic links, we can use token_hash parameter
+          // STEP 4: Exchange token for Supabase session
+          // The token_hash method works for magic links
           const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
             token_hash: sessionResult.data.token,
             type: 'magiclink',
@@ -402,19 +419,19 @@ export class AuthService {
 
           if (sessionError) {
             console.error('Failed to set session from token_hash:', sessionError);
-            // Note: For salon admins, we authenticate with phone
-            // The token_hash method should work regardless of email/phone
-            // If it fails, the session generation might have an issue
             console.warn('Session creation failed - user may need to use OTP flow instead');
+            // Note: Login continues, but RLS policies may fail
+            // User will see errors when trying to create deals, upload images, etc.
           } else if (sessionData?.session) {
             console.log('✅ Supabase session created successfully for direct login');
+            // Now auth.uid() will work in RLS policies!
           }
         } else {
           console.warn('Failed to generate session token:', sessionResult.error);
         }
       } catch (sessionErr) {
         console.error('Error generating session:', sessionErr);
-        // Continue with login - session generation is optional for now
+        // Continue with login - but RLS policies will fail without session
       }
 
       // Get salon data by phone number if user_type is 'salon'

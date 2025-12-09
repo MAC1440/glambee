@@ -3,10 +3,25 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Generate a Supabase session token for a user by their ID
- * This is used for direct login (salon admins) to create a session without OTP
- * Uses service role key to generate session token server-side
  * 
- * NO OTP COST - This generates a session programmatically without sending SMS/email
+ * PURPOSE:
+ * - Used for direct login (salon admins) to create a session without OTP
+ * - Avoids OTP costs (no SMS/email sent)
+ * - Enables RLS policies to work (auth.uid() needs a session)
+ * 
+ * HOW IT WORKS:
+ * 1. Receives userId from client
+ * 2. Verifies user exists in auth.users
+ * 3. Generates a magic link token (but doesn't send it)
+ * 4. Extracts token from magic link URL
+ * 5. Returns token to client
+ * 
+ * SECURITY:
+ * - Uses SERVICE_ROLE_KEY (secret, server-side only)
+ * - Never exposed to client
+ * - Token is short-lived and single-use
+ * 
+ * See docs/DIRECT_LOGIN_FLOW.md for full explanation
  */
 export async function POST(request: NextRequest) {
   try {
