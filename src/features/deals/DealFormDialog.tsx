@@ -28,6 +28,21 @@ import { DealWithSalon, DealFormData } from "@/types/deal";
 import { uploadImageToStorage } from "@/lib/utils/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
+
+
+// Parses a "YYYY-MM-DDTHH:mm" string as LOCAL time (not UTC)
+function parseLocalDateTime(dateTimeString: string): Date | null {
+  if (!dateTimeString) return null;
+  const [datePart, timePart] = dateTimeString.split('T');
+  if (!datePart || !timePart) return null;
+  
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes] = timePart.split(':').map(Number);
+  
+  // Months are 0-indexed in JS Date
+  return new Date(year, month - 1, day, hours, minutes);
+}
 
 // Helper: convert empty string to null for optional inputs
 const emptyToNull = (value: unknown) => (value === "" ? null : value);
@@ -435,49 +450,73 @@ export function DealFormDialog({
                 <FormField
                   control={form.control}
                   name="valid_from"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valid From</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          value={field.value ? field.value.slice(0, 16) : ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            field.onChange(value ? value : null);
-                          }}
-                          min={new Date().toISOString().slice(0, 16)}
-                          disabled={saving}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const dateValue = field.value ? parseLocalDateTime(field.value) : null;
+                    return (
+                      <FormItem>
+                        <FormLabel>Valid From</FormLabel>
+                        <FormControl>
+                          <DateTimePicker
+                            value={dateValue}
+                            onChange={(date) => {
+                              if (date) {
+                                // Format as local datetime string (YYYY-MM-DDTHH:mm) to preserve local time
+                                // This avoids timezone conversion issues with toISOString()
+                                const year = date.getFullYear();
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const hours = String(date.getHours()).padStart(2, '0');
+                                const minutes = String(date.getMinutes()).padStart(2, '0');
+                                field.onChange(`${year}-${month}-${day}T${hours}:${minutes}`);
+                              } else {
+                                field.onChange(null);
+                              }
+                            }}
+                            min={new Date()}
+                            disabled={saving}
+                            placeholder="Select date and time"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
                   control={form.control}
                   name="valid_till"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Valid Till</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="datetime-local"
-                          {...field}
-                          value={field.value ? field.value.slice(0, 16) : ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            field.onChange(value ? value : null);
-                          }}
-                          min={new Date().toISOString().slice(0, 16)}
-                          disabled={saving}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const dateValue = field.value ? parseLocalDateTime(field.value) : null;
+                    return (
+                      <FormItem>
+                        <FormLabel>Valid Till</FormLabel>
+                        <FormControl>
+                          <DateTimePicker
+                            value={dateValue}
+                            onChange={(date) => {
+                              if (date) {
+                                // Format as local datetime string (YYYY-MM-DDTHH:mm) to preserve local time
+                                // This avoids timezone conversion issues with toISOString()
+                                const year = date.getFullYear();
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const hours = String(date.getHours()).padStart(2, '0');
+                                const minutes = String(date.getMinutes()).padStart(2, '0');
+                                field.onChange(`${year}-${month}-${day}T${hours}:${minutes}`);
+                              } else {
+                                field.onChange(null);
+                              }
+                            }}
+                            min={new Date()}
+                            disabled={saving}
+                            placeholder="Select date and time"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
 

@@ -228,7 +228,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
       
       if (isDuplicate) {
         toast({
-          title: "Service Already Added",
+          title: "Service or Deal Already Added",
           description: `${selectedService.name} is already selected.`,
           variant: "destructive",
         });
@@ -239,7 +239,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
       setSelectedServiceId(null);
       setSelectedArtist(null);
       toast({
-        title: "Service Added",
+        title: "Service or Deal Added",
         description: `${selectedService.name} has been selected.`,
         style: {
           backgroundColor: "lightgreen",

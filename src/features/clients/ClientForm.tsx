@@ -231,7 +231,7 @@ export function ClientForm({ client, onSave, onCancel, isLoading = false }: Clie
                     <SelectItem value="Female">Female</SelectItem>
                     <SelectItem value="Male">Male</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
-                    <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                    {/* <SelectItem value="Prefer not to say">Prefer not to say</SelectItem> */}
                   </SelectContent>
                 </Select>
                 <FormMessage />
