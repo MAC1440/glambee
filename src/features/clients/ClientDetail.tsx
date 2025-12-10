@@ -879,7 +879,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 </Link>
               </Button>
             )}
-            {(canCreate(clientsModuleKey) || canUpdate(clientsModuleKey)) && (
+            {canUpdate(clientsModuleKey) && (
               <Button variant="outline" onClick={() => setIsFormOpen(true)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Client
