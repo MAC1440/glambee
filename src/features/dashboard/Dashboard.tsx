@@ -32,7 +32,6 @@ import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 export function Dashboard() {
   const [period, setPeriod] = useState<"today" | "week" | "month">("today");
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
-  console.log("Appointments: ", appointments);
   const [staff, setStaff] = useState<StaffWithCategories[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,11 +41,9 @@ export function Dashboard() {
   const dashboardModuleKey = "dashboard" as const;
   // const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const hasAccess = hasModuleAccess(dashboardModuleKey);
-  console.log("Has access for dashboard: ", hasAccess)
-  // console.log("Can create: ", canCreate(dashboardModuleKey))
-  // console.log("Can read: ", canRead(dashboardModuleKey))
-  // console.log("Can update: ", canUpdate(dashboardModuleKey))
-  // console.log("Can delete: ", canDelete(dashboardModuleKey))
+  const canCreateSchedule = canCreate("schedule");
+  const canUpdateSchedule = canUpdate("schedule");
+
   // useEffect(() => {
   //   console.log("In dash effect....")
   //   const checkAccess = async () => {
@@ -373,7 +370,7 @@ export function Dashboard() {
           />
         </Card>
         <Card>
-          <QuickActions />
+          <QuickActions canCreateSchedule={canCreateSchedule} canUpdateSchedule={canUpdateSchedule} />
         </Card>
       </div>
 

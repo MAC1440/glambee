@@ -54,7 +54,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
   const sessionData = localStorage.getItem("session");
   const salonId = propSalonId || (sessionData ? JSON.parse(sessionData).salonId : null);
   const { hasModuleAccess } = usePermissions();
-  console.log("Has services access: ", hasModuleAccess("services"))
+
   // Fetch services and deals on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -205,10 +205,10 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
       .map((s) => ({ value: s.id, label: s.name }));
 
     const groups = [];
-    if (packageDeals.length > 0) {
+    if (hasModuleAccess("deals") && packageDeals.length > 0) {
       groups.push({ label: "Deals", options: packageDeals });
     }
-    if (individualServices.length > 0) {
+    if (hasModuleAccess("services") && individualServices.length > 0) {
       groups.push({ label: "Individual Services", options: individualServices });
     }
     return groups;
@@ -281,7 +281,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
                   <SelectValue placeholder="Search for a service or deal..." />
               </SelectTrigger>
               <SelectContent className="w-[var(--radix-select-trigger-width)] max-h-[300px]">
-                  {hasModuleAccess("services") && groupedOptions && groupedOptions.length > 0 ? (
+                  {groupedOptions && groupedOptions.length > 0 ? (
                     groupedOptions.map(group => (
                       <div key={group.label}>
                         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
@@ -296,7 +296,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
                     ))
                   ) : (
                     <div className="p-4 text-center text-sm text-muted-foreground">
-                      No services available
+                      No services or deals available
                     </div>
                   )}
               </SelectContent>

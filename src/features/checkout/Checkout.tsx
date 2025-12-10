@@ -35,10 +35,9 @@ export function Checkout({ client }: { client: Customer | undefined }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discountAmount, setDiscountAmount] = useState(0);
   const { toast } = useToast();
-  const { canCreate, canUpdate } = usePermissions();
+  const { canUpdate } = usePermissions();
   const clientsModuleKey = "clients" as const;
-  const hasAccess = canCreate(clientsModuleKey) || canUpdate(clientsModuleKey);
-  console.log("Has access for checkout: ", hasAccess)
+  const hasAccess = canUpdate(clientsModuleKey);
 
   if (!client) {
     return (

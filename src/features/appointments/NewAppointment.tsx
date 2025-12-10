@@ -18,6 +18,8 @@ import { AppointmentsApi, type AppointmentWithDetails, type CreateAppointmentDat
 import { ClientsApi, type ClientWithDetails } from "@/lib/api/clientsApi";
 import { StaffApi } from "@/lib/api/staffApi";
 import Link from "next/link";
+import { usePermissions } from "@/hooks/use-permissions";
+import { UnauthorizedAccess } from "@/components/ui/unauthorized-access";
 
 type Client = ClientWithDetails | any;
 
@@ -37,13 +39,11 @@ export function NewAppointment({
   console.log("Selected slot: ", selectedSlot, new Date(selectedSlot?.start || ''))
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
   console.log("Services to book: ", servicesToBook)
-  // const [selectedClient, setSelectedClient] = useState<Client | null>(preselectedClient || null);
-  // console.log("Selected client: ", preselectedClient)
   const [isLoading, setIsLoading] = useState(false);
   const sessionData = localStorage.getItem("session");
-  console.log("Session appoint data: ", JSON.parse(sessionData || ''))
-  console.log("Preselected client in new appointment file: ", preselectedClient)
-
+  const { hasModuleAccess, canCreate, canUpdate } = usePermissions();
+  const scheduleModuleKey = "schedule" as const;
+  const hasScheduleAccess = canCreate(scheduleModuleKey) || canUpdate(scheduleModuleKey);
   // Fetch appointments on component mount if not provided
   useEffect(() => {
     if (appointments.length === 0) {
@@ -416,6 +416,14 @@ export function NewAppointment({
           </p>
         </div> */}
         <ClientsList onClientSelect={(client) => setPreselectedClient(client)} isSelectMode={true} />
+      </div>
+    );
+  }
+
+  if(!hasScheduleAccess) {
+    return (
+      <div className="flex flex-col gap-8">
+        <UnauthorizedAccess moduleName={scheduleModuleKey} />
       </div>
     );
   }

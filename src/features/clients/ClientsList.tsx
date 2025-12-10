@@ -53,6 +53,8 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
   const { canCreate, canUpdate, canDelete, canRead, hasModuleAccess } = usePermissions();
   const clientsModuleKey = "clients" as const;
   const hasAccess = hasModuleAccess(clientsModuleKey);
+  const canCreateSchedule = canCreate("schedule");
+  const canUpdateSchedule = canUpdate("schedule");
 
   const fetchClients = async () => {
     try {
@@ -127,6 +129,14 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
   // if (hasAccess === false) {
   //   return <UnauthorizedAccess moduleName="Clients" />;
   // }
+
+  // Determine if Actions column should be shown
+  // Show if user has ANY of these permissions:
+  // - Can update clients (for Payment button)
+  // - Can create/update schedule (for Book button)
+  const shouldShowActionsColumn = 
+    canUpdate(clientsModuleKey) ||
+    (canCreateSchedule || canUpdateSchedule);
 
   // Define columns for DataTable
   const columns: ColumnDef<any>[] = [
@@ -287,9 +297,10 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
         return <div className="text-center">${totalSpent?.toFixed(2)}</div>;
       },
     },
-    {
+    // Conditionally include Actions column based on permissions
+    ...(shouldShowActionsColumn ? [{
       id: "actions",
-      header: ({ column }) => {
+      header: ({ column }: { column: any }) => {
         return (
           <div className="flex justify-center">
             <span>Actions</span>
@@ -297,7 +308,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
         );
       },
       enableHiding: false,
-      cell: ({ row }) => {
+      cell: ({ row }: { row: any }) => {
         const client = row.original;
         return (
           <div className="text-right">
@@ -316,7 +327,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
               </Button>
             ) : (
               <div className="flex gap-2 justify-end">
-                {(canCreate(clientsModuleKey) || canUpdate(clientsModuleKey)) && (
+                {canUpdate(clientsModuleKey) && (
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/checkout/${client?.id}`}>
                       <DollarSign className="mr-2 h-4 w-4" />
@@ -324,18 +335,20 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                     </Link>
                   </Button>
                 )}
+                {(canCreateSchedule || canUpdateSchedule) && (
                 <Button asChild variant="default" size="sm">
                   <Link href={`/appointments?clientId=${client?.id}`}>
                     <CalendarPlus className="mr-2 h-4 w-4" />
-                    Book
-                  </Link>
-                </Button>
+                      Book
+                    </Link>
+                  </Button>
+                )}
               </div>
             )}
           </div>
         );
       },
-    },
+    }] : []),
   ];
 
   // Filter clients based on search query (client-side filtering for DataTable)
