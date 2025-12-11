@@ -209,6 +209,14 @@ export function DealFormDialog({
     }
   }, [isOpen, deal, form]);
 
+  const priceVaryCheck = form.watch('prices_may_vary')
+
+  useEffect(() => {
+    if(!priceVaryCheck) {
+      form.setValue("discounted_price", null, { shouldValidate: true, shouldDirty: true });
+      form.setValue("price", null, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [priceVaryCheck])
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -361,7 +369,7 @@ export function DealFormDialog({
                               field.onChange(sanitized === '' ? null : numValue);
                             }
                           }}
-                          disabled={saving}
+                          disabled={saving || priceVaryCheck}
                         />
                       </FormControl>
                       <FormMessage />
@@ -408,7 +416,7 @@ export function DealFormDialog({
                               field.onChange(sanitized === '' ? null : numValue);
                             }
                           }}
-                          disabled={saving}
+                          disabled={saving || priceVaryCheck}
                         />
                       </FormControl>
                       <FormMessage />
