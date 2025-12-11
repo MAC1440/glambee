@@ -331,7 +331,7 @@ export function NewAppointment({
         }],
         startTime: appointmentStart.toISOString(),
         endTime: appointmentEnd.toISOString(),
-        date: appointmentStart.toISOString().split('T')[0],
+        date: format(appointmentStart, 'yyyy-MM-dd'),
         notes: `Appointment for ${preselectedClient.name}`,
         bookingType: undefined,
         bookingApproach: undefined
@@ -420,7 +420,7 @@ export function NewAppointment({
     );
   }
 
-  if(!hasScheduleAccess) {
+  if (!hasScheduleAccess) {
     return (
       <div className="flex flex-col gap-8">
         <UnauthorizedAccess moduleName={scheduleModuleKey} />
