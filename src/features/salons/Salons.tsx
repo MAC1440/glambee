@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { salons as initialSalons, users } from "@/lib/placeholder-data";
+import { users } from "@/lib/placeholder-data";
 import { Building, MapPin, Users, Edit, PlusCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -35,7 +35,7 @@ export type Salon = {
 
 export function Salons() {
   const [user, setUser] = useState<User | null>(null);
-  const [salons, setSalons] = useState<Salon[]>(initialSalons);
+  const [salons, setSalons] = useState<Salon[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [editingSalon, setEditingSalon] = useState<Salon | undefined>(
