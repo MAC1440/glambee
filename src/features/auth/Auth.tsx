@@ -70,7 +70,7 @@ export function Auth() {
     if (salonIdParam) {
       setPreSelectedSalonId(salonIdParam);
       setSelectedSalonId(salonIdParam);
-      
+
       // Pre-fill email if provided
       if (staffEmailParam) {
         setEmail(staffEmailParam);
@@ -240,7 +240,7 @@ export function Auth() {
         session,
         staffRecord,
       };
-      
+
       const passwordUpdated = user.user_metadata?.password_updated;
       if (!passwordUpdated) {
         // Store temp session in component state for use after password update
@@ -267,7 +267,7 @@ export function Auth() {
       // Use salon_id from staffRecord (from database) - this is the source of truth
       // If staffRecord doesn't have salon_id, that's a data issue
       const salonIdFromRecord = staffRecord.salon_id;
-      
+
       if (!salonIdFromRecord) {
         // Staff record exists but has no salon_id - this shouldn't happen but handle gracefully
         setError("Staff account is not associated with a salon. Please contact your administrator.");
@@ -359,7 +359,7 @@ export function Auth() {
             <TabsTrigger value="salon">Login as Business</TabsTrigger>
             <TabsTrigger value="staff">Login as Staff</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="salon" className="mt-0">
             <Card className="w-full bg-black/30 border-green-700/50">
               <CardHeader className="text-center">
@@ -412,14 +412,14 @@ export function Auth() {
               </form>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="staff" className="mt-0">
             <Card className="w-full bg-black/30 border-green-700/50">
               <CardHeader className="text-center">
                 <div className="flex justify-center mb-4">
                   <SalonFlowLogo className="h-12 w-12 text-green-400" src="/partner app store logo.png" />
                 </div>
-                <CardTitle className="text-2xl font-headline text-white-300">Welcome to GlamBee CRM</CardTitle>
+                <CardTitle className="text-2xl font-headline text-white-300">Welcome to GlamBee Software Management System</CardTitle>
                 <CardDescription className="text-white-400/80">
                   Enter your email and password to sign in.
                 </CardDescription>
@@ -437,10 +437,10 @@ export function Auth() {
                       placeholder="example@example.com"
                       className="bg-black/50 border-green-700/50 text-white-200 placeholder:text-white-400/60"
                     />
-                    {!email && 
-                    <p className="text-xs text-white-400/60">
-                      Enter your email address
-                    </p>
+                    {!email &&
+                      <p className="text-xs text-white-400/60">
+                        Enter your email address
+                      </p>
                     }
                   </div>
                   <div className="grid gap-2">
@@ -454,10 +454,10 @@ export function Auth() {
                       placeholder="********"
                       className="bg-black/50 border-green-700/50 text-white-200 placeholder:text-white-400/60"
                     />
-                    {!password && 
-                    <p className="text-xs text-white-400/60">
-                      Enter your password
-                    </p>
+                    {!password &&
+                      <p className="text-xs text-white-400/60">
+                        Enter your password
+                      </p>
                     }
                   </div>
                   {/* Show salon field only if pre-selected from URL (first-time login via email link) */}
@@ -477,7 +477,7 @@ export function Auth() {
                       </p> */}
                     </div>
                   )}
-                  
+
                   {/* Show info message for existing staff logging in without email link */}
                   {!selectedSalonId && (
                     <div className="rounded-md bg-blue-950/50 border border-blue-700/50 p-3">
@@ -534,7 +534,7 @@ export function Auth() {
           onComplete={async () => {
             setShowPasswordModal(false);
             setIsLoading(true);
-            
+
             // After password update, continue with the stored session
             try {
               // Get the stored session from before password update
@@ -556,7 +556,7 @@ export function Auth() {
               // Proceed to dashboard - staffRecord is guaranteed to exist at this point
               // Use salon_id from staffRecord (from database) - this is the source of truth
               const salonIdFromRecord = staffRecord.salon_id;
-              
+
               if (!salonIdFromRecord) {
                 // Staff record exists but has no salon_id - this shouldn't happen but handle gracefully
                 setError("Staff account is not associated with a salon. Please contact your administrator.");

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     if (!process.env.RESEND_API_KEY) {
       console.error("RESEND_API_KEY is not configured in environment variables");
       return NextResponse.json(
-        { 
+        {
           error: "Email service not configured. Please add RESEND_API_KEY to your environment variables.",
           details: "Email was not sent. Check server logs for email content."
         },
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Email template with HTML formatting
     const emailSubject = `Your CRM Access - ${salonOwnerName}`;
-    
+
     // HTML email body
     const htmlBody = `
 <!DOCTYPE html>
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px;">
-    <h2 style="color: #2c3e50; margin-top: 0;">Welcome to GlamBee CRM</h2>
+    <h2 style="color: #2c3e50; margin-top: 0;">Welcome to GlamBee Software Management System</h2>
     
     <p>Hello <strong>${staffName}</strong>,</p>
     
@@ -108,10 +108,10 @@ ${salonOwnerName}
     // We'll use the salon owner's name as display name and set reply-to to their email
     let fromEmail: string;
     let replyTo: string | undefined;
-    
+
     // Sanitize salon owner name for email display
     const displayName = salonOwnerName.replace(/[<>"]/g, '').trim();
-    
+
     if (process.env.RESEND_FROM_EMAIL) {
       // Use verified domain with salon owner's name as display name
       const verifiedEmail = process.env.RESEND_FROM_EMAIL;
@@ -120,26 +120,41 @@ ${salonOwnerName}
       // Fallback to Resend's default (for testing only)
       fromEmail = `${displayName} <onboarding@resend.dev>`;
     }
-    
+
     // Set reply-to to salon owner's email if available
     if (salonOwnerEmail) {
       replyTo = salonOwnerEmail;
     }
 
     // Send email using Resend
-    const emailPayload: any = {
+    let emailPayload: any = {
       from: fromEmail,
       to: [email],
       subject: emailSubject,
       html: htmlBody,
       text: textBody,
     };
-    
+
+    // Dev mode handling or Test Sender handling
+    // Redirect if:
+    // 1. We are in development mode (to avoid spamming real users)
+    // 2. OR we are using the default Resend test email (which RESTRICTS sending to only the verified owner)
+    if (process.env.NODE_ENV === 'development' || fromEmail.includes('onboarding@resend.dev')) {
+      const devRecipient = 'bilal.shahid@invozone.dev';
+      console.log(`[DEV/TEST MODE] Redirecting email from ${email} to ${devRecipient}`);
+
+      emailPayload.to = [devRecipient];
+      emailPayload.subject = `[DEV - Redirected from ${email}] ${emailSubject}`;
+      emailPayload.html = `<div style="background: #ffe4e6; color: #881337; padding: 10px; margin-bottom: 20px; border: 1px solid #f43f5e; border-radius: 4px;">
+        <strong>DEV/TEST MODE:</strong> This email was originally sent to: ${email}
+      </div>` + htmlBody;
+    }
+
     // Add reply-to if salon owner email is available
     if (replyTo) {
       emailPayload.reply_to = replyTo;
     }
-    
+
     const { data, error } = await resend.emails.send(emailPayload);
 
     if (error) {

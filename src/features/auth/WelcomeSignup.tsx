@@ -31,12 +31,12 @@ export function WelcomeSignup() {
   const formatPhoneNumber = (value: string) => {
     // Remove all non-digits
     const digits = value.replace(/\D/g, '');
-    
+
     // If it doesn't start with +, add it
     if (digits && !value.startsWith('+')) {
       return '+' + digits;
     }
-    
+
     return value;
   };
 
@@ -49,7 +49,7 @@ export function WelcomeSignup() {
   const validatePhoneNumber = (phoneNumber: string): boolean => {
     // Remove all non-digits for validation
     const digits = phoneNumber.replace(/\D/g, '');
-    
+
     // Must start with + and have 10-15 digits total
     const phoneRegex = /^\+[1-9]\d{9,14}$/;
     return phoneRegex.test(phoneNumber);
@@ -87,11 +87,11 @@ export function WelcomeSignup() {
     try {
       // Check if user already exists
       const userExists = await checkUserExists(phone);
-      
+
       if (userExists) {
         // User exists - send OTP for verification
         const loginResponse = await AuthService.directLogin(phone);
-        
+
         if (loginResponse.success) {
           toast({
             title: "Welcome Back!",
@@ -147,7 +147,7 @@ export function WelcomeSignup() {
             <SalonFlowLogo className="h-12 w-12 text-golden-400" />
           </div>
           <CardTitle className="text-2xl font-headline text-golden-300">
-            Welcome to SalonFlow
+            Welcome to GlamBee Software Management System
           </CardTitle>
           <CardDescription className="text-golden-400/80">
             Enter your phone number to get started with your beauty journey
@@ -185,8 +185,8 @@ export function WelcomeSignup() {
             )}
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-golden-600 hover:bg-golden-700 text-purple-950"
               disabled={isLoading || !phone}
             >
@@ -202,7 +202,7 @@ export function WelcomeSignup() {
                 </>
               )}
             </Button>
-            
+
             <div className="text-center">
               <p className="text-xs text-golden-400/60">
                 Already have an account? Just enter your phone number above
