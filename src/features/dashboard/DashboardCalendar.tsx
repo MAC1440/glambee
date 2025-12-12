@@ -12,28 +12,35 @@ import type { SlotInfo, View } from 'react-big-calendar';
 import { Views } from 'react-big-calendar';
 import type { StaffWithCategories } from '@/lib/api/staffApi';
 
-export function DashboardCalendar({ 
-  allAppointments, 
+export function DashboardCalendar({
+  allAppointments,
   staff = [],
-  period 
-}: { 
-  allAppointments: ScheduleAppointment[], 
+  period
+}: {
+  allAppointments: ScheduleAppointment[],
   staff?: StaffWithCategories[],
-  period: 'today' | 'week' | 'month' 
+  period: 'today' | 'week' | 'month'
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedAppointments, setSelectedAppointments] = useState<ScheduleAppointment[]>([]);
+  console.log("All appointments in dash: ", allAppointments)
 
   const calendarEvents = useMemo(() => {
     return allAppointments.map((apt) => {
       // Find staff name from the appointment data
-      const staffName = apt.staffId && apt.staffId !== 'unassigned' 
+      const staffName = apt.staffId && apt.staffId !== 'unassigned'
         ? staff.find(s => s.id === apt.staffId)?.name || 'Unknown Staff'
         : 'Unassigned';
-      
+      let title = ''
+      if (apt.service !== 'N/A') {
+        title = `${apt.service} (Service)`
+      } else {
+        title = `${apt.deal} (Deal)`
+      }
+
       return {
-        title: `${apt.service} - ${apt.customerName} - ${staffName}`,
+        title: `${title} - ${apt.customerName} - ${staffName}`,
         start: apt.start,
         end: apt.end,
         resource: apt,
@@ -50,20 +57,20 @@ export function DashboardCalendar({
       setIsModalOpen(true);
     }
   };
-  
+
   const calendarView = useMemo(() => {
-      switch(period) {
-          case 'today': return Views.DAY;
-          case 'week': return Views.WEEK;
-          case 'month': return Views.MONTH;
-          default: return Views.MONTH;
-      }
+    switch (period) {
+      case 'today': return Views.DAY;
+      case 'week': return Views.WEEK;
+      case 'month': return Views.MONTH;
+      default: return Views.MONTH;
+    }
   }, [period]);
 
   return (
     <>
-      <CalendarView 
-        events={calendarEvents} 
+      <CalendarView
+        events={calendarEvents}
         view={calendarView}
         onSelectSlot={handleDateClick}
         onDrillDown={handleDateClick}
@@ -92,11 +99,11 @@ export function DashboardCalendar({
                     <TableRow key={apt.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
+                          <Avatar className="h-9 w-9">
                             <AvatarImage src={apt.customerAvatar} alt="Avatar" />
                             <AvatarFallback>{apt.customerName.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="font-medium">{apt.customerName}</div>
+                          </Avatar>
+                          <div className="font-medium">{apt.customerName}</div>
                         </div>
                       </TableCell>
                       <TableCell>{apt.service}</TableCell>

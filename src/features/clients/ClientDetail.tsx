@@ -90,7 +90,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           }
         }
       }
-      
+
       // Check if appointment has deals
       if (appointment.deals && appointment.deals.length > 0) {
         // Get staff for all deals and combine them (union)
@@ -712,7 +712,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         );
       },
-      cell: ({ row }) => <div className="text-right pr-10">${row.original.amount.toFixed(2)}</div>,
+      cell: ({ row }) => <div className="text-right pr-10">PKR {row.original.amount.toFixed(2)}</div>,
     },
   ];
 
@@ -736,7 +736,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             >
               <CaretSortIcon className="h-4 w-4" />
             </Button>
-            </div>
+          </div>
         );
       },
       cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
@@ -747,7 +747,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         return (
           <div className="flex items-center">
             <span>Times Booked</span>
-          <Button
+            <Button
               variant="ghost"
               onClick={() => {
                 // Get current sort state
@@ -784,7 +784,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         );
       },
-      cell: ({ row }) => <div className="text-right pr-12">${row.original.total.toFixed(2)}</div>,
+      cell: ({ row }) => <div className="text-right pr-12">PKR {row.original.total.toFixed(2)}</div>,
     },
   ];
 
@@ -856,7 +856,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         );
       },
-      cell: ({ row }) => <div className="text-right pr-12">${row.original.total.toFixed(2)}</div>,
+      cell: ({ row }) => <div className="text-right pr-12">PKR {row.original.total.toFixed(2)}</div>,
     },
   ];
 
@@ -886,9 +886,9 @@ export function ClientDetail({ clientId }: { clientId: string }) {
               </Button>
             )}
             {hasScheduleAccess && (
-            <Button asChild>
-              <Link href={`/appointments?clientId=${client?.id}`}>
-                <CalendarPlus className="mr-2 h-4 w-4" />
+              <Button asChild>
+                <Link href={`/appointments?clientId=${client?.id}`}>
+                  <CalendarPlus className="mr-2 h-4 w-4" />
                   Book Appointment
                 </Link>
               </Button>

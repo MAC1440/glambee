@@ -146,16 +146,31 @@ export class AppointmentsApi {
             // Transform data to include customer details from users table
             const appointmentsWithDetails: AppointmentWithDetails[] = [];
 
+            // Batch fetch user details
+            const authIds = appointments
+                ?.map(apt => apt.customer?.auth_id)
+                .filter((id): id is string => !!id) || [];
+
+            const uniqueAuthIds = [...new Set(authIds)];
+            const userMap = new Map();
+
+            if (uniqueAuthIds.length > 0) {
+                const { data: users, error: usersError } = await supabase
+                    .from('users')
+                    .select('id, email, phone_number, fullname, avatar')
+                    .in('id', uniqueAuthIds);
+
+                if (!usersError && users) {
+                    users.forEach(user => userMap.set(user.id, user));
+                }
+            }
+
             for (const appointment of appointments || []) {
                 let customerDetails = null;
 
-                // Fetch customer details from users table if customer exists
+                // lookup customer details from the map
                 if (appointment.customer?.auth_id) {
-                    const { data: userData } = await supabase
-                        .from('users')
-                        .select('id, email, phone_number, fullname, avatar')
-                        .eq('id', appointment.customer.auth_id)
-                        .single();
+                    const userData = userMap.get(appointment.customer.auth_id);
 
                     if (userData) {
                         customerDetails = {
@@ -392,7 +407,7 @@ export class AppointmentsApi {
 
             // Create appointment services
             const appointmentServices = appointmentData.services.map(service => {
-                if(service.category === 'Service') {
+                if (service.category === 'Service') {
                     return ({
                         appointment_id: appointment.id,
                         service_id: service.serviceId,

@@ -276,7 +276,7 @@ export class ClientsApi {
       // Step 3: Create auth user with email (phone signups are disabled)
       // Use email for signup and generate a temporary password
       const tempPassword = formData.phone || `temp_${Date.now()}`;
-      
+
       const result = await supabase.auth
         .signUp({
           email: formData.email,
@@ -565,11 +565,11 @@ export class ClientsApi {
       let query = supabase
         .from('customers')
         .select('id, activity_status, is_test_user, created_at');
-      
+
       if (salonId) {
         query = query.eq('salon_id', salonId);
       }
-      
+
       const { data: customers, error } = await query;
 
       if (error) {
@@ -601,6 +601,23 @@ export class ClientsApi {
    */
   static async searchCustomers(searchTerm: string, salonId?: string): Promise<ClientWithDetails[]> {
     try {
+      // Check if search term looks like a phone number (contains digits)
+      const hasDigits = /\d/.test(searchTerm);
+      let userIds: string[] = [];
+
+      // If it looks like a phone number, search users table first
+      if (hasDigits) {
+        const { data: users, error: usersError } = await supabase
+          .from('users')
+          .select('id')
+          .ilike('phone_number', `%${searchTerm}%`)
+          .limit(20);
+
+        if (!usersError && users) {
+          userIds = users.map(u => u.id);
+        }
+      }
+
       let query = supabase
         .from('customers')
         .select(`
@@ -612,16 +629,28 @@ export class ClientsApi {
             bill,
             created_at
           )
-        `)
-        .ilike('customer_name', `%${searchTerm}%`);
-      
+        `);
+
+      // If we found users by phone, search by auth_id OR name
+      if (userIds.length > 0) {
+        // We use 'or' to match either auth_id (phone match) or name (name match)
+        // Syntax: auth_id.in.(ids),name.ilike.%term%
+        const userIdsString = `(${userIds.join(',')})`;
+        query = query.or(`auth_id.in.${userIdsString},name.ilike.%${searchTerm}%`);
+      } else {
+        // Just search by name if no phone match or no digits
+        // Use 'name' instead of 'customer_name' as per schema
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
+
       if (salonId) {
         query = query.eq('salon_id', salonId);
       }
-      
-      const { data: customers, error } = await query.limit(10);
+
+      const { data: customers, error } = await query.limit(20);
 
       if (error) {
+        // If 'name' column fails, try 'customer_name' as fallback or just log error
         console.error('Error searching customers:', error);
         throw error;
       }

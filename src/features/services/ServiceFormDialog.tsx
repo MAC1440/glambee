@@ -46,15 +46,15 @@ type ServiceFormDialogProps = {
 const formSchema = z.object({
   id: z.string().optional(),
   name: z.string()
-    .min(2, "Name must be at least 2 characters." )
-    .max(50, "Name must be less than 50 characters." )
+    .min(2, "Name must be at least 2 characters.")
+    .max(50, "Name must be less than 50 characters.")
     .refine((val) => val.trim().length > 0, {
       message: "Name cannot be only whitespace."
     })
     .refine((val) => !val.startsWith(' ') && !val.endsWith(' '), {
       message: "Name cannot start or end with spaces."
     }),
-  price: z.coerce.number().int().max(999999, "Starting from cannot exceed $999,999.").positive("Value must be greater than zero."),
+  price: z.coerce.number().int().max(999999, "Starting from cannot exceed PKR 999,999.").positive("Value must be greater than zero."),
   time: z.string()
     .min(1, "Duration is required.")
     .refine((val) => {
@@ -72,7 +72,7 @@ const formSchema = z.object({
   category_id: z.string().min(1, "Category is required."),
   gender: z.string().min(1, "Gender is required."),
   has_range: z.boolean().optional().default(false),
-  starting_from: z.coerce.number().int().max(999999, "Starting from cannot exceed $999,999.").positive("Starting from must be greater than zero.").optional().nullable(),
+  starting_from: z.coerce.number().int().max(999999, "Starting from cannot exceed PKR 999,999.").positive("Starting from must be greater than zero.").optional().nullable(),
 }).refine((data) => {
   // If has_range is true, starting_from must be provided
   if (data.has_range && (!data.starting_from || data.starting_from <= 0)) {
@@ -182,16 +182,16 @@ export function ServiceFormDialog({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="e.g., Signature Haircut" 
-                  {...field} 
-                  disabled={saving} 
+                <Input
+                  placeholder="e.g., Signature Haircut"
+                  {...field}
+                  disabled={saving}
                   onChange={(e) => {
                     const value = e.target.value;
                     // Always call field.onChange to update form state
                     // Truncate to 50 characters if exceeded
                     field.onChange(value.length > 50 ? value.slice(0, 50) : value);
-                  }} 
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -279,7 +279,7 @@ export function ServiceFormDialog({
           name="starting_from"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Starting From ($)</FormLabel>
+              <FormLabel>Starting From (PKR)</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -330,7 +330,7 @@ export function ServiceFormDialog({
         name="price"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{isConsultation ? "Consultation Fee ($)" : "Price ($)"}</FormLabel>
+            <FormLabel>{isConsultation ? "Consultation Fee (PKR)" : "Price (PKR)"}</FormLabel>
             <FormControl>
               <Input
                 type="number"

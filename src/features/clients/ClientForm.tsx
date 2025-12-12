@@ -51,9 +51,9 @@ const formSchema = z.object({
     }),
   email: z.string().email({ message: "Please enter a valid email address." }),
   phone: z.string()
-    .min(10, { message: "Phone number must be at least 10 digits." })
-    .max(15, { message: "Phone number can't be longer than 15 digits." })
-    .regex(/^\+[0-9]+$/, { message: "Phone number must start with + and contain only numbers." }),
+    .regex(/^\+92[0-9]{10,13}$/, {
+      message: "Phone number must start with +92 followed by 10 to 13 digits (e.g., +923001234567)."
+    }),
   gender: z.string({ required_error: "Please select a gender." }),
   // dob: z.date({
   //   required_error: "A date of birth is required.",
@@ -71,30 +71,30 @@ type ClientFormProps = {
 
 export function ClientForm({ client, onSave, onCancel, isLoading = false }: ClientFormProps) {
   const { toast } = useToast();
-  
+
   const form = useForm<ClientFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: client?.name || "",
       email: client?.email || "",
-      phone: client?.phone_number?.startsWith('+') ? client.phone_number : `+${client?.phone_number || ''}`,
+      phone: client?.phone_number || '+92',
       gender: client?.gender || undefined,
       // dob: client?.dob ? new Date(client.dob) : undefined,
     },
   });
 
   const onSubmit = async (values: ClientFormData) => {
-      // If nothing changed, do nothing (no API call, no toast) and close dialog
-      if (!form.formState.isDirty) {
-        onCancel();
-        return;
-      }
+    // If nothing changed, do nothing (no API call, no toast) and close dialog
+    if (!form.formState.isDirty) {
+      onCancel();
+      return;
+    }
 
-      const formData = {
-        ...values,
-        // dob: values.dob.toISOString().split('T')[0]
-      };
-      onSave(formData);
+    const formData = {
+      ...values,
+      // dob: values.dob.toISOString().split('T')[0]
+    };
+    onSave(formData);
   };
   // const onSubmit = async (values: ClientFormData) => {
   //   setIsLoading(true);
@@ -106,7 +106,7 @@ export function ClientForm({ client, onSave, onCancel, isLoading = false }: Clie
   //     };
 
   //     const newClient = await ClientsApi.createCustomerFromForm(formData);
-      
+
   //     toast({
   //       title: "Client Created",
   //       description: `${values.name} has been successfully added.`,
@@ -117,10 +117,10 @@ export function ClientForm({ client, onSave, onCancel, isLoading = false }: Clie
   //     onSave(formData);
   //   } catch (error: any) {
   //     console.error('Error creating client:', error);
-      
+
   //     // Handle specific error messages
   //     let errorMessage = "Failed to create client. Please try again.";
-      
+
   //     if (error.message?.includes('duplicate key')) {
   //       errorMessage = "A client with this phone number already exists.";
   //     } else if (error.message?.includes('signup')) {
@@ -128,7 +128,7 @@ export function ClientForm({ client, onSave, onCancel, isLoading = false }: Clie
   //     } else if (error.message) {
   //       errorMessage = error.message;
   //     }
-      
+
   //     toast({
   //       title: "Error",
   //       description: errorMessage,
@@ -177,32 +177,33 @@ export function ClientForm({ client, onSave, onCancel, isLoading = false }: Clie
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none">
-                      +
-                    </span>
-                    <Input 
-                      type="tel" 
-                      placeholder="1 (555) 123-4567" 
-                      className="pl-8"
+                    {/* Fixed +92 badge */}
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-muted px-2 py-0.5 rounded text-sm text-muted-foreground pointer-events-none">
+                      +92
+                    </div>
+                    <Input
+                      type="tel"
+                      placeholder="300 1234567"
+                      className="pl-16"
                       inputMode="numeric"
                       pattern="[0-9]*"
-                      value={field.value?.replace('+', '') || ''}
+                      value={field.value?.replace('+92', '') || ''}
                       onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9]/g, '');
-                        field.onChange('+' + value);
+                        const digitsOnly = e.target.value.replace(/[^0-9]/g, '');
+                        // Enforce max 13 digits after +92
+                        if (digitsOnly.length <= 13) {
+                          field.onChange('+92' + digitsOnly);
+                        }
                       }}
                       onKeyDown={(e) => {
-                        // Allow: backspace, delete, tab, escape, enter, home, end, left, right
-                        if ([8, 9, 27, 13, 46, 35, 36, 37, 39].indexOf(e.keyCode) !== -1 ||
-                            // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-                            (e.keyCode === 65 && e.ctrlKey === true) ||
-                            (e.keyCode === 67 && e.ctrlKey === true) ||
-                            (e.keyCode === 86 && e.ctrlKey === true) ||
-                            (e.keyCode === 88 && e.ctrlKey === true)) {
+                        // Allow navigation/editing keys
+                        if ([8, 9, 27, 13, 46, 35, 36, 37, 39].includes(e.keyCode) ||
+                          (e.ctrlKey && [65, 67, 86, 88].includes(e.keyCode))) {
                           return;
                         }
-                        // Ensure that it is a number and stop the keypress
-                        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                        // Block non-digit keys
+                        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) &&
+                          (e.keyCode < 96 || e.keyCode > 105)) {
                           e.preventDefault();
                         }
                       }}

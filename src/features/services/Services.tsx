@@ -118,11 +118,11 @@ const ServiceCard = ({
     <CardContent className="flex-grow flex items-end justify-start">
       <div className="flex items-center gap-2">
         <p className="text-2xl font-bold text-primary">
-          ${service.price}
+          PKR {service.price}
         </p>
         {service.starting_from && (
           <p className="text-lg text-muted-foreground">
-            Starting from ${service.starting_from}
+            Starting from PKR {service.starting_from}
           </p>
         )}
       </div>
@@ -142,7 +142,7 @@ export function Services() {
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  
+
   // Dialog states
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
@@ -164,9 +164,9 @@ export function Services() {
         setServices(response.data);
       } catch (e) {
         console.error("Error fetching services:", e);
-        toast({ 
-          title: "Error", 
-          description: "Failed to fetch services. Please try again." 
+        toast({
+          title: "Error",
+          description: "Failed to fetch services. Please try again."
         });
       } finally {
         setIsLoading(false);
@@ -227,9 +227,9 @@ export function Services() {
       }
     } catch (error) {
       console.error("Error saving service:", error);
-      toast({ 
-        title: "Error", 
-        description: `Failed to ${dialogMode === 'add' ? 'create' : 'update'} service.` 
+      toast({
+        title: "Error",
+        description: `Failed to ${dialogMode === 'add' ? 'create' : 'update'} service.`
       });
     }
   };
@@ -242,9 +242,9 @@ export function Services() {
       toast({ title: "Deleted", description: `${serviceName} has been removed.` });
     } catch (error) {
       console.error("Error deleting service:", error);
-      toast({ 
-        title: "Error", 
-        description: "Failed to delete service. Please try again." 
+      toast({
+        title: "Error",
+        description: "Failed to delete service. Please try again."
       });
     }
   };

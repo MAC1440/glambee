@@ -7,7 +7,7 @@ interface QuickActionsProps {
   canCreateSchedule: boolean;
   canUpdateSchedule: boolean;
 }
-export function QuickActions({canCreateSchedule, canUpdateSchedule}: QuickActionsProps) {
+export function QuickActions({ canCreateSchedule, canUpdateSchedule }: QuickActionsProps) {
   return (
     <>
       <CardHeader>
@@ -18,7 +18,7 @@ export function QuickActions({canCreateSchedule, canUpdateSchedule}: QuickAction
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button style={{cursor: 'not-allowed', opacity: 0.7}}>
+                <Button style={{ cursor: 'not-allowed', opacity: 0.7 }}>
                   Book New Appointment
                 </Button>
               </TooltipTrigger>
@@ -34,6 +34,9 @@ export function QuickActions({canCreateSchedule, canUpdateSchedule}: QuickAction
         )}
         <Button asChild>
           <Link href="/services">Manage Services</Link>
+        </Button>
+        <Button asChild>
+          <Link href="/deals">Manage Deals</Link>
         </Button>
         <Button asChild>
           <Link href="/staff/schedule">View Schedule</Link>

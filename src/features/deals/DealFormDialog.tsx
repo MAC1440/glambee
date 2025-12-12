@@ -36,10 +36,10 @@ function parseLocalDateTime(dateTimeString: string): Date | null {
   if (!dateTimeString) return null;
   const [datePart, timePart] = dateTimeString.split('T');
   if (!datePart || !timePart) return null;
-  
+
   const [year, month, day] = datePart.split('-').map(Number);
   const [hours, minutes] = timePart.split(':').map(Number);
-  
+
   // Months are 0-indexed in JS Date
   return new Date(year, month - 1, day, hours, minutes);
 }
@@ -60,13 +60,13 @@ const formSchema = z.object({
   price: z.preprocess(emptyToNull,
     z.number({ invalid_type_error: "Price must be a number." })
       .positive("Price must be greater than zero.")
-      .max(999999.99, "Price must be less than $1,000,000.")
+      .max(999999.99, "Price must be less than PKR 1,000,000.")
       .nullable()
   ),
   discounted_price: z.preprocess(emptyToNull,
     z.number({ invalid_type_error: "Discounted price must be a number." })
       .positive("Discounted price must be greater than zero.")
-      .max(999999.99, "Discounted price must be less than $1,000,000.")
+      .max(999999.99, "Discounted price must be less than PKR 1,000,000.")
       .nullable()
   ),
   prices_may_vary: z.boolean().default(false),
@@ -78,7 +78,7 @@ const formSchema = z.object({
   ),
   dealpopup: z.preprocess(emptyToNull, z.boolean().default(false)),
   popup_title: z.preprocess(emptyToNull, z.string().nullable()),
-      popup_color: z.preprocess(
+  popup_color: z.preprocess(
     (val) => {
       if (!val || val === "") return null;
       const validColors = ["#FFCCCC", "#CCFFCC", "#CCE5FF", "#FFE5CC", "#FFCCE5"];
@@ -172,7 +172,7 @@ export function DealFormDialog({
       media_url: deal?.media_url || "",
       dealpopup: deal?.dealpopup || false,
       popup_title: deal?.popup_title || "",
-      popup_color: (deal?.popup_color && ["#FFCCCC", "#CCFFCC", "#CCE5FF", "#FFE5CC", "#FFCCE5"].includes(deal.popup_color)) 
+      popup_color: (deal?.popup_color && ["#FFCCCC", "#CCFFCC", "#CCE5FF", "#FFE5CC", "#FFCCE5"].includes(deal.popup_color))
         ? (deal.popup_color as "#FFCCCC" | "#CCFFCC" | "#CCE5FF" | "#FFE5CC" | "#FFCCE5")
         : null,
       popup_template: (deal?.popup_template && ["Bell Icon", "Coupon"].includes(deal.popup_template))
@@ -185,7 +185,7 @@ export function DealFormDialog({
     if (isOpen) {
       const validColors = ["#FFCCCC", "#CCFFCC", "#CCE5FF", "#FFE5CC", "#FFCCE5"] as const;
       const validTemplates = ["Bell Icon", "Coupon"] as const;
-      
+
       form.reset({
         title: deal?.title || "",
         price: deal?.price || null,
@@ -196,7 +196,7 @@ export function DealFormDialog({
         media_url: deal?.media_url || "",
         dealpopup: deal?.dealpopup || false,
         popup_title: deal?.popup_title || "",
-        popup_color: (deal?.popup_color && validColors.includes(deal.popup_color as any)) 
+        popup_color: (deal?.popup_color && validColors.includes(deal.popup_color as any))
           ? (deal.popup_color as typeof validColors[number])
           : null,
         popup_template: (deal?.popup_template && validTemplates.includes(deal.popup_template as any))
@@ -212,7 +212,7 @@ export function DealFormDialog({
   const priceVaryCheck = form.watch('prices_may_vary')
 
   useEffect(() => {
-    if(!priceVaryCheck) {
+    if (!priceVaryCheck) {
       form.setValue("discounted_price", null, { shouldValidate: true, shouldDirty: true });
       form.setValue("price", null, { shouldValidate: true, shouldDirty: true });
     }
@@ -242,7 +242,7 @@ export function DealFormDialog({
       }
 
       setImageFile(file);
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -335,7 +335,7 @@ export function DealFormDialog({
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Original Price ($)</FormLabel>
+                      <FormLabel>Original Price (PKR)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -382,7 +382,7 @@ export function DealFormDialog({
                   name="discounted_price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Discounted Price ($)</FormLabel>
+                      <FormLabel>Discounted Price (PKR)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -425,7 +425,7 @@ export function DealFormDialog({
                 />
               </div>
 
-                <FormField
+              <FormField
                 control={form.control}
                 name="prices_may_vary"
                 render={({ field }) => (
@@ -650,7 +650,7 @@ export function DealFormDialog({
               {form.watch("dealpopup") && (
                 <div className="space-y-4 p-4 border rounded-md bg-muted/50">
                   <h4 className="text-sm font-medium">Popup Settings</h4>
-                  
+
                   <FormField
                     control={form.control}
                     name="popup_title"
@@ -658,11 +658,11 @@ export function DealFormDialog({
                       <FormItem>
                         <FormLabel>Popup Title</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="Special Offer!" 
-                            {...field} 
+                          <Input
+                            placeholder="Special Offer!"
+                            {...field}
                             value={field.value || ''}
-                            disabled={saving} 
+                            disabled={saving}
                           />
                         </FormControl>
                         <FormMessage />
@@ -708,7 +708,7 @@ export function DealFormDialog({
                           { value: "#FFE5CC", label: "Light Orange" },
                           { value: "#FFCCE5", label: "Light Pink" },
                         ];
-                        
+
                         return (
                           <FormItem>
                             <FormLabel>Popup Color</FormLabel>

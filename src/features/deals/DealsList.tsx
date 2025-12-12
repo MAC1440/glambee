@@ -76,10 +76,10 @@ export function DealsList() {
   const dealsModuleKey = "deals" as const;
   const isPopUpEnabledInAnyDeal = deals.some((item) => item?.dealpopup)
   // console.log("Is popup enable already: ", isPopUpEnabledInAnyDeal)
-  
+
   // State to track if user has access (with async permission loading)
   const [hasAccess, setHasAccess] = React.useState<boolean | null>(null);
-  
+
   // Check if user has access to deals module (with async permission fetch if needed)
   // s, [dealsModuleKey, hasModuleAccess]);
 
@@ -112,7 +112,7 @@ export function DealsList() {
     // Apply search filter
     if (searchQuery && searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(deal => 
+      filtered = filtered.filter(deal =>
         deal.title.toLowerCase().includes(query) ||
         (deal.popup_title && deal.popup_title.toLowerCase().includes(query)) ||
         deal.price?.toString().includes(query) ||
@@ -180,7 +180,7 @@ export function DealsList() {
       setSaving(true);
 
       if (dialogMode === "add") {
-        const savedDeal = await DealsApi.createDeal({...dealData, salon_id: JSON.parse(sessionData || '').salonId});
+        const savedDeal = await DealsApi.createDeal({ ...dealData, salon_id: JSON.parse(sessionData || '').salonId });
         setDeals((prev) => [savedDeal, ...prev]);
         toast({
           title: "✅ Deal Added",
@@ -212,9 +212,8 @@ export function DealsList() {
       console.error("💥 Error saving deal:", err);
       toast({
         title: "Error",
-        description: `Failed to ${
-          dialogMode === "add" ? "create" : "update"
-        } deal. Please try again.`,
+        description: `Failed to ${dialogMode === "add" ? "create" : "update"
+          } deal. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -331,7 +330,7 @@ export function DealsList() {
         const amount = parseFloat(row.getValue("price"));
         const formatted = amount ? new Intl.NumberFormat("en-US", {
           style: "currency",
-          currency: "USD",
+          currency: "PKR",
         }).format(amount) : 'N/A';
         return <div className="font-medium pr-4">{formatted}</div>;
       },
@@ -355,7 +354,7 @@ export function DealsList() {
         const amount = parseFloat(row.getValue("discounted_price"));
         const formatted = amount ? new Intl.NumberFormat("en-US", {
           style: "currency",
-          currency: "USD",
+          currency: "PKR",
         }).format(amount) : 'N/A';
         return <div className="font-medium pr-4">{formatted}</div>;
       },
@@ -517,7 +516,7 @@ export function DealsList() {
   //     </div>
   //   );
   // }
-  
+
   // if (hasAccess === false) {
   //   return <UnauthorizedAccess moduleName="Deals" />;
   // }
@@ -569,7 +568,7 @@ export function DealsList() {
   }
 
   return (
-    <> 
+    <>
       <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
           <div className="text-left">
@@ -621,7 +620,7 @@ export function DealsList() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setDeleteDialogOpen(false);
                 setDealToDelete(null);

@@ -15,19 +15,23 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 
-type Customer = (typeof mockCustomers)[0];
+// type Customer = (typeof mockCustomers)[0];
 
 export function GlobalClientSearch() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Customer[]>([]);
+  const [results, setResults] = useState<[]>([]);
+  console.log("Results global filter: ", results)
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const getSession = localStorage.getItem("session")
+  const sessionData = getSession ? JSON.parse(getSession) : null;
+  console.log("Session data fetched: ", sessionData)
 
   useEffect(() => {
     if (query.length > 0) {
-      const filteredCustomers = mockCustomers.filter((customer) =>
-        customer.phone.includes(query)
+      const filteredCustomers = sessionData?.clients?.filter((customer: any) =>
+        customer.phone_number.includes(query)
       );
       setResults(filteredCustomers);
       setIsOpen(true);
@@ -36,7 +40,7 @@ export function GlobalClientSearch() {
       setIsOpen(false);
     }
   }, [query]);
-  
+
   const handleSelectClient = () => {
     setQuery("");
     setResults([]);
@@ -58,15 +62,15 @@ export function GlobalClientSearch() {
               onChange={(e) => setQuery(e.target.value)}
             />
             {query && (
-                <Button
-                    size="icon"
-                    variant="ghost"
-                    className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    onClick={() => setQuery('')}
-                    aria-label="Clear search"
-                >
-                    <X className="h-4 w-4" />
-                </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setQuery('')}
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             )}
           </div>
         </PopoverTrigger>
@@ -77,10 +81,10 @@ export function GlobalClientSearch() {
         >
           <div className="flex flex-col space-y-1 p-2">
             {results.length > 0 ? (
-              results.map((customer) => (
+              results.map((customer: any) => (
                 <Link
                   key={customer.id}
-                  href={`/clients/${encodeURIComponent(customer.email)}`}
+                  href={`/clients/${customer.id}`}
                   className="flex items-center gap-3 rounded-md p-2 hover:bg-accent"
                   onClick={handleSelectClient}
                 >
@@ -89,12 +93,12 @@ export function GlobalClientSearch() {
                       src={`https://picsum.photos/seed/${customer.name}/100`}
                       alt={customer.name}
                     />
-                    <AvatarFallback>{customer.name[0]}</AvatarFallback>
+                    <AvatarFallback>{customer.name}</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium text-sm">{customer.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {customer.phone}
+                      {customer.phone_number}
                     </p>
                   </div>
                 </Link>

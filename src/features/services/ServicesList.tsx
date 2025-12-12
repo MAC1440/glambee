@@ -80,12 +80,12 @@ export function ServicesList() {
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [categoryFilter, setCategoryFilter] = React.useState<string>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
-  
+
   // Ref for the DataTable to access TanStack table instance
   const tableRef = React.useRef<any>(null);
   const sessionData = localStorage.getItem("session");
   console.log("Session data: ", JSON.parse(sessionData || ''))
-  
+
   // Get permissions for services module
   const { canCreate, canUpdate, canDelete, canRead, hasModuleAccess } = usePermissions();
   const servicesModuleKey = "services" as const;
@@ -113,7 +113,7 @@ export function ServicesList() {
       setLoading(true);
       setError(null);
 
-      const response = await ServicesApi.getServices({salonId: JSON.parse(sessionData || '').salonId});
+      const response = await ServicesApi.getServices({ salonId: JSON.parse(sessionData || '').salonId });
 
       setServices(response.data || []);
     } catch (err) {
@@ -136,7 +136,7 @@ export function ServicesList() {
     // Apply search filter
     if (searchQuery && searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(service => 
+      filtered = filtered.filter(service =>
         service.name.toLowerCase().includes(query) ||
         service.time.toLowerCase().includes(query) ||
         service.price.toString().includes(query)
@@ -194,14 +194,14 @@ export function ServicesList() {
         });
 
         setServices((prev) => [savedService, ...prev]);
-      toast({
-        title: "Service Added",
-        description: `${savedService.name} has been successfully created.`,
-        style: {
-          backgroundColor: "lightgreen",
-          color: "black",
-        }
-      });
+        toast({
+          title: "Service Added",
+          description: `${savedService.name} has been successfully created.`,
+          style: {
+            backgroundColor: "lightgreen",
+            color: "black",
+          }
+        });
       } else if (editingService) {
         const savedService = await ServicesApi.updateService(editingService.id, {
           name: serviceData.name,
@@ -231,9 +231,8 @@ export function ServicesList() {
       console.error("💥 Error saving service:", err);
       toast({
         title: "Error",
-        description: `Failed to ${
-          dialogMode === "add" ? "create" : "update"
-        } service. Please try again.`,
+        description: `Failed to ${dialogMode === "add" ? "create" : "update"
+          } service. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -282,8 +281,8 @@ export function ServicesList() {
         return (
           <div className="flex items-center">
             <span>Name</span>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => {
                 const currentSort = column.getIsSorted();
                 column.toggleSorting(currentSort === "asc");
@@ -310,8 +309,8 @@ export function ServicesList() {
         return (
           <div className="flex items-center">
             <span>Duration</span>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => {
                 const currentSort = column.getIsSorted();
                 column.toggleSorting(currentSort === "asc");
@@ -335,8 +334,8 @@ export function ServicesList() {
         return (
           <div className="flex items-center">
             <span>Starting From</span>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => {
                 const currentSort = column.getIsSorted();
                 column.toggleSorting(currentSort === "asc");
@@ -353,7 +352,7 @@ export function ServicesList() {
           style: "currency",
           currency: "USD",
         }).format(amount)
-        : 'N/A'
+          : 'N/A'
 
         return <div className="font-medium pr-4">{formatted}</div>;
       },
@@ -364,8 +363,8 @@ export function ServicesList() {
         return (
           <div className="flex items-center">
             <span>Price</span>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => {
                 const currentSort = column.getIsSorted();
                 column.toggleSorting(currentSort === "asc");
@@ -380,7 +379,7 @@ export function ServicesList() {
         const amount = parseFloat(row.getValue("price"));
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
-          currency: "USD",
+          currency: "PKR",
         }).format(amount);
 
         return <div className="font-medium pr-4">{formatted}</div>;
@@ -392,8 +391,8 @@ export function ServicesList() {
         return (
           <div className="flex items-center">
             <span>Category</span>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => {
                 const currentSort = column.getIsSorted();
                 column.toggleSorting(currentSort === "asc");
@@ -425,8 +424,8 @@ export function ServicesList() {
         return (
           <div className="flex items-center">
             <span>Discount</span>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => {
                 const currentSort = column.getIsSorted();
                 column.toggleSorting(currentSort === "asc");
@@ -453,8 +452,8 @@ export function ServicesList() {
         return (
           <div className="flex items-center">
             <span>Gender</span>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => {
                 const currentSort = column.getIsSorted();
                 column.toggleSorting(currentSort === "asc");
@@ -570,7 +569,7 @@ export function ServicesList() {
   }
 
   return (
-    <> 
+    <>
       <div className="flex flex-col gap-8">
         <div className="flex items-center justify-between">
           <div className="text-left">

@@ -134,7 +134,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
   // Show if user has ANY of these permissions:
   // - Can update clients (for Payment button)
   // - Can create/update schedule (for Book button)
-  const shouldShowActionsColumn = 
+  const shouldShowActionsColumn =
     canUpdate(clientsModuleKey) ||
     (canCreateSchedule || canUpdateSchedule);
 
@@ -294,7 +294,7 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
       },
       cell: ({ row }) => {
         const totalSpent = row.getValue("totalSpent") as number;
-        return <div className="text-center">${totalSpent?.toFixed(2)}</div>;
+        return <div className="text-center">PKR {totalSpent?.toFixed(2)}</div>;
       },
     },
     // Conditionally include Actions column based on permissions
@@ -336,9 +336,9 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                   </Button>
                 )}
                 {(canCreateSchedule || canUpdateSchedule) && (
-                <Button asChild variant="default" size="sm">
-                  <Link href={`/appointments?clientId=${client?.id}`}>
-                    <CalendarPlus className="mr-2 h-4 w-4" />
+                  <Button asChild variant="default" size="sm">
+                    <Link href={`/appointments?clientId=${client?.id}`}>
+                      <CalendarPlus className="mr-2 h-4 w-4" />
                       Book
                     </Link>
                   </Button>

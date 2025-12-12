@@ -315,7 +315,7 @@ export function Dashboard() {
               <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+              <div className="text-2xl font-bold">PKR {totalRevenue.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
                 Total revenue from all appointments
               </p>
@@ -385,7 +385,7 @@ export function Dashboard() {
           <CardContent>
             <RevenueChart appointments={convertedFilteredAppointments} period={period} />
             <div className="mt-4 text-sm text-muted-foreground">
-              Period Revenue: ${periodRevenue.toFixed(2)} | Total Revenue: ${totalRevenue.toFixed(2)}
+              Period Revenue: PKR {periodRevenue.toFixed(2)} | Total Revenue: PKR {totalRevenue.toFixed(2)}
             </div>
           </CardContent>
         </Card>
