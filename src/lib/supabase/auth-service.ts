@@ -461,7 +461,7 @@ export class AuthService {
       // If no salon then error should be there like no salon associated against this user and this user is not an owner of any salon
       if (salonData) {
         const salonClients = await ClientsApi.getCustomers({ salonId: salonData.id });
-        const clients = salonClients?.data?.length > 0 ? salonClients?.data?.map((client) => {
+        const clients = salonClients?.data?.length > 0 ? salonClients?.data?.map((client: any) => {
           return {
             id: client.id,
             name: client.name,
@@ -554,7 +554,7 @@ export class AuthService {
       console.log("Staff clients permitted: ", staffClientsPermitted)
 
       let clients: any = [];
-      if (staffClientsPermitted && staffClientsPermitted?.clients?.read) {
+      if (staffRecord?.salon_id && staffClientsPermitted && staffClientsPermitted?.clients?.read) {
         const { data: clientsData } = await ClientsApi.getCustomers({ salonId: staffRecord?.salon_id });
         console.log("Clients in if...: ", clientsData)
         clients = clientsData;
