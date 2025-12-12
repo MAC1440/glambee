@@ -7,11 +7,11 @@ type User = Database['public']['Tables']['users']['Row'];
 type Customer = Database['public']['Tables']['customers']['Row'];
 type Salon = Database['public']['Tables']['salons']['Row'];
 
-interface SessionClients {
-  id: string;
-  name: string | null;
-  phone_number: string | null;
-}
+// interface SessionClients {
+//   id: string;
+//   name: string | null;
+//   phone_number: string | null;
+// }
 export interface AuthUser {
   id: string;
   email: string | null;
@@ -22,7 +22,7 @@ export interface AuthUser {
   created_at: string;
   updated_at: string;
   salon?: Salon | null;
-  clients?: SessionClients[] | [];
+  // clients?: SessionClients[] | [];
 }
 
 export interface SignupResponse {
@@ -460,15 +460,15 @@ export class AuthService {
       // Transform the data to match AuthUser interface
       // If no salon then error should be there like no salon associated against this user and this user is not an owner of any salon
       if (salonData) {
-        const salonClients = await ClientsApi.getCustomers({ salonId: salonData.id });
-        const clients = salonClients?.data?.length > 0 ? salonClients?.data?.map((client: any) => {
-          return {
-            id: client.id,
-            name: client.name,
-            phone_number: client.phone_number,
-          };
-        }) : [];
-        console.log("Session clients: ", clients)
+        // const salonClients = await ClientsApi.getCustomers({ salonId: salonData.id });
+        // const clients = salonClients?.data?.length > 0 ? salonClients?.data?.map((client: any) => {
+        //   return {
+        //     id: client.id,
+        //     name: client.name,
+        //     phone_number: client.phone_number,
+        //   };
+        // }) : [];
+        // console.log("Session clients: ", clients)
         const authUser: AuthUser = {
           id: userData.id,
           email: userData.email,
@@ -479,7 +479,7 @@ export class AuthService {
           created_at: userData.created_at,
           updated_at: userData.updated_at,
           salon: salonData,
-          clients: clients
+          // clients: clients
         };
 
         return {
@@ -512,7 +512,7 @@ export class AuthService {
       user: any;
       session: any;
       staffRecord: any;
-      clients: any;
+      // clients: any;
     };
     error?: string;
   }> {
@@ -550,15 +550,15 @@ export class AuthService {
         };
       }
 
-      const staffClientsPermitted = await RolesApi.getStaffPermissions(staffRecord.id);
-      console.log("Staff clients permitted: ", staffClientsPermitted)
+      // const staffClientsPermitted = await RolesApi.getStaffPermissions(staffRecord.id);
+      // console.log("Staff clients permitted: ", staffClientsPermitted)
 
-      let clients: any = [];
-      if (staffRecord?.salon_id && staffClientsPermitted && staffClientsPermitted?.clients?.read) {
-        const { data: clientsData } = await ClientsApi.getCustomers({ salonId: staffRecord?.salon_id });
-        console.log("Clients in if...: ", clientsData)
-        clients = clientsData;
-      }
+      // let clients: any = [];
+      // if (staffRecord?.salon_id && staffClientsPermitted && staffClientsPermitted?.clients?.read) {
+      //   const { data: clientsData } = await ClientsApi.getCustomers({ salonId: staffRecord?.salon_id });
+      //   console.log("Clients in if...: ", clientsData)
+      //   clients = clientsData;
+      // }
 
       // Both validations passed - user exists in auth and salons_staff
       return {
@@ -567,7 +567,7 @@ export class AuthService {
           user: authData.user,
           session: authData.session,
           staffRecord: staffRecord,
-          clients: clients
+          // clients: clients
         },
       };
     } catch (error) {

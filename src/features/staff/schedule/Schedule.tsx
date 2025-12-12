@@ -46,7 +46,7 @@ export function Schedule() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // You can adjust this
   const sessionData = localStorage.getItem("session");
-  
+
   // Get permissions for schedule/appointments module
   const { canCreate, hasModuleAccess } = usePermissions();
   const scheduleModuleKey = "schedule" as const;
@@ -60,13 +60,13 @@ export function Schedule() {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // Fetch appointments and staff in parallel
         const [appointmentsResponse, staffResponse] = await Promise.all([
-          AppointmentsApi.getAppointments({salonId: JSON.parse(sessionData || '').salonId}),
-          StaffApi.getStaff({salonId: JSON.parse(sessionData || '').salonId})
+          AppointmentsApi.getAppointments({ salonId: JSON.parse(sessionData || '').salonId }),
+          StaffApi.getStaff({ salonId: JSON.parse(sessionData || '').salonId })
         ]);
-        
+
         setAppointments(appointmentsResponse.data || []);
         setStaff(staffResponse.data || []);
       } catch (err) {
@@ -83,7 +83,7 @@ export function Schedule() {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedStaffId]);
-  
+
   // Transform appointments to ScheduleAppointment format
   const scheduleAppointments: ScheduleAppointment[] = useMemo(() => {
     return appointments.map(apt => ({
@@ -107,7 +107,7 @@ export function Schedule() {
     }
     return scheduleAppointments.filter((apt) => apt.staffId === selectedStaffId);
   }, [scheduleAppointments, selectedStaffId]);
-  
+
   console.log("Filtered Appointments: ", filteredAppointments);
 
   const todayAppointments = filteredAppointments.filter((apt) =>
@@ -129,13 +129,13 @@ export function Schedule() {
       const staffMember = staff.find(s => s.id === apt.staffId);
       const staffName = staffMember?.name || 'Unassigned';
       let title = ''
-      if (apt.service && apt.service !== 'No Service') {
+      if (apt.service && apt.service !== 'N/A') {
         title = `${apt.service} (Service) - ${apt.customerName} - ${staffName}`
-      } 
+      }
       else {
         title = `${apt.deal} (Deal) - ${apt.customerName} - ${staffName}`
       }
-      
+
       return {
         title: title,
         start: apt.start,
@@ -162,7 +162,7 @@ export function Schedule() {
       .slice(startIndex, startIndex + itemsPerPage);
 
     console.log("Current appointments: ", currentAppointments);
-  
+
     return (
       <div>
         <Table>
@@ -209,7 +209,7 @@ export function Schedule() {
             )}
           </TableBody>
         </Table>
-  
+
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="flex justify-end items-center gap-2 py-4 pr-4">
@@ -237,7 +237,7 @@ export function Schedule() {
       </div>
     );
   };
-  
+
 
   // Loading state
   if (isLoading) {
@@ -291,55 +291,55 @@ export function Schedule() {
 
   return (
     <div className="flex flex-col gap-8">
-       <Tabs defaultValue="calendar">
+      <Tabs defaultValue="calendar">
         <div className="flex items-center justify-between">
-            <div className="text-left">
-                <h1 className="text-4xl font-headline font-bold">Schedule</h1>
-                <p className="text-muted-foreground mt-2">
-                Here are your upcoming appointments.
-                </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <TabsList>
-                  <TabsTrigger value="grid" className="w-10 h-10"><LayoutGrid className="h-5 w-5" /></TabsTrigger>
-                  <TabsTrigger value="calendar" className="w-10 h-10"><Calendar className="h-5 w-5" /></TabsTrigger>
-              </TabsList>
+          <div className="text-left">
+            <h1 className="text-4xl font-headline font-bold">Schedule</h1>
+            <p className="text-muted-foreground mt-2">
+              Here are your upcoming appointments.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <TabsList>
+              <TabsTrigger value="grid" className="w-10 h-10"><LayoutGrid className="h-5 w-5" /></TabsTrigger>
+              <TabsTrigger value="calendar" className="w-10 h-10"><Calendar className="h-5 w-5" /></TabsTrigger>
+            </TabsList>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-[180px] justify-between">
-                    {selectedStaffName}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[180px] max-h-[300px]">
-                  <DropdownMenuLabel>Filter by Staff</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="sticky top-0 z-10" />
-                  <div className="max-h-[240px] overflow-y-auto">
-                    <DropdownMenuItem onSelect={() => setSelectedStaffId(null)}>
-                      All Staff
-                    </DropdownMenuItem>
-                    {staff.map((staffMember) => (
-                      <DropdownMenuItem
-                        key={staffMember.id}
-                        onSelect={() => setSelectedStaffId(staffMember.id)}
-                      >
-                        {staffMember.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-                {canCreate(scheduleModuleKey) && (
-                <Button asChild>
-                  <Link href="/appointments">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Appointment
-                  </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-[180px] justify-between">
+                  {selectedStaffName}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
-              )}
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[180px] max-h-[300px]">
+                <DropdownMenuLabel>Filter by Staff</DropdownMenuLabel>
+                <DropdownMenuSeparator className="sticky top-0 z-10" />
+                <div className="max-h-[240px] overflow-y-auto">
+                  <DropdownMenuItem onSelect={() => setSelectedStaffId(null)}>
+                    All Staff
+                  </DropdownMenuItem>
+                  {staff.map((staffMember) => (
+                    <DropdownMenuItem
+                      key={staffMember.id}
+                      onSelect={() => setSelectedStaffId(staffMember.id)}
+                    >
+                      {staffMember.name}
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {canCreate(scheduleModuleKey) && (
+              <Button asChild>
+                <Link href="/appointments">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Appointment
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
 
         <TabsContent value="grid" className="mt-4">

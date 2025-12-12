@@ -350,7 +350,7 @@ export function ServicesList() {
         const amount = parseFloat(row.getValue("starting_from"));
         const formatted = amount ? new Intl.NumberFormat("en-US", {
           style: "currency",
-          currency: "USD",
+          currency: "PKR",
         }).format(amount)
           : 'N/A'
 

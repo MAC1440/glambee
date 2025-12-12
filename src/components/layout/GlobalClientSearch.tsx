@@ -1,11 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, User, X } from "lucide-react";
-import { mockCustomers } from "@/lib/placeholder-data";
+import { Search, X } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -14,59 +12,91 @@ import {
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
-
-// type Customer = (typeof mockCustomers)[0];
+import { ClientsApi, ClientWithDetails } from "@/lib/api/clientsApi";
+import { usePermissions } from "@/hooks/use-permissions";
 
 export function GlobalClientSearch() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<[]>([]);
-  console.log("Results global filter: ", results)
+  const [results, setResults] = useState<ClientWithDetails[]>([]);
+  console.log("Check results for global search: ", results)
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const getSession = localStorage.getItem("session")
-  const sessionData = getSession ? JSON.parse(getSession) : null;
-  console.log("Session data fetched: ", sessionData)
+  const [isLoading, setIsLoading] = useState(false);
+  // const inputRef = useRef<HTMLInputElement>(null);
+
+  const { canRead, isAdmin } = usePermissions();
+  const canSearchClients = isAdmin || canRead("clients");
 
   useEffect(() => {
-    if (query.length > 0) {
-      const filteredCustomers = sessionData?.clients?.filter((customer: any) =>
-        customer.phone_number.includes(query)
-      );
-      setResults(filteredCustomers);
-      setIsOpen(true);
-    } else {
+    if (!isOpen) {
+      setQuery("");
+      setResults([]);
+    }
+  }, [isOpen])
+
+  const handleSearch = async () => {
+    if (!query.trim()) {
       setResults([]);
       setIsOpen(false);
+      return;
     }
-  }, [query]);
 
-  const handleSelectClient = () => {
+    if (!canSearchClients) {
+      console.warn("User does not have permission to search clients");
+      setResults([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const searchResults = await ClientsApi.searchCustomers(query);
+      setResults(searchResults);
+      setIsOpen(true);
+    } catch (error) {
+      console.error("Error searching clients:", error);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  const clearSearch = () => {
     setQuery("");
     setResults([]);
     setIsOpen(false);
+    // inputRef.current?.focus();
   };
 
   return (
-    <div className="relative w-full  items-center">
+    <div className="relative w-full items-center">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground"
+              onClick={handleSearch}
+            />
             <Input
-              ref={inputRef}
+              // ref={inputRef}
               type="tel"
-              placeholder="Search client by phone..."
+              placeholder={canSearchClients ? "Search client by phone..." : "Search unavailable"}
               className="w-full rounded-lg bg-background pl-10 pr-10 border-2 border-primary ring-2 ring-primary/20"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={!canSearchClients}
             />
             {query && (
               <Button
                 size="icon"
                 variant="ghost"
                 className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                onClick={() => setQuery('')}
+                onClick={clearSearch}
                 aria-label="Clear search"
               >
                 <X className="h-4 w-4" />
@@ -77,23 +107,27 @@ export function GlobalClientSearch() {
         <PopoverContent
           className="w-[--radix-popover-trigger-width] p-0"
           align="start"
-          onOpenAutoFocus={(e) => e.preventDefault()} // Prevents input from losing focus
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <div className="flex flex-col space-y-1 p-2">
-            {results.length > 0 ? (
+            {isLoading ? (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                Searching...
+              </div>
+            ) : results.length > 0 ? (
               results.map((customer: any) => (
                 <Link
                   key={customer.id}
                   href={`/clients/${customer.id}`}
                   className="flex items-center gap-3 rounded-md p-2 hover:bg-accent"
-                  onClick={handleSelectClient}
+                  onClick={() => setIsOpen(false)}
                 >
                   <Avatar className="h-9 w-9">
                     <AvatarImage
-                      src={`https://picsum.photos/seed/${customer.name}/100`}
+                      src={customer.avatar || `https://picsum.photos/seed/${customer.name}/100`}
                       alt={customer.name}
                     />
-                    <AvatarFallback>{customer.name}</AvatarFallback>
+                    <AvatarFallback>{customer.name?.[0] || "?"}</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium text-sm">{customer.name}</p>

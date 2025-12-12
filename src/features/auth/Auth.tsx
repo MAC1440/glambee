@@ -143,7 +143,7 @@ export function Auth() {
             phone: loginResponse.data.phone_number,
             userType: loginResponse.data.user_type,
             salon: loginResponse.data.salon || null,
-            clients: loginResponse.data.clients || []
+            // clients: loginResponse.data.clients || []
           };
 
           localStorage.setItem("session", JSON.stringify(userSession));
@@ -232,7 +232,7 @@ export function Auth() {
         return;
       }
 
-      const { user, session, staffRecord, clients } = loginResponse.data!;
+      const { user, session, staffRecord } = loginResponse.data!;
 
       // Check if password needs to be updated (first login)
       // Store session temporarily to use after password update
@@ -289,8 +289,7 @@ export function Auth() {
         role: staffRecord.role || "STAFF",
         salonId: salonIdFromRecord, // Always use salon_id from staffRecord (database)
         phone: staffRecord.phone_number,
-        userType: "staff",
-        clients: clients
+        userType: "staff"
       };
 
       localStorage.setItem("session", JSON.stringify(userSession));
