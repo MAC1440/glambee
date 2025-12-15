@@ -35,7 +35,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { format, parseISO, differenceInYears } from "date-fns";
 import { ClientFormDialog } from "./ClientFormDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +59,9 @@ export function ClientDetail({ clientId }: { clientId: string }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  console.log("Editing staff id: ", editingStaffId)
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  console.log("Set editing status Id: ", editingStatusId)
   const [staffOptions, setStaffOptions] = useState<Array<{ id: string, name: string }>>([]);
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [loadingStaff, setLoadingStaff] = useState(false);
@@ -295,6 +298,44 @@ export function ClientDetail({ clientId }: { clientId: string }) {
     setEditingStaffId(null);
   };
 
+  const handleStatusEdit = (id: string) => {
+    setEditingStatusId(id);
+  };
+
+  const handleStatusSave = async (appointmentId: string, newStatus: 'paid' | 'pending') => {
+    try {
+      await AppointmentsApi.updatePaymentStatus(appointmentId, newStatus);
+
+      // Update local state
+      setAppointments(prev => prev.map(apt =>
+        apt.id === appointmentId
+          ? { ...apt, payment_status: newStatus as any }
+          : apt
+      ));
+
+      setEditingStatusId(null);
+      toast({
+        title: "Success",
+        description: "Payment status updated successfully.",
+        style: {
+          backgroundColor: "lightgreen",
+          color: "black",
+        }
+      });
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update payment status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusCancel = () => {
+    setEditingStatusId(null);
+  };
+
   const getAppointments = () => {
     return appointments?.map((appointment) => ({
       id: appointment.id,
@@ -312,10 +353,12 @@ export function ClientDetail({ clientId }: { clientId: string }) {
   const getPaymentHistory = () => {
     return appointments.map((appointment, index) => ({
       id: `INV-${appointment.id.slice(-6).toUpperCase()}`,
+      appointmentId: appointment.id,
       date: appointment.date,
       amount: appointment.bill || 0,
       status: (appointment.payment_status === 'paid' ? 'Paid' : 'Pending') as "Paid" | "Pending" | "Overdue",
-      service: appointment.services?.[0]?.name || 'Service',
+      service: appointment.services?.[0]?.name || 'N/A',
+      deal: appointment.deals?.[0]?.name || 'N/A',
     }));
   };
 
@@ -372,7 +415,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       accessorKey: "date",
       header: ({ column }) => {
         return (
-          <div className="flex items-center">
+          <div className="flex items-center w-[90px]">
             <span>Date</span>
             <Button
               variant="ghost"
@@ -436,7 +479,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         );
       },
       cell: ({ row }) => {
-        console.log("Row: ", row)
+        // console.log("Row: ", row)
         return (<span className="font-medium">{row.original.deal}</span>)
       },
     },
@@ -466,7 +509,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       accessorKey: "staff",
       header: ({ column }) => {
         return (
-          <div className="flex items-center">
+          <div className="flex items-center w-[125px]">
             <span>Staff</span>
             <Button
               variant="ghost"
@@ -488,7 +531,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         if (!appointment) return 'N/A';
 
         return (
-          <div className="group relative">
+          <div className="group relative w-[125px]">
             {editingStaffId === appointment.id ? (
               <div className="flex items-center gap-2">
                 <Select
@@ -501,7 +544,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                     }
                   }}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select staff" />
                   </SelectTrigger>
                   <SelectContent
@@ -543,7 +586,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 group">
+              <div className="flex items-center group">
                 <span>{appointment.staff?.name || 'N/A'}</span>
                 <Button
                   size="sm"
@@ -580,7 +623,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         );
       },
-      cell: ({ row }) => <div>{row.original.price}</div>,
+      cell: ({ row }) => <div>PKR {row.original.price}</div>,
     },
   ]
 
@@ -590,7 +633,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       accessorKey: "id",
       header: ({ column }) => {
         return (
-          <div>
+          <div className="flex items-center w-[116px]">
             <span>Invoice ID</span>
             <Button
               variant="ghost"
@@ -602,7 +645,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 column.toggleSorting(currentSort === "asc");
               }}
             >
-              <CaretSortIcon className="h-4 w-4" />
+              <CaretSortIcon className="h-1 w-1" />
             </Button>
           </div>
         );
@@ -612,7 +655,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       accessorKey: "date",
       header: ({ column }) => {
         return (
-          <div className="flex items-center">
+          <div className="flex items-center nowrap">
             <span>Date</span>
             <Button
               variant="ghost"
@@ -624,7 +667,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 column.toggleSorting(currentSort === "asc");
               }}
             >
-              <CaretSortIcon className="h-4 w-4" />
+              <CaretSortIcon className="h-1 w-1" />
             </Button>
           </div>
         );
@@ -647,7 +690,29 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 column.toggleSorting(currentSort === "asc");
               }}
             >
-              <CaretSortIcon className="h-4 w-4" />
+              <CaretSortIcon className="h-1 w-1" />
+            </Button>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "deal",
+      header: ({ column }) => {
+        return (
+          <div className="flex items-center">
+            <span>Deal</span>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                // Get current sort state
+                const currentSort = column.getIsSorted();
+                // If not sorted or descending, sort ascending
+                // If ascending, sort descending
+                column.toggleSorting(currentSort === "asc");
+              }}
+            >
+              <CaretSortIcon className="h-1 w-1" />
             </Button>
           </div>
         );
@@ -657,7 +722,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       accessorKey: "status",
       header: ({ column }) => {
         return (
-          <div className="flex items-center">
+          <div className="flex items-center w-[80px]">
             <span>Status</span>
             <Button
               variant="ghost"
@@ -669,33 +734,76 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 column.toggleSorting(currentSort === "asc");
               }}
             >
-              <CaretSortIcon className="h-4 w-4" />
+              <CaretSortIcon className="h-1 w-1" />
             </Button>
           </div>
         );
       },
-      cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className={cn({
-            "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300":
-              row.original.status === "Paid",
-            "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300":
-              row.original.status === "Pending",
-            "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300":
-              row.original.status === "Overdue",
-          })}
-        >
-          {row.original.status}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const isEditing = editingStatusId === row.original.appointmentId;
+
+        return (
+          <div className="group relative w-[80px]">
+            {isEditing ?
+              (
+                <div className="flex items-center">
+                  <Select
+                    defaultValue={row.original.status.toLowerCase()}
+                    onValueChange={(value) => handleStatusSave(row.original.appointmentId, value as 'paid' | 'pending')}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      {/* <SelectItem value="overdue">Overdue</SelectItem> */}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleStatusCancel}
+                    className="h-6 w-6 p-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center group">
+                  <Badge
+                    variant="outline"
+                    className={cn({
+                      "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300":
+                        row.original.status === "Paid",
+                      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300":
+                        row.original.status === "Pending",
+                      "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300":
+                        row.original.status === "Overdue",
+                    })}
+                  >
+                    {row.original.status}
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleStatusEdit(row.original.appointmentId)}
+                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+          </div>
+        )
+      },
     },
     {
       accessorKey: "amount",
       header: ({ column }) => {
         // We need to put amount column dynamically at the end of the table for better UI
         return (
-          <div className="flex items-center justify-end gap-1">
+          <div className="flex items-center justify-end">
             <span>Amount</span>
             <Button
               variant="ghost"
@@ -707,14 +815,14 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 column.toggleSorting(currentSort === "asc");
               }}
             >
-              <CaretSortIcon className="h-4 w-4" />
+              <CaretSortIcon className="h-1 w-1" />
             </Button>
           </div>
         );
       },
-      cell: ({ row }) => <div className="text-right pr-10">PKR {row.original.amount.toFixed(2)}</div>,
+      cell: ({ row }) => <div className="text-right pr-6">PKR {row.original.amount.toFixed(2)}</div>,
     },
-  ];
+  ]
 
   // Services columns
   const servicesColumns: ColumnDef<typeof servicesHistory[0]>[] = [
@@ -784,7 +892,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         );
       },
-      cell: ({ row }) => <div className="text-right pr-12">PKR {row.original.total.toFixed(2)}</div>,
+      cell: ({ row }) => <div className="text-right pr-8">PKR {row.original.total.toFixed(2)}</div>,
     },
   ];
 
@@ -856,7 +964,7 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           </div>
         );
       },
-      cell: ({ row }) => <div className="text-right pr-12">PKR {row.original.total.toFixed(2)}</div>,
+      cell: ({ row }) => <div className="text-right pr-8">PKR {row.original.total.toFixed(2)}</div>,
     },
   ];
 

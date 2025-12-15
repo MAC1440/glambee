@@ -292,6 +292,32 @@ export class AppointmentsApi {
     }
 
     /**
+     * Update appointment payment status
+     */
+    static async updatePaymentStatus(appointmentId: string, status: 'paid' | 'pending'): Promise<boolean> {
+        try {
+            const { error } = await supabase
+                .from('appointments')
+                .update({
+                    payment_status: status,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', appointmentId)
+                .select();
+
+            if (error) {
+                console.error('Error updating payment status:', error);
+                throw error;
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Failed to update payment status:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Get or create a default salon
      */
     private static async getDefaultSalonId(): Promise<string> {

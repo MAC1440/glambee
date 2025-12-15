@@ -180,6 +180,10 @@ export function NewAppointment({
     toast({
       title: "Time Slot Selected",
       description: `Selected start time: ${format(startDate, "p")}`,
+      style: {
+        backgroundColor: "lightgreen",
+        color: "black",
+      }
     });
   };
 

@@ -59,6 +59,7 @@ export const DataTable = React.forwardRef(function DataTable<TData, TValue>(
   const table = useReactTable({
     data,
     columns,
+    autoResetPageIndex: false,
     state: {
       sorting,
       columnVisibility,

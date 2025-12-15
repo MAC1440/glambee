@@ -18,10 +18,8 @@ import { usePermissions } from "@/hooks/use-permissions";
 export function GlobalClientSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ClientWithDetails[]>([]);
-  console.log("Check results for global search: ", results)
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  // const inputRef = useRef<HTMLInputElement>(null);
 
   const { canRead, isAdmin } = usePermissions();
   const canSearchClients = isAdmin || canRead("clients");
@@ -32,6 +30,13 @@ export function GlobalClientSearch() {
       setResults([]);
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (query?.trim() === "") {
+      setResults([]);
+      setIsOpen(false);
+    }
+  }, [query]);
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -87,8 +92,15 @@ export function GlobalClientSearch() {
               placeholder={canSearchClients ? "Search client by phone..." : "Search unavailable"}
               className="w-full rounded-lg bg-background pl-10 pr-10 border-2 border-primary ring-2 ring-primary/20"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Only allow digits and optional leading '+' and max length 16
+                if (/^\+?[0-9]*$/.test(value)) {
+                  setQuery(value);
+                }
+              }}
               onKeyDown={handleKeyDown}
+              maxLength={16}
               disabled={!canSearchClients}
             />
             {query && (
@@ -109,7 +121,7 @@ export function GlobalClientSearch() {
           align="start"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <div className="flex flex-col space-y-1 p-2">
+          <div className="flex flex-col space-y-1 p-2 max-h-[300px] overflow-y-auto">
             {isLoading ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 Searching...

@@ -33,8 +33,8 @@ type ServiceOption = {
 };
 
 export type CartItem = {
-    service: Service;
-    artist?: ArtistOption | null;
+  service: Service;
+  artist?: ArtistOption | null;
 }
 
 type ServiceSelectionProps = {
@@ -60,7 +60,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch services
         const servicesResponse = await ServicesApi.getServices({ limit: 100, salonId });
         const servicesWithDefaults = servicesResponse.data.map(service => ({
@@ -76,66 +76,60 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
         // Fetch deals
         if (salonId) {
           const dealsResponse = await DealsApi.getDeals({ salonId, limit: 100 });
-          
-          // Fetch services for each deal
-          const dealsWithServices = await Promise.all(
-            dealsResponse.data.map(async (deal) => {
-              // Fetch services included in this deal
-              const { data: dealServices } = await supabase
-                .from('salons_deals_services')
-                .select(`
-                  salon_service_id,
-                  service:salons_services(id, name, price, time)
-                `)
-                .eq('deal_id', deal.id);
 
-              const includedServices = dealServices?.map(ds => ({
-                value: ds.service?.id || '',
-                label: ds.service?.name || ''
-              })) || [];
+          // Fetch services for all deals in one go
+          const dealIds = dealsResponse.data.map(d => d.id);
+          const servicesByDeal = await ServicesApi.getServicesForDeals(dealIds);
 
-              // Calculate total duration from included services
-              // Helper function to parse time string to minutes
-              const parseTimeToMinutes = (timeString: string): number => {
-                if (!timeString) return 30;
-                const match = timeString.match(/(\d+)\s*(min|minutes?|m)/i);
-                if (match) return parseInt(match[1], 10);
-                const numMatch = timeString.match(/(\d+)/);
-                if (numMatch) return parseInt(numMatch[1], 10);
-                return 30;
-              };
-              
-              const totalDuration = dealServices?.reduce((sum, ds) => {
-                if (ds.service?.time) {
-                  const duration = parseTimeToMinutes(ds.service.time);
-                  return sum + duration;
-                }
-                return sum;
-              }, 0) || 30;
+          // Helper function to parse time string to minutes
+          const parseTimeToMinutes = (timeString: string): number => {
+            if (!timeString) return 30;
+            const match = timeString.match(/(\d+)\s*(min|minutes?|m)/i);
+            if (match) return parseInt(match[1], 10);
+            const numMatch = timeString.match(/(\d+)/);
+            if (numMatch) return parseInt(numMatch[1], 10);
+            return 30;
+          };
 
-              return {
-                id: deal.id,
-                name: deal.title || deal.popup_title || 'Deal',
-                price: deal.discounted_price || deal.price || 0,
-                duration: totalDuration,
-                description: deal.description || deal.title,
-                originalPrice: deal.price,
-                image: deal.media_url || `https://picsum.photos/seed/${deal.title}/200`,
-                category: "Deal" as const,
-                includedServices,
-                salon_id: deal.salon_id,
-                category_id: null,
-                gender: null,
-                starting_from: null,
-                has_range: false,
-                time: `${totalDuration} minutes`,
-                created_at: deal.created_at,
-                updated_at: deal.updated_at,
-                staff: [],
-              } as Service;
-            })
-          );
-          
+          // Map deals with their services
+          const dealsWithServices = dealsResponse.data.map((deal) => {
+            const services = servicesByDeal.get(deal.id) || [];
+
+            const includedServices = services.map(s => ({
+              value: s.id || '',
+              label: s.name || ''
+            }));
+
+            const totalDuration = services.reduce((sum, s) => {
+              if (s.time) {
+                const duration = parseTimeToMinutes(s.time);
+                return sum + duration;
+              }
+              return sum;
+            }, 0) || 30;
+
+            return {
+              id: deal.id,
+              name: deal.title || deal.popup_title || 'Deal',
+              price: deal.discounted_price || deal.price || 0,
+              duration: totalDuration,
+              description: deal.description || deal.title,
+              originalPrice: deal.price,
+              image: deal.media_url || `https://picsum.photos/seed/${deal.title}/200`,
+              category: "Deal" as const,
+              includedServices,
+              salon_id: deal.salon_id,
+              category_id: null,
+              gender: null,
+              starting_from: null,
+              has_range: false,
+              time: `${totalDuration} minutes`,
+              created_at: deal.created_at,
+              updated_at: deal.updated_at,
+              staff: [],
+            } as Service;
+          });
+
           setDeals(dealsWithServices);
         }
       } catch (error) {
@@ -167,7 +161,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
 
       try {
         let staff: any[] = [];
-        
+
         // Check if it's a deal or a regular service
         if (selectedService.category === "Deal") {
           // For deals, get staff based on categories of included services
@@ -176,7 +170,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
           // For regular services, get staff based on service category
           staff = await ServicesApi.getStaffForService(selectedService.id, salonId || '');
         }
-        
+
         setStaffForService(staff);
       } catch (error) {
         console.error("Error fetching staff for service:", error);
@@ -199,7 +193,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
     const individualServices = services
       .filter((s) => s.category === "Service" || !s.category)
       .map((s) => ({ value: s.id, label: s.name }));
-    
+
     const packageDeals = deals
       .filter((s) => s.category === "Deal")
       .map((s) => ({ value: s.id, label: s.name }));
@@ -220,12 +214,12 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
     setSelectedServiceId(serviceId);
     setSelectedArtist(null); // Reset artist when service changes
   };
-  
+
   const handleAddClick = () => {
     if (selectedService) {
       // Check if service already exists in cart
       const isDuplicate = existingItems.some(item => item.service.id === selectedService.id);
-      
+
       if (isDuplicate) {
         toast({
           title: "Service or Deal Already Added",
@@ -277,29 +271,29 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
             onValueChange={(value) => handleServiceChange(value)}
             value={selectedServiceId || ""}
           >
-              <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Search for a service or deal..." />
-              </SelectTrigger>
-              <SelectContent className="w-[var(--radix-select-trigger-width)] max-h-[300px]">
-                  {groupedOptions && groupedOptions.length > 0 ? (
-                    groupedOptions.map(group => (
-                      <div key={group.label}>
-                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                          {group.label}
-                        </div>
-                        {group.options.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      No services or deals available
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Search for a service or deal..." />
+            </SelectTrigger>
+            <SelectContent className="w-[var(--radix-select-trigger-width)] max-h-[300px]">
+              {groupedOptions && groupedOptions.length > 0 ? (
+                groupedOptions.map(group => (
+                  <div key={group.label}>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                      {group.label}
                     </div>
-                  )}
-              </SelectContent>
+                    {group.options.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  No services or deals available
+                </div>
+              )}
+            </SelectContent>
           </Select>
         </div>
 
@@ -307,7 +301,7 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
           <div className="space-y-2">
             <div className="text-sm">
               <p className="font-medium">{selectedService.name}</p>
-              <p className="text-muted-foreground">${selectedService.price} • {selectedService.duration || 30} min</p>
+              <p className="text-muted-foreground">PKR {selectedService.price} • {selectedService.duration || 30} min</p>
             </div>
           </div>
         )}
@@ -332,13 +326,13 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
             </Select>
           </div>
         )}
-        
-        <Button 
-            className="w-full"
-            disabled={!selectedService || isLoading}
-            onClick={handleAddClick}
+
+        <Button
+          className="w-full"
+          disabled={!selectedService || isLoading}
+          onClick={handleAddClick}
         >
-            {isLoading ? "Loading..." : buttonText}
+          {isLoading ? "Loading..." : buttonText}
         </Button>
       </CardContent>
     </Card>

@@ -186,10 +186,10 @@ export class ServicesApi {
    */
   static async searchServices(searchTerm: string, salonId?: string): Promise<ServiceWithStaff[]> {
     try {
-      const response = await this.getServices({ 
-        search: searchTerm, 
+      const response = await this.getServices({
+        search: searchTerm,
         salonId,
-        limit: 20 
+        limit: 20
       });
       return response.data;
     } catch (error) {
@@ -203,9 +203,9 @@ export class ServicesApi {
    */
   static async getServicesByCategory(categoryId: string, salonId?: string): Promise<ServiceWithStaff[]> {
     try {
-      const response = await this.getServices({ 
-        categoryId, 
-        salonId 
+      const response = await this.getServices({
+        categoryId,
+        salonId
       });
       return response.data;
     } catch (error) {
@@ -246,7 +246,7 @@ export class ServicesApi {
   private static async syncServiceDiscount(serviceId: string, salonId: string): Promise<SalonService | null> {
     try {
       const discount = await this.getSalonDiscount(salonId);
-      
+
       if (discount !== null) {
         const { data, error } = await supabase
           .from('salons_services')
@@ -262,7 +262,7 @@ export class ServicesApi {
 
         return data;
       }
-      
+
       return null;
     } catch (error) {
       console.warn('Failed to sync service discount:', error);
@@ -279,7 +279,7 @@ export class ServicesApi {
       if (!serviceData.salon_id) {
         serviceData.salon_id = await this.getDefaultSalonId();
       }
-      
+
       const salonId = serviceData.salon_id;
 
       const { data: service, error } = await supabase
@@ -419,7 +419,7 @@ export class ServicesApi {
       const minutes = parseInt(timeString);
       return isNaN(minutes) ? 30 : minutes; // Default to 30 minutes
     }
-    
+
     return 30; // Default fallback
   }
 
@@ -487,6 +487,45 @@ export class ServicesApi {
     } catch (error) {
       console.error('Failed to fetch staff for service:', error);
       return [];
+    }
+  }
+
+  /**
+   * Get services for multiple deals
+   */
+  static async getServicesForDeals(dealIds: string[]): Promise<Map<string, any[]>> {
+    try {
+      if (!dealIds.length) return new Map();
+
+      const { data: dealServices, error } = await supabase
+        .from('salons_deals_services')
+        .select(`
+          deal_id,
+          salon_service_id,
+          service:salons_services(id, name, price, time)
+        `)
+        .in('deal_id', dealIds);
+
+      if (error) {
+        console.error('Error fetching services for deals:', error);
+        throw error;
+      }
+
+      const servicesByDeal = new Map<string, any[]>();
+
+      dealServices?.forEach(ds => {
+        if (!ds.deal_id) return;
+        const services = servicesByDeal.get(ds.deal_id) || [];
+        if (ds.service) {
+          services.push(ds.service);
+        }
+        servicesByDeal.set(ds.deal_id, services);
+      });
+
+      return servicesByDeal;
+    } catch (error) {
+      console.error('Failed to fetch services for deals:', error);
+      return new Map();
     }
   }
 

@@ -6,7 +6,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { CustomToolbar } from './Toolbar';
-import { useState, useMemo, useCallback }from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { SlotInfo, NavigateAction } from 'react-big-calendar';
 import { staff } from '@/lib/placeholder-data';
 
@@ -29,18 +29,18 @@ const darkStaffColors = [
   '#059669', '#0284C7', '#BE185D', '#D97706', '#6D28D9', '#4B5563'
 ];
 
-export function CalendarView({ 
-    events, 
-    onSelectSlot, 
-    onDrillDown,
-    view: defaultView = Views.WEEK, 
-    showToolbar = true 
-}: { 
-    events: any[], 
-    onSelectSlot?: (slotInfo: SlotInfo) => void,
-    onDrillDown?: (date: Date) => void,
-    view?: View, 
-    showToolbar?: boolean 
+export function CalendarView({
+  events,
+  onSelectSlot,
+  onDrillDown,
+  view: defaultView = Views.WEEK,
+  showToolbar = true
+}: {
+  events: any[],
+  onSelectSlot?: (slotInfo: SlotInfo) => void,
+  onDrillDown?: (date: Date) => void,
+  view?: View,
+  showToolbar?: boolean
 }) {
   const [view, setView] = useState<View>(defaultView);
   const [date, setDate] = useState(new Date());
@@ -52,12 +52,19 @@ export function CalendarView({
   const staffColorMap = useMemo(() => {
     const map = new Map<string, { light: string, dark: string }>();
     staff.forEach((s, index) => {
-        map.set(s.id, { 
-            light: staffColors[index % staffColors.length],
-            dark: darkStaffColors[index % darkStaffColors.length]
-        });
+      map.set(s.id, {
+        light: staffColors[index % staffColors.length],
+        dark: darkStaffColors[index % darkStaffColors.length]
+      });
     });
     return map;
+  }, []);
+
+  const { min, max } = useMemo(() => {
+    const today = new Date();
+    const min = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0);
+    const max = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 30, 0);
+    return { min, max };
   }, []);
 
   const eventStyleGetter = (event: any, start: Date, end: Date, isSelected: boolean) => {
@@ -74,7 +81,7 @@ export function CalendarView({
       };
       return { style: temporaryStyle };
     }
-    
+
     const staffId = event?.resource?.staffId;
     if (!staffId) return {};
 
@@ -82,14 +89,14 @@ export function CalendarView({
     if (!colors) return {};
 
     const style = {
-        backgroundColor: colors.light,
-        color: '#111827', // Dark text for light backgrounds
-        borderRadius: '5px',
-        border: '0px',
-        display: 'block',
-        opacity: 0.8,
+      backgroundColor: colors.light,
+      color: '#111827', // Dark text for light backgrounds
+      borderRadius: '5px',
+      border: '0px',
+      display: 'block',
+      opacity: 0.8,
     };
-    
+
     // A simple way to detect dark mode without context.
     // In a real app, you might pass the theme down as a prop.
     if (document.documentElement.classList.contains('dark')) {
@@ -116,6 +123,8 @@ export function CalendarView({
         onDrillDown={onDrillDown}
         selectable={!!onSelectSlot}
         onSelectSlot={onSelectSlot}
+        min={min}
+        max={max}
         components={{
           toolbar: showToolbar ? CustomToolbar : () => null
         }}

@@ -107,7 +107,7 @@ export function Checkout({ client }: { client: Customer | undefined }) {
   }, [subtotal, discountAmount]);
 
   const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value) || 0;
+    const value = parseFloat(e.target.value) > 0 ? parseFloat(e.target.value) : 0;
     if (value > subtotal) {
       setDiscountAmount(subtotal);
       toast({

@@ -611,7 +611,7 @@ export class ClientsApi {
           .from('users')
           .select('id')
           .ilike('phone_number', `%${searchTerm}%`)
-          .limit(20);
+        // .limit(20);
 
         if (!usersError && users) {
           userIds = users.map(u => u.id);

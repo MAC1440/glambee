@@ -15,9 +15,9 @@ type TimeSelectionProps = {
 // Generate time slots from 9 AM to 5 PM every 30 minutes
 const generateTimeSlots = () => {
   const slots = [];
-  for (let i = 9; i <= 17; i++) {
+  for (let i = 9; i <= 23; i++) {
     slots.push(format(set(new Date(), { hours: i, minutes: 0 }), 'p'));
-    if (i < 17) {
+    if (i < 24) {
       slots.push(format(set(new Date(), { hours: i, minutes: 30 }), 'p'));
     }
   }
@@ -37,10 +37,10 @@ export function TimeSelection({ onSelectTime }: TimeSelectionProps) {
       const [minute, ampm] = minutePart.split(' ');
       let hourNumber = parseInt(hour, 10);
       if (ampm === 'PM' && hourNumber !== 12) {
-          hourNumber += 12;
+        hourNumber += 12;
       }
       if (ampm === 'AM' && hourNumber === 12) {
-          hourNumber = 0;
+        hourNumber = 0;
       }
 
       const newDate = set(date, { hours: hourNumber, minutes: parseInt(minute) });
@@ -65,23 +65,23 @@ export function TimeSelection({ onSelectTime }: TimeSelectionProps) {
           </CardContent>
         </div>
         <div>
-           <CardHeader className="p-2">
+          <CardHeader className="p-2">
             <CardTitle>2. Select a Time</CardTitle>
           </CardHeader>
           <CardContent className="p-2">
             <ScrollArea className="h-72 w-full rounded-md border p-4">
-                <div className="grid grid-cols-2 gap-2">
-                    {timeSlots.map(time => (
-                        <Button 
-                            key={time}
-                            variant={selectedTime === time ? "default" : "outline"}
-                            onClick={() => handleTimeSelect(time)}
-                            disabled={!date}
-                        >
-                            {time}
-                        </Button>
-                    ))}
-                </div>
+              <div className="grid grid-cols-2 gap-2">
+                {timeSlots.map(time => (
+                  <Button
+                    key={time}
+                    variant={selectedTime === time ? "default" : "outline"}
+                    onClick={() => handleTimeSelect(time)}
+                    disabled={!date}
+                  >
+                    {time}
+                  </Button>
+                ))}
+              </div>
             </ScrollArea>
           </CardContent>
         </div>
