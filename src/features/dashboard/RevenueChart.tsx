@@ -4,9 +4,9 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useMemo } from 'react';
 import { format, eachDayOfInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parse, getHours, getWeekOfMonth, parseISO, isSameDay } from 'date-fns';
-import type { Appointment } from "@/lib/api/servicesApi";
+// import { AppointmentWithDetails } from "@/lib/api/appointmentsApi";
 
-const groupDataByDay = (appointments: Appointment[]) => {
+const groupDataByDay = (appointments: any[]) => {
     const today = new Date();
     const interval = { start: startOfWeek(today, { weekStartsOn: 1 }), end: endOfWeek(today, { weekStartsOn: 1 }) };
     const weekDays = eachDayOfInterval(interval);
@@ -29,7 +29,7 @@ const groupDataByDay = (appointments: Appointment[]) => {
     return dailyData;
 };
 
-const groupDataByWeek = (appointments: Appointment[]) => {
+const groupDataByWeek = (appointments: any[]) => {
     const today = new Date();
     const start = startOfMonth(today);
     const end = endOfMonth(today);
@@ -59,7 +59,7 @@ const groupDataByWeek = (appointments: Appointment[]) => {
     }));
 };
 
-const groupDataByHour = (appointments: Appointment[]) => {
+const groupDataByHour = (appointments: any[]) => {
     const hourlyData: { [key: number]: number } = {};
     for (let i = 8; i <= 20; i++) { // From 8 AM to 8 PM
         hourlyData[i] = 0;
@@ -88,7 +88,7 @@ const groupDataByHour = (appointments: Appointment[]) => {
 }
 
 
-export function RevenueChart({ appointments, period }: { appointments: Appointment[]; period: "today" | "week" | "month" }) {
+export function RevenueChart({ appointments, period }: { appointments: any[]; period: "today" | "week" | "month" }) {
 
   const chartData = useMemo(() => {
     if (period === 'today') {
@@ -119,7 +119,7 @@ export function RevenueChart({ appointments, period }: { appointments: Appointme
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `$${value}`}
+          tickFormatter={(value) => `PKR ${value}`}
         />
         <Tooltip
             cursor={{ fill: 'hsl(var(--muted))' }}

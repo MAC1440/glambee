@@ -60,12 +60,12 @@ export function CalendarView({
     return map;
   }, []);
 
-  const { min, max } = useMemo(() => {
-    const today = new Date();
-    const min = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0);
-    const max = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 30, 0);
-    return { min, max };
-  }, []);
+  // const { min, max } = useMemo(() => {
+  //   const today = new Date();
+  //   const min = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0, 0);
+  //   const max = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 30, 0);
+  //   return { min, max };
+  // }, []);
 
   const eventStyleGetter = (event: any, start: Date, end: Date, isSelected: boolean) => {
     const isTemporary = event?.resource?.isTemporary;
@@ -123,8 +123,8 @@ export function CalendarView({
         onDrillDown={onDrillDown}
         selectable={!!onSelectSlot}
         onSelectSlot={onSelectSlot}
-        min={min}
-        max={max}
+        // min={min}
+        // max={max}
         components={{
           toolbar: showToolbar ? CustomToolbar : () => null
         }}

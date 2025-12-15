@@ -330,8 +330,8 @@ export function ClientsList({ isSelectMode = false, onClientSelect }: ClientsLis
                 {canUpdate(clientsModuleKey) && (
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/checkout/${client?.id}`}>
-                      <DollarSign className="mr-2 h-4 w-4" />
-                      Payment
+                      {/* <DollarSign className="mr-2 h-4 w-4" /> */}
+                      (PKR) Payment
                     </Link>
                   </Button>
                 )}

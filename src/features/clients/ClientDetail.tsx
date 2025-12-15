@@ -982,8 +982,8 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             {canUpdate(clientsModuleKey) && (
               <Button variant="outline" asChild>
                 <Link href={`/checkout/${client?.id}`}>
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Add Payment
+                  {/* <DollarSign className="mr-2 h-4 w-4" /> */}
+                  (PKR) Add Payment
                 </Link>
               </Button>
             )}
