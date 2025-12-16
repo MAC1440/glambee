@@ -7,8 +7,6 @@ export default async function ClientDetailPage({
 }) {
   const resolvedParams = await params;
   const clientId = resolvedParams.email;
-  console.log("Params: ", resolvedParams)
-  console.log("Client while fetching in params: ", clientId)
 
   return <ClientDetail clientId={clientId} />;
 }
