@@ -51,7 +51,6 @@ export function Schedule() {
   const { canCreate, hasModuleAccess } = usePermissions();
   const scheduleModuleKey = "schedule" as const;
   const hasAccess = hasModuleAccess(scheduleModuleKey);
-  console.log("Has access for schedule: ", hasAccess)
 
 
   // Fetch appointments and staff data
@@ -98,17 +97,12 @@ export function Schedule() {
     }));
   }, [appointments]);
 
-  console.log("Appointments: ", appointments);
-  console.log("Schedule Appointments: ", scheduleAppointments);
-
   const filteredAppointments = useMemo(() => {
     if (!selectedStaffId) {
       return scheduleAppointments;
     }
     return scheduleAppointments.filter((apt) => apt.staffId === selectedStaffId);
   }, [scheduleAppointments, selectedStaffId]);
-
-  console.log("Filtered Appointments: ", filteredAppointments);
 
   const todayAppointments = filteredAppointments.filter((apt) =>
     isToday(apt.start)
@@ -117,32 +111,85 @@ export function Schedule() {
   const weeklyAppointments = filteredAppointments.filter((apt) =>
     isThisWeek(apt.start, { weekStartsOn: 0 })
   );
-  // console.log("Filtered appointments weekly: ", weeklyAppointments);
 
   const monthlyAppointments = filteredAppointments.filter((apt) =>
     isThisMonth(apt.start)
   );
 
+  // const calendarEvents = filteredAppointments
+  //   .filter(apt => apt.service && apt.customerName)
+  //   .map((apt) => {
+  //     const staffMember = staff.find(s => s.id === apt.staffId);
+  //     const staffName = staffMember?.name || 'Unassigned';
+  //     let title = ''
+  //     if (apt.service && apt.service !== 'N/A') {
+  //       title = `${apt.service} (Service) - ${apt.customerName} - ${staffName}`
+  //     }
+  //     else {
+  //       title = `${apt.deal} (Deal) - ${apt.customerName} - ${staffName}`
+  //     }
+
+  //     return {
+  //       title: title,
+  //       start: apt.start,
+  //       end: apt.end,
+  //       resource: apt,
+  //     };
+  //   });
+
+  // Improved calendar events for displaying in calendar view
   const calendarEvents = filteredAppointments
     .filter(apt => apt.service && apt.customerName)
     .map((apt) => {
       const staffMember = staff.find(s => s.id === apt.staffId);
       const staffName = staffMember?.name || 'Unassigned';
-      let title = ''
+      let title = '';
       if (apt.service && apt.service !== 'N/A') {
-        title = `${apt.service} (Service) - ${apt.customerName} - ${staffName}`
-      }
-      else {
-        title = `${apt.deal} (Deal) - ${apt.customerName} - ${staffName}`
+        title = `${apt.service} (Service) - ${apt.customerName} - ${staffName}`;
+      } else {
+        title = `${apt.deal} (Deal) - ${apt.customerName} - ${staffName}`;
       }
 
+      const startDate = apt.start;
+      const endDate = apt.end;
+
+      // Compare full getDate to detect midnight crossing
+      const startDay = startDate.getDate();
+      const endDay = endDate.getDate();
+
+      if (startDay !== endDay) {
+        // Split into two parts with microsecond offsets
+        const midnightStart = new Date(startDate);
+        midnightStart.setHours(23, 59, 59, 999); // Last ms of start day
+
+        const midnightEnd = new Date(startDate);
+        midnightEnd.setHours(24, 0, 0, 1); // First ms of next day
+
+        return [
+          {
+            title: `${title} (Part 1)`,
+            start: startDate,
+            end: midnightStart,
+            resource: { ...apt, part: '1' },
+          },
+          {
+            title: `${title} (Part 2)`,
+            start: midnightEnd,
+            end: endDate,
+            resource: { ...apt, part: '2' },
+          },
+        ];
+      }
+
+      // Normal single-day event
       return {
-        title: title,
-        start: apt.start,
-        end: apt.end,
+        title,
+        start: startDate,
+        end: endDate,
         resource: apt,
       };
-    });
+    })
+    .flat();
 
   const selectedStaffName = useMemo(() => {
     if (!selectedStaffId) {
@@ -160,8 +207,6 @@ export function Schedule() {
     const currentAppointments = appointments
       .sort((a, b) => a.start.getTime() - b.start.getTime())
       .slice(startIndex, startIndex + itemsPerPage);
-
-    console.log("Current appointments: ", currentAppointments);
 
     return (
       <div>

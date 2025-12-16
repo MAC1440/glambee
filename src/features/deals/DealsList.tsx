@@ -68,14 +68,11 @@ export function DealsList() {
   const tableRef = React.useRef<any>(null);
   const { toast } = useToast();
   const sessionData = localStorage.getItem("session");
-  console.log("Session data in deals: ", JSON.parse(sessionData || ''))
   const [userPermissions, setUserPermissions] = React.useState<any>(null);
-  console.log("User permissions in deals: ", userPermissions)
   // Get permissions for deals module
   const { canCreate, canUpdate, canDelete, canRead, hasModuleAccess } = usePermissions();
   const dealsModuleKey = "deals" as const;
   const isPopUpEnabledInAnyDeal = deals.some((item) => item?.dealpopup)
-  // console.log("Is popup enable already: ", isPopUpEnabledInAnyDeal)
 
   // State to track if user has access (with async permission loading)
   const [hasAccess, setHasAccess] = React.useState<boolean | null>(null);

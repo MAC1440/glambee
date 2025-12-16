@@ -34,11 +34,8 @@ export function NewAppointment({
 }) {
   const { toast } = useToast();
   const [appointmentsList, setAppointmentsList] = useState<AppointmentWithDetails[]>(appointments);
-  console.log("List of appointments: ", appointmentsList)
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date, end: Date } | null>(null);
-  console.log("Selected slot: ", selectedSlot, new Date(selectedSlot?.start || ''))
   const [servicesToBook, setServicesToBook] = useState<CartItem[]>([]);
-  console.log("Services to book: ", servicesToBook)
   const [isLoading, setIsLoading] = useState(false);
   const sessionData = localStorage.getItem("session");
   const { hasModuleAccess, canCreate, canUpdate } = usePermissions();
@@ -87,45 +84,172 @@ export function NewAppointment({
       confirmedAppointments = confirmedAppointments.filter(apt => selectedArtistIds.has(apt.staff_id || ''));
     }
 
-    console.log("Confirmed appointments: ", confirmedAppointments)
+    // const confirmedEvents = confirmedAppointments.map((apt) => {
+    //   let title = ''
+    //   if (apt.services?.[0]?.name) {
+    //     title = `${apt.services?.[0]?.name} (Service) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`
+    //   }
+    //   else {
+    //     title = `${apt.deals?.[0]?.name} (Deal) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`
+    //   }
 
+    //   return {
+    //     title: title,
+    //     start: apt.start_time ? new Date(apt.start_time) : new Date(apt.date),
+    //     end: apt.end_time ? new Date(apt.end_time) : new Date(apt.date),
+    //     resource: { ...apt, isTemporary: false },
+    //   }
+    // });
+
+    // Improved confirmed events rendering logic
     const confirmedEvents = confirmedAppointments.map((apt) => {
-      let title = ''
+      let title = '';
       if (apt.services?.[0]?.name) {
-        title = `${apt.services?.[0]?.name} (Service) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`
+        title = `${apt.services?.[0]?.name} (Service) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`;
+      } else {
+        title = `${apt.deals?.[0]?.name} (Deal) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`;
       }
-      else {
-        title = `${apt.deals?.[0]?.name} (Deal) - ${apt.customer?.name || apt.customer_name || 'Unknown'} - ${apt.staff?.name || 'Unknown Staff'}`
+
+      // Parse start and end times
+      const startDate = apt.start_time ? new Date(apt.start_time) : new Date(apt.date);
+      const endDate = apt.end_time ? new Date(apt.end_time) : new Date(apt.date);
+
+      // Check if event crosses midnight
+      const startDay = startDate.getDate();
+      const endDay = endDate.getDate();
+
+      let adjustedStart = startDate;
+      let adjustedEnd = endDate;
+
+      // Inside confirmedEvents map:
+      if (startDay !== endDay) {
+        const midnightStart = new Date(startDate);
+        midnightStart.setHours(23, 59, 59, 999);
+
+        const midnightEnd = new Date(startDate);
+        midnightEnd.setHours(24, 0, 0, 1);
+
+        return [
+          {
+            title: `${title} (Part 1)`,
+            start: startDate,
+            end: midnightStart,
+            resource: { ...apt, isTemporary: false, part: '1' },
+          },
+          {
+            title: `${title} (Part 2)`,
+            start: midnightEnd,
+            end: endDate,
+            resource: { ...apt, isTemporary: false, part: '2' },
+          }
+        ];
       }
 
       return {
         title: title,
-        start: apt.start_time ? new Date(apt.start_time) : new Date(apt.date),
-        end: apt.end_time ? new Date(apt.end_time) : new Date(apt.date),
+        start: adjustedStart,
+        end: adjustedEnd,
         resource: { ...apt, isTemporary: false },
-      }
-    });
+      };
+    }).flat();
 
+    // if (selectedSlot && servicesToBook.length > 0) {
+    //   let cumulativeEndTime = new Date(selectedSlot.start);
+    //   console.log("Before cumulative time: ", cumulativeEndTime)
+    //   const temporaryEvents = servicesToBook.map((item, index) => {
+    //     const serviceDuration = item.service.duration || 30;
+    //     const appointmentStart = new Date(cumulativeEndTime);
+    //     const appointmentEnd = new Date(appointmentStart.getTime() + serviceDuration * 60000);
+    //     cumulativeEndTime = appointmentEnd;
+    //     console.log("Appoint start time: ", appointmentStart)
+    //     console.log("Appoint end time: ", appointmentEnd)
+    //     console.log("After Appoint cumulative time: ", cumulativeEndTime)
+
+    //     return {
+    //       title: `(PENDING) ${item.service.name}`,
+    //       start: appointmentStart,
+    //       end: appointmentEnd,
+    //       resource: {
+    //         id: `temp_${index}`,
+    //         customerName: preselectedClient?.name || 'New Client',
+    //         service: item.service.name,
+    //         staffId: item.artist?.value || '',
+    //         isTemporary: true,
+    //       },
+    //     };
+    //   });
+    //   console.log("Temp events: ", temporaryEvents)
+    //   return [...confirmedEvents, ...temporaryEvents];
+    // }
+
+    // Improved temporary events for displaying in time slots
     if (selectedSlot && servicesToBook.length > 0) {
       let cumulativeEndTime = new Date(selectedSlot.start);
-      const temporaryEvents = servicesToBook.map((item, index) => {
+      const temporaryEvents: any[] = [];
+
+      servicesToBook.forEach((item, index) => {
         const serviceDuration = item.service.duration || 30;
         const appointmentStart = new Date(cumulativeEndTime);
         const appointmentEnd = new Date(appointmentStart.getTime() + serviceDuration * 60000);
         cumulativeEndTime = appointmentEnd;
 
-        return {
-          title: `(PENDING) ${item.service.name}`,
-          start: appointmentStart,
-          end: appointmentEnd,
-          resource: {
-            id: `temp_${index}`,
-            customerName: preselectedClient?.name || 'New Client',
-            service: item.service.name,
-            staffId: item.artist?.value || '',
-            isTemporary: true,
-          },
-        };
+        // Check if this event crosses midnight
+        const startDay = appointmentStart.getDate();
+        const endDay = appointmentEnd.getDate();
+
+        if (startDay === endDay) {
+          // Simple case: event is within one day
+          temporaryEvents.push({
+            title: `(PENDING) ${item.service.name}`,
+            start: appointmentStart,
+            end: appointmentEnd,
+            resource: {
+              id: `temp_${index}`,
+              customerName: preselectedClient?.name || 'New Client',
+              service: item.service.name,
+              staffId: item.artist?.value || '',
+              isTemporary: true,
+            },
+          });
+        } else {
+          // Complex case: event crosses midnight
+          // Split into two segments
+          // Create a date just before midnight (last millisecond of the day)
+          const midnightStart = new Date(appointmentStart);
+          midnightStart.setHours(23, 59, 59, 999); // End of day at 23:59:59.999
+
+          // Create a date just after midnight (first millisecond of next day)
+          const midnightEnd = new Date(appointmentStart);
+          midnightEnd.setHours(24, 0, 0, 1); // Start of next day at 00:00:00.001
+
+          // First segment: from start to midnight
+          temporaryEvents.push({
+            title: `(PENDING) ${item.service.name} (Part 1)`,
+            start: appointmentStart,
+            end: midnightStart,
+            resource: {
+              id: `temp_${index}_part1`,
+              customerName: preselectedClient?.name || 'New Client',
+              service: item.service.name,
+              staffId: item.artist?.value || '',
+              isTemporary: true,
+            },
+          });
+
+          // Second segment: from midnight to end
+          temporaryEvents.push({
+            title: `(PENDING) ${item.service.name} (Part 2)`,
+            start: midnightEnd,
+            end: appointmentEnd,
+            resource: {
+              id: `temp_${index}_part2`,
+              customerName: preselectedClient?.name || 'New Client',
+              service: item.service.name,
+              staffId: item.artist?.value || '',
+              isTemporary: true,
+            },
+          });
+        }
       });
       return [...confirmedEvents, ...temporaryEvents];
     }
@@ -134,7 +258,6 @@ export function NewAppointment({
   }, [appointmentsList, servicesToBook, selectedSlot, preselectedClient]);
 
   const handleAddServiceToList = (item: CartItem) => {
-    console.log("Item for selection: ", item)
     // Check if service already exists in list
     const isDuplicate = servicesToBook.some(service => service.service.id === item.service.id);
     if (isDuplicate) {
@@ -215,12 +338,9 @@ export function NewAppointment({
 
     // Validation: Check for duplicate bookings
     const selectedDate = selectedSlot.start.toISOString().split('T')[0];
-    console.log("Selected date: ", selectedDate)
     // Check for same service on same date
     const serviceIds = servicesToBook.map(item => item.service.id);
-    console.log("Services ids: ", serviceIds)
     const duplicateServices = serviceIds.filter((id, index) => serviceIds.indexOf(id) !== index);
-    console.log("Duplicated services: ", duplicateServices)
     if (duplicateServices.length > 0) {
       toast({
         title: "Duplicate Service",
@@ -236,8 +356,6 @@ export function NewAppointment({
       const selectedStartTimeISO = selectedSlot.start.toISOString();
       // Extract just the time portion (HH:MM:SS) for comparison
       const selectedTimeOnly = selectedStartTimeISO.split('T')[1]?.slice(0, 5); // Remove milliseconds
-      console.log("Check selected start time for ISO conversion: ", selectedStartTimeISO)
-      console.log("Converted selected slot time: ", selectedTimeOnly)
 
       const existingAppointment = appointmentsList.find(apt => {
         // Must be for the same customer
@@ -250,7 +368,6 @@ export function NewAppointment({
         if (apt.start_time) {
           const aptStartTimeISO = new Date(apt.start_time).toISOString();
           const aptTimeOnly = aptStartTimeISO.split('T')[1]?.slice(0, 5); // Remove milliseconds
-          console.log("Converted existing appointment time: ", aptTimeOnly)
 
           // If times match exactly, it's a duplicate regardless of service/staff
           if (aptTimeOnly === selectedTimeOnly) {
@@ -276,7 +393,6 @@ export function NewAppointment({
         return false;
       });
 
-      console.log("Existing appointment: ", existingAppointment)
       if (existingAppointment) {
         const staffInfo = item.artist ? ` with staff member ${item.artist.label}` : '';
         const timeInfo = format(selectedSlot.start, 'p');
@@ -314,7 +430,6 @@ export function NewAppointment({
 
     // Create appointment data for each staff member
     let cumulativeEndTime = new Date(selectedSlot.start);
-    console.log("Check services by staff: ", servicesByStaff)
 
     // for (const [staffId, services] of servicesByStaff) {
     for (const service of servicesToBook) {
@@ -340,7 +455,6 @@ export function NewAppointment({
         bookingType: undefined,
         bookingApproach: undefined
       });
-      console.log("Appointments to create: ", appointmentsToCreate)
 
       cumulativeEndTime = appointmentEnd;
     }
@@ -354,7 +468,6 @@ export function NewAppointment({
         const createdAppointment = await AppointmentsApi.createAppointment(appointmentData);
         createdAppointments.push(createdAppointment);
       }
-      console.log("Created appointments: ", createdAppointments)
 
       // Refresh appointments list
       const salonId = sessionData ? JSON.parse(sessionData).salonId : null;

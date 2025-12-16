@@ -44,7 +44,6 @@ export function PromotionsList() {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [promotionToDelete, setPromotionToDelete] = React.useState<DiscountWithSalon | null>(null);
   const sessionData = localStorage.getItem("session");
-  console.log("Session data: ", JSON.parse(sessionData || ''))
   
   // Get permissions for promotions module
   const { canCreate, canUpdate, canDelete, canRead } = usePermissions();

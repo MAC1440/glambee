@@ -181,6 +181,8 @@ export function DealFormDialog({
     },
   });
 
+  const isFormValidToSubmit = Object.keys(form.formState.dirtyFields).length > 0 && !(Object.keys(form.formState.errors).length > 0)
+
   useEffect(() => {
     if (isOpen) {
       const validColors = ["#FFCCCC", "#CCFFCC", "#CCE5FF", "#FFE5CC", "#FFCCE5"] as const;
@@ -210,9 +212,10 @@ export function DealFormDialog({
   }, [isOpen, deal, form]);
 
   const priceVaryCheck = form.watch('prices_may_vary')
+  const originalPriceCheck = form.watch('price')
 
   useEffect(() => {
-    if (!priceVaryCheck) {
+    if (priceVaryCheck) {
       form.setValue("discounted_price", null, { shouldValidate: true, shouldDirty: true });
       form.setValue("price", null, { shouldValidate: true, shouldDirty: true });
     }
@@ -416,7 +419,7 @@ export function DealFormDialog({
                               field.onChange(sanitized === '' ? null : numValue);
                             }
                           }}
-                          disabled={saving || priceVaryCheck}
+                          disabled={saving || priceVaryCheck || !originalPriceCheck}
                         />
                       </FormControl>
                       <FormMessage />
@@ -769,7 +772,7 @@ export function DealFormDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={saving || uploadingImage || !form.formState.isValid}>
+              <Button type="submit" disabled={saving || uploadingImage || !isFormValidToSubmit}>
                 {saving ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

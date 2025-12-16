@@ -40,7 +40,6 @@ export class StaffApi {
       const limit = filters.limit || 50;
       const offset = filters.offset || 0;
 
-      console.log("Salon id for api: ", filters.salonId)
       let query = supabase
         .from('salons_staff')
         .select('*', { count: 'exact' });

@@ -392,7 +392,7 @@ export class AuthService {
         .select('*')
         .eq('phone_number', phone)
         .single();
-      console.log("Check data user: ", userData)
+      // console.log("Check data user: ", userData)
 
       if (error || !userData) {
         return {
@@ -451,7 +451,7 @@ export class AuthService {
           .eq('phone_number', phone)
           .maybeSingle();
 
-        console.log("Check salonn: ", salon)
+        // console.log("Check salonn: ", salon)
         if (!salonError && salon) {
           salonData = salon;
         }
@@ -522,10 +522,7 @@ export class AuthService {
         email,
         password,
       });
-      console.log("Email in auth-serice: ", email)
-      console.log("Password in auth-serice: ", password)
-      console.log("Auth error: ", authError)
-      console.log("Auth data: ", authData)
+      // console.log("Password in auth-serice: ", password)
 
       // If auth fails, user doesn't exist in auth.users
       if (authError || !authData.user) {
@@ -616,7 +613,6 @@ export class AuthService {
   ): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
       // Get auth user to get email
-      console.log("Profile data; ", profileData)
       const { data: authUser, error: authUserError } = await supabase.auth.getUser();
 
       if (authUserError || !authUser.user || authUser.user.id !== authUserId) {
@@ -758,7 +754,7 @@ export class AuthService {
     const length = 12;
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
     let password = "";
-    console.log("Before password:: ", password)
+    // console.log("Before password:: ", password)
     // Ensure at least one of each type
     password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 26)]; // Uppercase
     password += "abcdefghijklmnopqrstuvwxyz"[Math.floor(Math.random() * 26)]; // Lowercase
@@ -769,11 +765,11 @@ export class AuthService {
     for (let i = password.length; i < length; i++) {
       password += charset[Math.floor(Math.random() * charset.length)];
     }
-    console.log("After loop password: ", password)
+    // console.log("After loop password: ", password)
 
     // Shuffle the password
     const newPassword = password.split('').sort(() => Math.random() - 0.5).join('');
-    console.log("Final password: ", newPassword)
+    // console.log("Final password: ", newPassword)
     return newPassword
   }
 }

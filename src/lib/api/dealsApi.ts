@@ -93,7 +93,6 @@ export class DealsApi {
         // Try to get default salon, but don't filter if it fails
         try {
           const defaultSalonId = await this.getDefaultSalonId();
-          console.log("Using default salon ID:", defaultSalonId);
           query = query.eq('salon_id', defaultSalonId);
         } catch (error) {
           console.log("No default salon found, fetching all deals");
@@ -124,10 +123,7 @@ export class DealsApi {
       // Apply pagination
       query = query.range(offset, offset + limit - 1);
 
-      console.log("Executing query with filters:", { salonId, search, isActive, hasPopup, limit, offset });
       const { data, error, count } = await query;
-
-      console.log("Supabase response:", { data, error, count });
 
       if (error) {
         console.error("Supabase error:", error);
@@ -235,14 +231,10 @@ export class DealsApi {
     try {
       // Ensure we have a valid session and refresh if needed
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      console.log("Session in create deal: ", session)
       
       if (sessionError || !session) {
-        console.log("IN session check...")
         // Try to refresh the session
         const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
-        console.log("Refreshed session in creation of deal: ", refreshedSession)
-        console.log("Refresh error in creation of deal: ", refreshError)
         
         if (refreshError || !refreshedSession) {
           throw new Error(`Authentication required: ${sessionError?.message || refreshError?.message || 'No active session'}`);
@@ -262,8 +254,6 @@ export class DealsApi {
         ...dealData,
         salon_id: salonId,
       };
-
-      console.log('Creating deal with data:', { ...dealDataWithSalon, media_url: dealDataWithSalon.media_url ? '[URL]' : null });
 
       const { data, error } = await supabase
         .from('salons_deals')

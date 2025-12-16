@@ -36,7 +36,6 @@ export function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const sessionData = localStorage.getItem("session");
-  console.log("Session data: ", JSON.parse(sessionData || ''))
   const { hasModuleAccess, canCreate, canRead, canUpdate, canDelete } = usePermissions();
   const dashboardModuleKey = "dashboard" as const;
   // const [hasAccess, setHasAccess] = useState<boolean | null>(null);
@@ -154,7 +153,6 @@ export function Dashboard() {
       staffId: apt.staff?.id || 'unassigned'
     }));
   }, [appointments]);
-  console.log("Schedule Appointments: ", scheduleAppointments);
 
   const filteredAppointments = scheduleAppointments.filter(apt => {
     if (period === "today") return isToday(apt.start);
@@ -191,12 +189,8 @@ export function Dashboard() {
   // Calculate total revenue for all appointments (not just filtered period)
   const totalRevenue = scheduleAppointments.reduce((sum, apt) => {
     const originalAppointment = appointments.find(a => a.id === apt.id);
-    console.log("Original Appointment: ", originalAppointment);
     return sum + (originalAppointment?.bill || 0);
   }, 0);
-  console.log("Schedule Appointments length: ", scheduleAppointments?.length);
-  console.log("Appointments length: ", appointments?.length);
-  console.log("Revenue: ", totalRevenue);
 
   // Calculate period-specific revenue
   const periodRevenue = convertedFilteredAppointments.reduce((sum, apt) => sum + apt.price, 0);

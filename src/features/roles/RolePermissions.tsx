@@ -69,14 +69,12 @@ export function RolePermissions() {
   const [warningMessages, setWarningMessages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const sessionData = localStorage.getItem("session");
-  console.log("Session role permissions data: ", JSON.parse(sessionData || ''))
 
   
   // Get permissions for roles module
   const { canUpdate, canDelete, hasModuleAccess } = usePermissions();
   const rolesModuleKey = "rolesPermissions" as const;
   const hasAccess = hasModuleAccess(rolesModuleKey);
-  console.log("Has access for roles permissions: ", hasAccess)
 
   // Fetch staff members and default salon ID
   useEffect(() => {
@@ -103,7 +101,6 @@ export function RolePermissions() {
 
         // Fetch staff members for the salon
         const staffResponse = await StaffApi.getStaff({ salonId: JSON.parse(sessionData || '').salonId});
-        console.log("Staff response: ", staffResponse)
         // const staffResponse = await StaffApi.getStaff({ salonId: defaultSalonId });
 
         // Fetch permissions for each staff member
@@ -163,7 +160,6 @@ export function RolePermissions() {
         moduleKey as DependencyModuleKey,
         tempPermissions
       );
-      console.log("Dependency chheck: ", dependencyCheck)
       
       if (dependencyCheck.hasWarning) {
         // Store pending change and show warning
@@ -360,7 +356,6 @@ export function RolePermissions() {
             // Dispatch session update event to refresh UI
             window.dispatchEvent(new CustomEvent("sessionUpdated", { detail: currentSession }));
             
-            console.log("Updated session for affected staff member:", selectedStaff.id);
           }
         }
       } catch (sessionError) {
@@ -430,7 +425,6 @@ export function RolePermissions() {
             // Dispatch session update event to refresh UI
             window.dispatchEvent(new CustomEvent("sessionUpdated", { detail: currentSession }));
             
-            console.log("Updated session for affected staff member:", staffToDelete.id);
           }
         }
       } catch (sessionError) {

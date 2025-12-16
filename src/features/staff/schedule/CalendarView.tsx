@@ -79,6 +79,13 @@ export function CalendarView({
         display: 'block',
         opacity: 0.7,
       };
+
+      // If this is a split part, add a different border or background
+    if (event.title.includes('(Part 1)') || event.title.includes('(Part 2)')) {
+      temporaryStyle.border = '2px dashed hsl(var(--primary))';
+      temporaryStyle.backgroundColor = 'hsl(var(--primary)/0.1)';
+    }
+
       return { style: temporaryStyle };
     }
 

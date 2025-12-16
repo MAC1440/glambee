@@ -17,7 +17,6 @@ export function Roles() {
   const {hasModuleAccess} = usePermissions();
   const rolesModuleKey = "roles" as const;
   const hasAccess = hasModuleAccess(rolesModuleKey);
-  console.log("Has access for roles: ", hasAccess)
 
   // if (hasAccess === false) {
   //   return <UnauthorizedAccess moduleName="Roles" />;

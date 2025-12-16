@@ -115,14 +115,10 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  console.log("Check user: ", user)
   const [loading, setLoading] = useState(true);
   const [permissions, setPermissions] = useState<Record<string, any> | null>(null);
-  console.log("Check permissions: ", permissions)
   const [showUnauthorizedModal, setShowUnauthorizedModal] = useState(false);
   const [unauthorizedModule, setUnauthorizedModule] = useState<string | null>(null);
-  console.log("Check unauthorized module: ", unauthorizedModule)
-  console.log("Check show unauthorized modal: ", showUnauthorizedModal)
 
   useEffect(() => {
     // Immediate auth check - no loading delay
@@ -162,7 +158,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   }, []); // Only run on mount, not on pathname change
 
   useEffect(() => {
-    console.log("In permission effect...")
     const fetchPermissions = async () => {
       if (!user || !user.id) {
         setPermissions(null);

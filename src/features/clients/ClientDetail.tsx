@@ -55,13 +55,10 @@ import { CaretSortIcon } from "@radix-ui/react-icons";
 export function ClientDetail({ clientId }: { clientId: string }) {
   const [client, setClient] = useState<ClientWithDetails | null>(null);
   const [appointments, setAppointments] = useState<AppointmentWithDetails[]>([]);
-  console.log("Appointments: ", appointments?.flatMap((item) => item))
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
-  console.log("Editing staff id: ", editingStaffId)
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
-  console.log("Set editing status Id: ", editingStatusId)
   const [staffOptions, setStaffOptions] = useState<Array<{ id: string, name: string }>>([]);
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [loadingStaff, setLoadingStaff] = useState(false);
@@ -479,7 +476,6 @@ export function ClientDetail({ clientId }: { clientId: string }) {
         );
       },
       cell: ({ row }) => {
-        // console.log("Row: ", row)
         return (<span className="font-medium">{row.original.deal}</span>)
       },
     },

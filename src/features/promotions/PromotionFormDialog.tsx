@@ -93,9 +93,6 @@ export function PromotionFormDialog({
   const serviceDiscount = form.watch("service_discount");
   const dealDiscount = form.watch("deal_discount");
   const packageDiscount = form.watch("package_discount");
-  console.log("Service Discount: ", serviceDiscount);
-  console.log("Deal Discount: ", dealDiscount);
-  console.log("Package Discount: ", packageDiscount);
 
   // Check if all fields have values greater than 0
   const isFormValid = React.useMemo(() => {
@@ -105,7 +102,6 @@ export function PromotionFormDialog({
       packageDiscount > 0
     );
   }, [serviceDiscount, dealDiscount, packageDiscount]);
-  console.log("Form valid ", isFormValid)
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement>,

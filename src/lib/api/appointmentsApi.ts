@@ -362,7 +362,6 @@ export class AppointmentsApi {
      */
     static async createAppointment(appointmentData: CreateAppointmentData): Promise<AppointmentWithDetails> {
         try {
-            console.log("Appointment data in api: ", appointmentData)
             // Get salon ID from appointmentData or from session
             let salonId = appointmentData.salon_id;
             if (!salonId && typeof window !== 'undefined') {
@@ -452,7 +451,6 @@ export class AppointmentsApi {
                     })
                 }
             })
-            console.log("Appointments services: ", appointmentServices)
 
             for (const service of appointmentServices) {
                 if (service?.service_id) {

@@ -82,7 +82,6 @@ export function isAdmin(user: UserSession | null): boolean {
  */
 export function hasModuleAccess(moduleKey: ModuleKey, user: UserSession | null = null): boolean {
   const currentUser = user || getCurrentUser();
-  console.log("Current user: ", currentUser)
   if (!currentUser) return false;
   
   // Admins have access to all modules
@@ -103,7 +102,6 @@ export function hasModuleAccess(moduleKey: ModuleKey, user: UserSession | null =
   }
   
   const modulePermissions = currentUser.permissions[moduleKey];
-  console.log("Module permissions: ", modulePermissions)
   if (!modulePermissions) return false;
   
   // If module has any permission (read, create, update, delete), user has access

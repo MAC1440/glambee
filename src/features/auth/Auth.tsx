@@ -124,12 +124,10 @@ export function Auth() {
     try {
       // Check if user exists
       const userExists = await AuthService.checkUserExists(cleanPhoneNumber);
-      console.log("Existing user: ", userExists)
 
       if (userExists) {
         // User exists, login directly without OTP
         const loginResponse = await AuthService.directLogin(cleanPhoneNumber);
-        console.log('loginResponse', loginResponse);
 
         if (loginResponse.success && loginResponse.data) {
           // Create user session
@@ -218,7 +216,6 @@ export function Auth() {
       // Sign in staff - validates user exists in both auth.users and salons_staff tables
       // Note: salonId is optional - if not provided, we'll use the salon_id from staffRecord after login
       const loginResponse = await AuthService.signInStaff(email, password);
-      console.log("Login response: ", loginResponse)
 
       if (!loginResponse.success) {
         // Login failed - show error (user doesn't exist in auth or salons_staff)

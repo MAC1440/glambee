@@ -208,7 +208,6 @@ export function ServiceSelection({ onAddToCart, buttonText = "Add to Cart", exis
     return groups;
   }, [services, deals]);
 
-  console.log("Grouped options: ", groupedOptions)
 
   const handleServiceChange = (serviceId: string | null) => {
     setSelectedServiceId(serviceId);

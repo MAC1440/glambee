@@ -72,7 +72,6 @@ export function ServicesList() {
   const [editingService, setEditingService] = React.useState<
     Service | undefined
   >(undefined);
-  console.log("Edditing service: ", editingService)
   const [saving, setSaving] = React.useState(false);
   const [serviceToDelete, setServiceToDelete] = React.useState<Service | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -84,7 +83,6 @@ export function ServicesList() {
   // Ref for the DataTable to access TanStack table instance
   const tableRef = React.useRef<any>(null);
   const sessionData = localStorage.getItem("session");
-  console.log("Session data: ", JSON.parse(sessionData || ''))
 
   // Get permissions for services module
   const { canCreate, canUpdate, canDelete, canRead, hasModuleAccess } = usePermissions();
@@ -92,7 +90,6 @@ export function ServicesList() {
 
   // Check if user has access to services module
   const hasAccess = hasModuleAccess(servicesModuleKey);
-  console.log("Has access: ", hasAccess)
 
   // Fetch categories from Supabase
   const fetchCategoriesData = React.useCallback(async () => {

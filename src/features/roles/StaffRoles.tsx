@@ -26,13 +26,10 @@ import { usePermissions } from "@/hooks/use-permissions";
 
 export function StaffRoles() {
   const [staff, setStaff] = useState<StaffWithCategories[]>([]);
-  console.log("Staffs: ", staff)
   const [roles, setRoles] = useState<Role[]>([]);
-  // console.log("Roles: ", roles)
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const sessionData = localStorage.getItem("session");
-  console.log("Session roles data: ", JSON.parse(sessionData || ''))
   
   // Get permissions for roles module
   const { canUpdate } = usePermissions();
@@ -65,17 +62,13 @@ export function StaffRoles() {
         // }
 
         // Fetch roles
-        // console.log('Fetching roles...');
         const rolesData = await RolesApi.getRoles();
         setRoles(rolesData);
-        // console.log(`Loaded ${rolesData.length} roles`);
 
         // Fetch staff with their assigned roles
         // If salonId is undefined, it will fetch ALL staff regardless of salon_id
-        // console.log('Fetching staff with roles...');
         const staffData = await StaffApi.getStaffWithRoles({salonId: JSON.parse(sessionData || '').salonId});
         setStaff(staffData);
-        // console.log(`Loaded ${staffData.length} staff members`);
       } catch (error) {
         console.error("Error loading data:", error);
         toast({

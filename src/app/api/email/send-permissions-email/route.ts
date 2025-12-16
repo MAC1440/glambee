@@ -168,8 +168,6 @@ ${salonOwnerName}
       );
     }
 
-    console.log("Email sent successfully:", data);
-
     return NextResponse.json({
       success: true,
       message: "Email sent successfully",

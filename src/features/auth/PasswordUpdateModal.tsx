@@ -100,7 +100,6 @@ export function PasswordUpdateModal({
 
       // First, ensure we have an active session
       const { data: { session: currentSession } } = await supabase.auth.getSession();
-      console.log("Current session in password update modal: ", currentSession)
       
       if (!currentSession) {
         throw new Error("No active session. Please log in again.");
@@ -114,8 +113,8 @@ export function PasswordUpdateModal({
           password_updated_at: new Date().toISOString(),
         },
       });
-      console.log("Updated password data: ", updateData)
-      console.log("Updated password error: ", updateError)
+      // console.log("Updated password data: ", updateData)
+      // console.log("Updated password error: ", updateError)
 
       if (updateError) {
         throw updateError;
@@ -141,11 +140,11 @@ export function PasswordUpdateModal({
       }
 
       // Log successful password update for debugging
-      console.log("Password updated successfully:", {
-        userId: updateData.user.id,
-        email: updateData.user.email,
-        passwordUpdated: updateData.user.user_metadata?.password_updated,
-      });
+      // console.log("Password updated successfully:", {
+      //   userId: updateData.user.id,
+      //   email: updateData.user.email,
+      //   passwordUpdated: updateData.user.user_metadata?.password_updated,
+      // });
 
       toast({
         title: "Password Updated",

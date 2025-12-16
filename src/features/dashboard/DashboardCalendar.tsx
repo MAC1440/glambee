@@ -24,28 +24,85 @@ export function DashboardCalendar({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedAppointments, setSelectedAppointments] = useState<ScheduleAppointment[]>([]);
-  console.log("All appointments in dash: ", allAppointments)
 
+  // const calendarEvents = useMemo(() => {
+  //   return allAppointments.map((apt) => {
+  //     // Find staff name from the appointment data
+  //     const staffName = apt.staffId && apt.staffId !== 'unassigned'
+  //       ? staff.find(s => s.id === apt.staffId)?.name || 'Unknown Staff'
+  //       : 'Unassigned';
+  //     let title = ''
+  //     if (apt.service !== 'N/A') {
+  //       title = `${apt.service} (Service)`
+  //     } else {
+  //       title = `${apt.deal} (Deal)`
+  //     }
+
+  //     return {
+  //       title: `${title} - ${apt.customerName} - ${staffName}`,
+  //       start: apt.start,
+  //       end: apt.end,
+  //       resource: apt,
+  //     };
+  //   });
+  // }, [allAppointments, staff]);
+
+  // Improved calendar events for displaying in calendar view
   const calendarEvents = useMemo(() => {
-    return allAppointments.map((apt) => {
-      // Find staff name from the appointment data
-      const staffName = apt.staffId && apt.staffId !== 'unassigned'
-        ? staff.find(s => s.id === apt.staffId)?.name || 'Unknown Staff'
-        : 'Unassigned';
-      let title = ''
-      if (apt.service !== 'N/A') {
-        title = `${apt.service} (Service)`
-      } else {
-        title = `${apt.deal} (Deal)`
-      }
-
-      return {
-        title: `${title} - ${apt.customerName} - ${staffName}`,
-        start: apt.start,
-        end: apt.end,
-        resource: apt,
-      };
-    });
+    return allAppointments
+      .map((apt) => {
+        // Find staff name from the appointment data
+        const staffName = apt.staffId && apt.staffId !== 'unassigned'
+          ? staff.find(s => s.id === apt.staffId)?.name || 'Unknown Staff'
+          : 'Unassigned';
+  
+        let title = '';
+        if (apt.service !== 'N/A') {
+          title = `${apt.service} (Service)`;
+        } else {
+          title = `${apt.deal} (Deal)`;
+        }
+  
+        const startDate = apt.start;
+        const endDate = apt.end;
+  
+        // Detect if event crosses midnight (different calendar days)
+        const startDay = startDate.getDate();
+        const endDay = endDate.getDate();
+  
+        if (startDay !== endDay) {
+          // Split into two segments with microsecond offsets
+          const midnightStart = new Date(startDate);
+          midnightStart.setHours(23, 59, 59, 999); // Last ms of start day
+  
+          const midnightEnd = new Date(startDate);
+          midnightEnd.setHours(24, 0, 0, 1); // First ms of next day
+  
+          return [
+            {
+              title: `${title} - ${apt.customerName} - ${staffName} (Part 1)`,
+              start: startDate,
+              end: midnightStart,
+              resource: { ...apt, part: '1' },
+            },
+            {
+              title: `${title} - ${apt.customerName} - ${staffName} (Part 2)`,
+              start: midnightEnd,
+              end: endDate,
+              resource: { ...apt, part: '2' },
+            },
+          ];
+        }
+  
+        // Regular single-day event
+        return {
+          title: `${title} - ${apt.customerName} - ${staffName}`,
+          start: startDate,
+          end: endDate,
+          resource: apt,
+        };
+      })
+      .flat();
   }, [allAppointments, staff]);
 
   const handleDateClick = (slotInfo: SlotInfo | Date) => {
